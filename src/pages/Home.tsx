@@ -173,17 +173,17 @@ export const Home: React.FC<HomeProps> = ({
 
       {/* ================= ABOUT SECTION ================= */}
       <section id="about" className="relative w-full py-16 sm:py-28 overflow-hidden bg-white dark:bg-navy-light/10">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-row lg:grid lg:grid-cols-12 gap-4 sm:gap-8 lg:gap-16 items-start lg:items-center">
           
           {/* About Left: Emblem Image Frame */}
-          <div className="lg:col-span-5 flex justify-center">
+          <div className="flex-shrink-0 lg:col-span-5 flex justify-start lg:justify-center">
             <motion.div
-              className="relative w-full max-w-[360px] aspect-[4/5] rounded-[40px] overflow-hidden border border-white/60 dark:border-white/10 shadow-2xl glass-card p-4"
+              className="relative w-20 sm:w-36 md:w-56 lg:w-full lg:max-w-[360px] aspect-[4/5] rounded-[12px] sm:rounded-[24px] lg:rounded-[40px] overflow-hidden border border-white/60 dark:border-white/10 shadow-lg lg:shadow-2xl glass-card p-1 sm:p-2 lg:p-4"
               whileInView={{ opacity: [0, 1], scale: [0.95, 1], rotate: [-2, 0] }}
               viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 1.0, ease: 'easeOut' }}
             >
-              <div className="w-full h-full rounded-[28px] overflow-hidden relative shadow-inner">
+              <div className="w-full h-full rounded-[8px] sm:rounded-[18px] lg:rounded-[28px] overflow-hidden relative shadow-inner">
                 <img
                   src="/assets/logo.jpg"
                   alt="Petalorah Logo Craft"
@@ -195,15 +195,15 @@ export const Home: React.FC<HomeProps> = ({
           </div>
 
           {/* About Right: Story Scroll Reveal */}
-          <div ref={storyRef} className="lg:col-span-7 text-left flex flex-col items-start">
-            <h2 className="font-serif text-base font-bold text-primary dark:text-secondary-light tracking-[0.25em] uppercase mb-4">
+          <div ref={storyRef} className="flex-grow lg:col-span-7 text-left flex flex-col items-start">
+            <h2 className="font-serif text-[10px] sm:text-xs md:text-base font-bold text-primary dark:text-secondary-light tracking-[0.25em] uppercase mb-1 sm:mb-4">
               Our Story
             </h2>
-            <h3 className="font-serif text-3xl md:text-4xl font-semibold text-primary dark:text-white leading-tight mb-8">
+            <h3 className="font-serif text-xs sm:text-lg md:text-3xl lg:text-4xl font-semibold text-primary dark:text-white leading-tight mb-2 sm:mb-8">
               Crafting Kept Memories
             </h3>
             
-            <p className="text-xl md:text-2xl font-serif text-primary/95 dark:text-gray-200 leading-relaxed flex flex-wrap gap-x-2 gap-y-1">
+            <p className="text-[10px] sm:text-base md:text-xl lg:text-2xl font-serif text-primary/95 dark:text-gray-200 leading-relaxed flex flex-wrap gap-x-1 gap-y-0.5 sm:gap-x-2 sm:gap-y-1">
               {storyWords.map((word, index) => (
                 <motion.span
                   key={index}
