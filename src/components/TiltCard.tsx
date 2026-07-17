@@ -72,7 +72,7 @@ export const TiltCard: React.FC<TiltCardProps> = ({
   return (
     <motion.div
       ref={cardRef}
-      className={`relative rounded-3xl glass-card p-6 overflow-hidden transition-shadow duration-500 select-none ${
+      className={`relative rounded-2xl sm:rounded-3xl glass-card p-2 sm:p-4 md:p-6 overflow-hidden transition-shadow duration-500 select-none ${
         onClick ? 'cursor-pointer' : 'cursor-default'
       } ${
         hovered ? 'shadow-2xl shadow-primary/5 border-primary/20 dark:border-secondary/20' : ''

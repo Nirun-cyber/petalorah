@@ -216,7 +216,7 @@ export const Portfolio: React.FC<PortfolioProps> = ({
         {/* ================= PRODUCT DISPLAY GRID (BLOOMED) ================= */}
         {boxState === 'opened' && (
           <motion.div
-            className="w-full max-w-[95rem] mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 py-10"
+            className="w-full max-w-[95rem] mx-auto px-2 sm:px-6 grid grid-cols-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-6 py-10"
             initial="hidden"
             animate="visible"
             variants={{
@@ -249,30 +249,30 @@ export const Portfolio: React.FC<PortfolioProps> = ({
                 >
                   <div>
                     {/* Image Arched Container */}
-                    <div className="w-full aspect-[4/5] rounded-[32px] overflow-hidden border border-primary/40 bg-white/40 dark:border-white/10 dark:bg-navy-light/20 p-2 mb-6">
-                      <div className="w-full h-full rounded-[24px] overflow-hidden relative shadow-inner">
+                    <div className="w-full aspect-[4/5] rounded-[16px] sm:rounded-[24px] md:rounded-[32px] overflow-hidden border border-primary/40 bg-white/40 dark:border-white/10 dark:bg-navy-light/20 p-1 sm:p-2 mb-2 sm:mb-6">
+                      <div className="w-full h-full rounded-[12px] sm:rounded-[18px] md:rounded-[24px] overflow-hidden relative shadow-inner">
                         <img
                           src={prod.img}
                           alt={prod.name}
                           className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
                         />
                         {/* Handmade Badge */}
-                        <span className="absolute top-4 left-4 px-3.5 py-1 text-xs font-semibold rounded-full bg-white/90 text-primary dark:bg-navy-light/95 dark:text-secondary-light shadow-md border border-primary/10">
+                        <span className="absolute top-1 left-1 sm:top-4 sm:left-4 px-1 py-0.5 sm:px-3.5 sm:py-1 text-[8px] sm:text-xs font-semibold rounded-full bg-white/90 text-primary dark:bg-navy-light/95 dark:text-secondary-light shadow-md border border-primary/10">
                           {prod.badge}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between w-full mb-3">
-                      <h3 className="font-serif text-2xl font-bold text-primary dark:text-white group-hover:text-primary-dark dark:group-hover:text-secondary-light transition-colors">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 w-full mb-1.5 sm:mb-3">
+                      <h3 className="font-serif text-xs sm:text-lg md:text-2xl font-bold text-primary dark:text-white group-hover:text-primary-dark dark:group-hover:text-secondary-light transition-colors line-clamp-1 sm:line-clamp-none">
                         {prod.name}
                       </h3>
-                      <span className="px-3.5 py-1 text-sm font-semibold rounded-full bg-primary/10 text-primary dark:bg-secondary/15 dark:text-secondary-light">
+                      <span className="px-1 py-0.5 sm:px-3.5 sm:py-1 text-[9px] sm:text-xs md:text-sm font-semibold rounded-full bg-primary/10 text-primary dark:bg-secondary/15 dark:text-secondary-light w-fit">
                         {prod.price}
                       </span>
                     </div>
 
-                    <p className="text-sm text-primary/70 dark:text-gray-300 leading-relaxed mb-6 text-left line-clamp-3">
+                    <p className="text-sm text-primary/70 dark:text-gray-300 leading-relaxed mb-6 text-left line-clamp-3 hidden sm:block">
                       {prod.description}
                     </p>
                   </div>
