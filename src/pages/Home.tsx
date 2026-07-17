@@ -37,20 +37,13 @@ export const Home: React.FC<HomeProps> = ({
 
 
 
-  // Featured products data (only 4)
+  // Featured products data (only 3)
   const featuredProducts = [
     { 
       name: 'Keychains', 
       price: 'Starts from ₹35', 
       desc: 'Explore our collection of fluffy, premium handcrafted keychains, including roses, tulips, and charms.', 
       img: '/assets/price_list.jpg',
-      isComingSoon: false 
-    },
-    { 
-      name: 'Customised Keychain', 
-      price: 'Starts from ₹60', 
-      desc: 'Personalized alphabet letter and heart keychains. The perfect custom handmade gift for birthdays.', 
-      img: '/assets/products/customised_birthday.jpg',
       isComingSoon: false 
     },
     { 
@@ -472,14 +465,14 @@ export const Home: React.FC<HomeProps> = ({
             Featured Creations
           </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             {featuredProducts.map((prod, idx) => (
               <TiltCard
                 key={idx}
                 glowColor={prod.isComingSoon ? "rgba(0, 0, 0, 0)" : "rgba(30, 78, 156, 0.15)"}
                 onClick={prod.isComingSoon ? undefined : () => {
                   console.log("Spotlight card clicked:", prod.name);
-                  if (prod.name === 'Keychains' || prod.name === 'Customised Keychain') {
+                  if (prod.name === 'Keychains') {
                     onNavigateToKeychains();
                   } else {
                     onNavigateToCollection();
