@@ -1,0 +1,195 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-primary: #124680;
+  --color-primary-light: #255ea0;
+  --color-primary-dark: #0a2c53;
+  --color-secondary: #A5C4F2;
+  --color-secondary-light: #CBE0FC;
+  --color-secondary-dark: #7FA4D9;
+  --color-ivory: #FFFFF0;
+  --color-ivory-dark: #F0F0E0;
+  --color-beige-light: #FFFFFF;
+  --color-beige-dark: #F4F4F6;
+  --color-lavender: #E6E6FA;
+  --color-lavender-light: #F3F3FF;
+  --color-lavender-dark: #D3D3F5;
+  --color-navy: #0A1128;
+  --color-navy-light: #131E3D;
+  --color-navy-dark: #050814;
+
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: Poppins, Inter, system-ui, sans-serif;
+
+  --animate-spin-slow: spin 12s linear infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-float-delayed: float 6s ease-in-out infinite 3s;
+  --animate-pulse-glow: pulseGlow 2s ease-in-out infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+}
+
+@utility glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  border: 1.5px solid #124680;
+  box-shadow: 0 8px 32px 0 rgba(18, 70, 128, 0.05);
+}
+
+.dark .glass-card {
+  background: rgba(19, 30, 61, 0.45);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+}
+
+@utility glass-modal {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1.5px solid #124680;
+  box-shadow: 0 25px 50px -12px rgba(18, 70, 128, 0.1);
+}
+
+.dark .glass-modal {
+  background: rgba(10, 17, 40, 0.85);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+@layer base {
+  body {
+    @apply bg-white dark:bg-navy text-primary dark:text-gray-100 font-sans transition-colors duration-500 overflow-x-hidden;
+  }
+
+  body.dark {
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(30, 78, 156, 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(230, 230, 250, 0.05) 0px, transparent 50%);
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-beige-light dark:bg-navy;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/20 dark:bg-secondary/20 rounded-full hover:bg-primary/40 dark:hover:bg-secondary/40 transition-colors;
+  }
+}
+
+/* Lenis Smooth Scroll Setup */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
+/* Custom Cursor Follower */
+html.no-cursor,
+html.no-cursor * {
+  cursor: none !important;
+}
+
+.cursor-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #124680;
+  position: fixed;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: width 0.2s, height 0.2s, background-color 0.2s;
+  will-change: transform;
+}
+
+.dark .cursor-dot {
+  background-color: #A5C4F2;
+}
+
+.cursor-follower {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #124680;
+  position: fixed;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+  transition: width 0.2s, height 0.2s, border-color 0.2s;
+  will-change: transform;
+}
+
+.dark .cursor-follower {
+  border-color: #A5C4F2;
+}
+
+.cursor-hover .cursor-dot {
+  width: 20px;
+  height: 20px;
+  background-color: rgba(18, 70, 128, 0.25);
+}
+
+.dark.cursor-hover .cursor-dot {
+  background-color: rgba(165, 196, 242, 0.25);
+}
+
+.cursor-hover .cursor-follower {
+  width: 48px;
+  height: 48px;
+  border-color: #124680;
+}
+
+.dark.cursor-hover .cursor-follower {
+  border-color: #A5C4F2;
+}
+
+/* Custom text selection */
+::selection {
+  @apply bg-primary/20 dark:bg-secondary/30;
+}
+
+/* Interactive trail canvas style */
+#interactive-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 40;
+}
