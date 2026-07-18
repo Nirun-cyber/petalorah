@@ -23,18 +23,21 @@ export const PageTransition: React.FC<PageTransitionProps> = ({
   const curtainVariants = {
     initial: {
       y: '-100%',
+      borderRadius: '0px 0px 100px 100px',
     },
     animate: {
       y: '0%',
+      borderRadius: '0px 0px 0px 0px',
       transition: {
-        duration: 0.6,
+        duration: 0.5,
         ease: [0.76, 0, 0.24, 1] as [number, number, number, number],
       },
     },
     exit: {
       y: '100%',
+      borderRadius: '100px 100px 0px 0px',
       transition: {
-        duration: 0.6,
+        duration: 0.5,
         ease: [0.76, 0, 0.24, 1] as [number, number, number, number],
       },
     },
@@ -51,7 +54,6 @@ export const PageTransition: React.FC<PageTransitionProps> = ({
                 key={i}
                 className="h-full flex-1 bg-gradient-to-b from-primary to-primary-dark"
                 style={{
-                  borderRadius: '0',
                   zIndex: 9991 + i,
                 }}
                 variants={curtainVariants}
@@ -59,8 +61,8 @@ export const PageTransition: React.FC<PageTransitionProps> = ({
                 animate="animate"
                 exit="exit"
                 transition={{
-                  delay: i * 0.08,
-                  duration: 0.6,
+                  delay: i * 0.05,
+                  duration: 0.5,
                   ease: [0.76, 0, 0.24, 1],
                 }}
                 onAnimationComplete={(definition: any) => {
