@@ -350,7 +350,7 @@ export const Home: React.FC<HomeProps> = ({
             >
               <div className="flex flex-col items-start text-left h-full relative overflow-hidden">
                 {/* Cherry background SVG watermark */}
-                <div className="absolute -bottom-8 -right-8 w-36 h-36 text-blue-500/10 dark:text-blue-400/5 pointer-events-none z-0 transition-all duration-700 group-hover:scale-110 group-hover:rotate-12 group-hover:text-blue-500/20 dark:group-hover:text-blue-400/15">
+                <div className="absolute -bottom-8 -right-8 w-20 h-20 sm:w-36 sm:h-36 text-blue-500/10 dark:text-blue-400/5 pointer-events-none z-0 transition-all duration-700 group-hover:scale-110 group-hover:rotate-12 group-hover:text-blue-500/20 dark:group-hover:text-blue-400/15">
                   <svg viewBox="0 0 100 100" fill="none" stroke="currentColor">
                     <circle cx="35" cy="65" r="14" strokeWidth="1.5" />
                     <circle cx="65" cy="70" r="12" strokeWidth="1.5" />
@@ -360,15 +360,15 @@ export const Home: React.FC<HomeProps> = ({
                   </svg>
                 </div>
 
-                <div className="relative z-10 flex flex-col h-full justify-between">
+                <div className="relative z-10 flex flex-col h-full justify-between w-full">
                   <div>
-                    <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-300 mb-6 group-hover:scale-110 transition-transform duration-300">
-                      <Heart size={22} className="animate-pulse" />
+                    <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-300 mb-3 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                      <Heart size={16} className="animate-pulse sm:size-[22px]" />
                     </div>
-                    <h4 className="font-serif text-xl font-semibold text-primary dark:text-white mb-3">
+                    <h4 className="font-serif text-sm sm:text-lg md:text-xl font-semibold text-primary dark:text-white mb-1.5 sm:mb-3">
                       Perfect Keepsake Gifts
                     </h4>
-                    <p className="text-sm text-primary/70 dark:text-gray-300 leading-relaxed mb-4">
+                    <p className="text-[10px] sm:text-sm text-primary/70 dark:text-gray-300 leading-relaxed mb-2 sm:mb-4">
                       Ideal custom gestures for birthday tags, token gifts, key charms, or desk companions that stay fresh and never wither.
                     </p>
                   </div>
@@ -383,7 +383,7 @@ export const Home: React.FC<HomeProps> = ({
             >
               <div className="flex flex-col items-start text-left h-full relative overflow-hidden">
                 {/* Lavender background SVG watermark */}
-                <div className="absolute -bottom-8 -right-8 w-36 h-36 text-emerald-500/10 dark:text-emerald-400/5 pointer-events-none z-0 transition-all duration-700 group-hover:scale-110 group-hover:-rotate-12 group-hover:text-emerald-500/20 dark:group-hover:text-emerald-400/15">
+                <div className="absolute -bottom-8 -right-8 w-20 h-20 sm:w-36 sm:h-36 text-emerald-500/10 dark:text-emerald-400/5 pointer-events-none z-0 transition-all duration-700 group-hover:scale-110 group-hover:-rotate-12 group-hover:text-emerald-500/20 dark:group-hover:text-emerald-400/15">
                   <svg viewBox="0 0 100 100" fill="none" stroke="currentColor">
                     <path strokeWidth="1.5" d="M50 90 L50 20" />
                     <path strokeWidth="1.5" d="M50 20 C46 15, 54 15, 50 20 Z" />
@@ -396,15 +396,15 @@ export const Home: React.FC<HomeProps> = ({
                   </svg>
                 </div>
 
-                <div className="relative z-10 flex flex-col h-full justify-between">
+                <div className="relative z-10 flex flex-col h-full justify-between w-full">
                   <div>
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-300 mb-6 group-hover:scale-110 transition-transform duration-300">
-                      <Sprout size={22} className="animate-bounce" style={{ animationDuration: '3s' }} />
+                    <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-300 mb-3 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                      <Sprout size={16} className="animate-bounce sm:size-[22px]" style={{ animationDuration: '3s' }} />
                     </div>
-                    <h4 className="font-serif text-xl font-semibold text-primary dark:text-white mb-3">
+                    <h4 className="font-serif text-sm sm:text-lg md:text-xl font-semibold text-primary dark:text-white mb-1.5 sm:mb-3">
                       Crafted With Patience
                     </h4>
-                    <p className="text-sm text-primary/70 dark:text-gray-300 leading-relaxed mb-4">
+                    <p className="text-[10px] sm:text-sm text-primary/70 dark:text-gray-300 leading-relaxed mb-2 sm:mb-4">
                       Hours of careful wire-molding go into composing a single creation. Craftsmanship you can feel in the weight and balance of the product.
                     </p>
                   </div>
@@ -415,11 +415,11 @@ export const Home: React.FC<HomeProps> = ({
             {/* Card 6: Made to Bring Smiles */}
             <TiltCard 
               glowColor="rgba(255, 215, 0, 0.25)" 
-              className="group border border-primary/20 dark:border-secondary/20 bg-white/50 dark:bg-navy-light/40"
+              className="group border border-primary/20 dark:border-secondary/20 bg-white/50 dark:bg-navy-light/40 col-span-2 lg:col-span-1"
             >
               <div className="flex flex-col items-start text-left h-full relative overflow-hidden">
                 {/* Daisy bloom background SVG watermark */}
-                <div className="absolute -bottom-8 -right-8 w-36 h-36 text-yellow-500/10 dark:text-yellow-400/5 pointer-events-none z-0 transition-all duration-700 group-hover:scale-110 group-hover:rotate-90 group-hover:text-yellow-500/20 dark:group-hover:text-yellow-400/15">
+                <div className="absolute -bottom-8 -right-8 w-20 h-20 sm:w-36 sm:h-36 text-yellow-500/10 dark:text-yellow-400/5 pointer-events-none z-0 transition-all duration-700 group-hover:scale-110 group-hover:rotate-90 group-hover:text-yellow-500/20 dark:group-hover:text-yellow-400/15">
                   <svg viewBox="0 0 100 100" fill="none" stroke="currentColor">
                     <circle cx="50" cy="50" r="10" strokeWidth="1.5" />
                     {[0, 60, 120, 180, 240, 300].map((angle) => (
@@ -433,15 +433,15 @@ export const Home: React.FC<HomeProps> = ({
                   </svg>
                 </div>
 
-                <div className="relative z-10 flex flex-col h-full justify-between">
+                <div className="relative z-10 flex flex-col h-full justify-between w-full">
                   <div>
-                    <div className="w-12 h-12 rounded-2xl bg-yellow-500/10 flex items-center justify-center text-yellow-600 dark:text-yellow-300 mb-6 group-hover:scale-110 transition-transform duration-300">
-                      <Smile size={22} className="animate-pulse" />
+                    <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-yellow-500/10 flex items-center justify-center text-yellow-600 dark:text-yellow-300 mb-3 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                      <Smile size={16} className="animate-pulse sm:size-[22px]" />
                     </div>
-                    <h4 className="font-serif text-xl font-semibold text-primary dark:text-white mb-3">
+                    <h4 className="font-serif text-sm sm:text-lg md:text-xl font-semibold text-primary dark:text-white mb-1.5 sm:mb-3">
                       Made to Bring Smiles
                     </h4>
-                    <p className="text-sm text-primary/70 dark:text-gray-300 leading-relaxed mb-4">
+                    <p className="text-[10px] sm:text-sm text-primary/70 dark:text-gray-300 leading-relaxed mb-2 sm:mb-4">
                       Cute aesthetics designed to trigger immediate joy. A little touch of handmade warmth added to your everyday life.
                     </p>
                   </div>
