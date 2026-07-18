@@ -150,7 +150,7 @@ export const App: React.FC = () => {
       setTimeout(() => {
         setIsTransitionActive(false);
         setTargetTab(null);
-      }, 100);
+      }, 250);
     }
   };
 

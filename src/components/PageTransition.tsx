@@ -41,17 +41,17 @@ export const PageTransition: React.FC<PageTransitionProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-[9990] flex">
+    <div className={`fixed inset-0 z-[9990] flex ${isActive ? 'pointer-events-auto' : 'pointer-events-none'}`}>
       <AnimatePresence>
         {isActive && (
-          <div className="absolute inset-0 flex pointer-events-none">
+          <div className="absolute inset-0 flex pointer-events-auto">
             {/* Staggered sweeping columns */}
             {Array.from({ length: 5 }).map((_, i) => (
               <motion.div
                 key={i}
                 className="h-full flex-1 bg-gradient-to-b from-primary to-primary-dark"
                 style={{
-                  borderRadius: '0 0 100px 100px',
+                  borderRadius: '0',
                   zIndex: 9991 + i,
                 }}
                 variants={curtainVariants}
