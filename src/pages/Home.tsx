@@ -234,7 +234,7 @@ export const Home: React.FC<HomeProps> = ({
             Why Petalorah Creation
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-8 items-stretch">
             {/* Card 1: 100% Handcrafted (Highlighted variant) */}
             <TiltCard 
               glowColor="rgba(255, 105, 180, 0.25)" 
@@ -242,7 +242,7 @@ export const Home: React.FC<HomeProps> = ({
             >
               <div className="flex flex-col items-start text-left h-full relative overflow-hidden">
                 {/* Rose background SVG watermark */}
-                <div className="absolute -bottom-8 -right-8 w-36 h-36 text-pink-500/10 dark:text-pink-400/5 pointer-events-none z-0 transition-all duration-700 group-hover:scale-110 group-hover:rotate-12 group-hover:text-pink-500/20 dark:group-hover:text-pink-400/15">
+                <div className="absolute -bottom-8 -right-8 w-20 h-20 sm:w-36 sm:h-36 text-pink-500/10 dark:text-pink-400/5 pointer-events-none z-0 transition-all duration-700 group-hover:scale-110 group-hover:rotate-12 group-hover:text-pink-500/20 dark:group-hover:text-pink-400/15">
                   <svg viewBox="0 0 100 100" fill="none" stroke="currentColor">
                     <path strokeWidth="1.5" d="M50 20 C40 10, 30 25, 50 45 C70 25, 60 10, 50 20 Z" />
                     <path strokeWidth="1.5" d="M50 28 C45 20, 38 30, 50 42 C62 30, 55 20, 50 28 Z" />
@@ -253,15 +253,15 @@ export const Home: React.FC<HomeProps> = ({
                   </svg>
                 </div>
 
-                <div className="relative z-10 flex flex-col h-full justify-between">
+                <div className="relative z-10 flex flex-col h-full justify-between w-full">
                   <div>
-                    <div className="w-12 h-12 rounded-2xl bg-pink-500/10 flex items-center justify-center text-pink-600 dark:text-pink-300 mb-6 group-hover:scale-110 transition-transform duration-300">
-                      <Flower size={22} className="animate-spin-slow" style={{ animationDuration: '20s' }} />
+                    <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-pink-500/10 flex items-center justify-center text-pink-600 dark:text-pink-300 mb-3 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                      <Flower size={16} className="animate-spin-slow sm:size-[22px]" style={{ animationDuration: '20s' }} />
                     </div>
-                    <h4 className="font-serif text-xl font-semibold text-primary dark:text-white mb-3">
+                    <h4 className="font-serif text-sm sm:text-lg md:text-xl font-semibold text-primary dark:text-white mb-1.5 sm:mb-3">
                       100% Handcrafted
                     </h4>
-                    <p className="text-sm text-primary/70 dark:text-gray-300 leading-relaxed mb-4">
+                    <p className="text-[10px] sm:text-sm text-primary/70 dark:text-gray-300 leading-relaxed mb-2 sm:mb-4">
                       No machinery, no shortcuts. Every single loop of pipe cleaner is twisted and formed carefully by hand, ensuring authenticity in every blossom.
                     </p>
                   </div>
@@ -272,11 +272,11 @@ export const Home: React.FC<HomeProps> = ({
             {/* Card 2: Premium Finish (Highly Highlighted signature variant) */}
             <TiltCard 
               glowColor="rgba(245, 158, 11, 0.35)" 
-              className="group border-2 border-amber-400/60 dark:border-amber-400/40 shadow-[0_0_30px_rgba(245,158,11,0.15)] bg-amber-500/5 dark:bg-amber-950/20 scale-[1.02] md:scale-[1.03]"
+              className="group border-2 border-amber-400/60 dark:border-amber-400/40 shadow-[0_0_30px_rgba(245,158,11,0.15)] bg-amber-500/5 dark:bg-amber-950/20 lg:scale-[1.03]"
             >
               <div className="flex flex-col items-start text-left h-full relative overflow-hidden">
                 {/* Tulip background SVG watermark */}
-                <div className="absolute -bottom-8 -right-8 w-36 h-36 text-amber-500/10 dark:text-amber-400/5 pointer-events-none z-0 transition-all duration-700 group-hover:scale-110 group-hover:-translate-y-2 group-hover:text-amber-500/20 dark:group-hover:text-amber-400/15">
+                <div className="absolute -bottom-8 -right-8 w-20 h-20 sm:w-36 sm:h-36 text-amber-500/10 dark:text-amber-400/5 pointer-events-none z-0 transition-all duration-700 group-hover:scale-110 group-hover:-translate-y-2 group-hover:text-amber-500/20 dark:group-hover:text-amber-400/15">
                   <svg viewBox="0 0 100 100" fill="none" stroke="currentColor">
                     <path strokeWidth="1.5" d="M35 35 C35 60, 50 65, 50 65 C50 65, 65 60, 65 35 C60 45, 55 45, 50 38 C45 45, 40 45, 35 35 Z" />
                     <path strokeWidth="1.5" d="M50 38 C50 25, 50 25, 50 25" />
@@ -286,19 +286,19 @@ export const Home: React.FC<HomeProps> = ({
                 </div>
 
                 {/* Signature badge */}
-                <div className="absolute top-0 right-0 px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest bg-amber-400/20 text-amber-700 dark:text-amber-300 border border-amber-400/30 shadow-sm z-20">
-                  Signature Value
+                <div className="absolute top-0 right-0 px-1.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[8px] sm:text-[10px] uppercase font-bold tracking-widest bg-amber-400/20 text-amber-700 dark:text-amber-300 border border-amber-400/30 shadow-sm z-20">
+                  Signature
                 </div>
 
-                <div className="relative z-10 flex flex-col h-full justify-between">
+                <div className="relative z-10 flex flex-col h-full justify-between w-full">
                   <div>
-                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-300 mb-6 group-hover:scale-110 transition-transform duration-300">
-                      <Sparkles size={22} className="animate-pulse" />
+                    <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-300 mb-3 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                      <Sparkles size={16} className="animate-pulse sm:size-[22px]" />
                     </div>
-                    <h4 className="font-serif text-xl font-semibold text-primary dark:text-white mb-3">
+                    <h4 className="font-serif text-sm sm:text-lg md:text-xl font-semibold text-primary dark:text-white mb-1.5 sm:mb-3">
                       Premium Finish
                     </h4>
-                    <p className="text-sm text-primary/80 dark:text-amber-100/90 leading-relaxed mb-4">
+                    <p className="text-[10px] sm:text-sm text-primary/80 dark:text-amber-100/90 leading-relaxed mb-2 sm:mb-4">
                       We use selected heavy-density, soft-bristle pipe cleaners and high-grade metal fittings to ensure your keychains remain fluffy, durable and luxurious.
                     </p>
                   </div>
@@ -309,11 +309,11 @@ export const Home: React.FC<HomeProps> = ({
             {/* Card 3: Unique Designs */}
             <TiltCard 
               glowColor="rgba(186, 85, 211, 0.25)" 
-              className="group border border-primary/20 dark:border-secondary/20 bg-white/50 dark:bg-navy-light/40"
+              className="group border border-primary/20 dark:border-secondary/20 bg-white/50 dark:bg-navy-light/40 col-span-2 lg:col-span-1"
             >
               <div className="flex flex-col items-start text-left h-full relative overflow-hidden">
                 {/* Sunflower background SVG watermark */}
-                <div className="absolute -bottom-8 -right-8 w-36 h-36 text-purple-500/10 dark:text-purple-400/5 pointer-events-none z-0 transition-all duration-700 group-hover:scale-110 group-hover:rotate-45 group-hover:text-purple-500/20 dark:group-hover:text-purple-400/15">
+                <div className="absolute -bottom-8 -right-8 w-20 h-20 sm:w-36 sm:h-36 text-purple-500/10 dark:text-purple-400/5 pointer-events-none z-0 transition-all duration-700 group-hover:scale-110 group-hover:rotate-45 group-hover:text-purple-500/20 dark:group-hover:text-purple-400/15">
                   <svg viewBox="0 0 100 100" fill="none" stroke="currentColor">
                     <circle cx="50" cy="50" r="10" strokeWidth="1.5" />
                     {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
@@ -327,15 +327,15 @@ export const Home: React.FC<HomeProps> = ({
                   </svg>
                 </div>
 
-                <div className="relative z-10 flex flex-col h-full justify-between">
+                <div className="relative z-10 flex flex-col h-full justify-between w-full">
                   <div>
-                    <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-300 mb-6 group-hover:scale-110 transition-transform duration-300">
-                      <Flower2 size={22} className="animate-spin-slow" style={{ animationDuration: '30s' }} />
+                    <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-300 mb-3 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
+                      <Flower2 size={16} className="animate-spin-slow sm:size-[22px]" style={{ animationDuration: '30s' }} />
                     </div>
-                    <h4 className="font-serif text-xl font-semibold text-primary dark:text-white mb-3">
+                    <h4 className="font-serif text-sm sm:text-lg md:text-xl font-semibold text-primary dark:text-white mb-1.5 sm:mb-3">
                       Unique Designs
                     </h4>
-                    <p className="text-sm text-primary/70 dark:text-gray-300 leading-relaxed mb-4">
+                    <p className="text-[10px] sm:text-sm text-primary/70 dark:text-gray-300 leading-relaxed mb-2 sm:mb-4">
                       Custom artistic color choices and original shape patterns that make each piece a miniature art gallery piece, unlike standard factory replicas.
                     </p>
                   </div>
