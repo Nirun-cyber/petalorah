@@ -82,14 +82,10 @@ const RosePlane: React.FC<RosePlaneProps> = ({ hovered, mouse }) => {
 export const ThreeFlower: React.FC = () => {
   const [hovered, setHovered] = useState(false);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    setIsTouchDevice(isTouch);
-
     const handleMouseMove = (e: MouseEvent) => {
       // Normalize mouse to range [-1, 1]
       setMouse({
@@ -136,7 +132,7 @@ export const ThreeFlower: React.FC = () => {
         <Canvas
           camera={{ position: [0, 0, 3.8], fov: 50 }}
           gl={{ antialias: true, alpha: true }}
-          style={{ background: 'transparent', pointerEvents: isTouchDevice ? 'none' : 'auto' }}
+          style={{ background: 'transparent', pointerEvents: 'auto' }}
         >
           <ambientLight intensity={1.4} />
           <directionalLight position={[2, 3, 5]} intensity={1.8} castShadow />
@@ -152,7 +148,7 @@ export const ThreeFlower: React.FC = () => {
           <Sparkles count={hovered ? 35 : 12} scale={3.5} size={hovered ? 2.5 : 1.2} speed={0.4} color="#FFD1E6" />
 
           {/* Orbit controls with disabled pan and zoom to keep page experience smooth */}
-          <OrbitControls enableZoom={false} enablePan={false} enableRotate={!isTouchDevice} maxPolarAngle={Math.PI / 1.8} minPolarAngle={Math.PI / 2.5} />
+          <OrbitControls enableZoom={false} enablePan={false} enableRotate={true} maxPolarAngle={Math.PI / 1.8} minPolarAngle={Math.PI / 2.5} />
         </Canvas>
       )}
     </div>
