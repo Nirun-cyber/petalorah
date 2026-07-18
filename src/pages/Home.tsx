@@ -465,7 +465,7 @@ export const Home: React.FC<HomeProps> = ({
             Featured Creations
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-8 mb-16">
             {featuredProducts.map((prod, idx) => (
               <TiltCard
                 key={idx}
@@ -483,8 +483,8 @@ export const Home: React.FC<HomeProps> = ({
                 <div className="flex flex-col items-center text-center">
                   
                   {/* Image container with nice arched shape */}
-                  <div className="w-full aspect-[4/5] rounded-[32px] overflow-hidden border border-primary/40 bg-white/40 dark:border-white/10 dark:bg-navy-light/20 p-2 mb-6">
-                    <div className="w-full h-full rounded-[24px] overflow-hidden relative shadow-inner">
+                  <div className="w-full aspect-[4/5] rounded-[16px] sm:rounded-[32px] overflow-hidden border border-primary/40 bg-white/40 dark:border-white/10 dark:bg-navy-light/20 p-1 sm:p-2 mb-2 sm:mb-6">
+                    <div className="w-full h-full rounded-[12px] sm:rounded-[24px] overflow-hidden relative shadow-inner">
                       <img
                         src={prod.img}
                         alt={prod.name}
@@ -494,9 +494,9 @@ export const Home: React.FC<HomeProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between w-full mb-3 gap-2">
-                    <h4 className="font-serif text-2xl font-semibold text-primary dark:text-white text-left">{prod.name}</h4>
-                    <span className={`px-3.5 py-1 text-sm font-semibold rounded-full whitespace-nowrap ${
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 w-full mb-1.5 sm:mb-3">
+                    <h4 className="font-serif text-xs sm:text-lg md:text-2xl font-semibold text-primary dark:text-white text-left">{prod.name}</h4>
+                    <span className={`px-1.5 py-0.5 sm:px-3.5 sm:py-1 text-[9px] sm:text-xs md:text-sm font-semibold rounded-full whitespace-nowrap w-fit ${
                       prod.isComingSoon 
                         ? 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/25 dark:text-amber-300'
                         : 'bg-primary/10 text-primary dark:bg-secondary/15 dark:text-secondary-light'
@@ -505,17 +505,17 @@ export const Home: React.FC<HomeProps> = ({
                     </span>
                   </div>
 
-                  <p className="text-sm text-primary/70 dark:text-gray-300 leading-relaxed text-left mb-6">
+                  <p className="text-sm text-primary/70 dark:text-gray-300 leading-relaxed text-left mb-6 hidden sm:block">
                     {prod.desc}
                   </p>
 
                   <div className="w-full">
                     <InteractiveButton
                       variant="glass"
-                      className="w-full py-3"
+                      className="w-full py-2 sm:py-3 text-[10px] sm:text-sm"
                       disabled={prod.isComingSoon}
                     >
-                      View Collection <ArrowRight size={14} />
+                      View Collection <ArrowRight size={14} className="hidden sm:inline-block ml-1" />
                     </InteractiveButton>
                   </div>
 
