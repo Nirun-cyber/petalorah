@@ -309,7 +309,7 @@ export const Home: React.FC<HomeProps> = ({
             {/* Card 3: Unique Designs */}
             <TiltCard 
               glowColor="rgba(186, 85, 211, 0.25)" 
-              className="group border border-primary/20 dark:border-secondary/20 bg-white/50 dark:bg-navy-light/40 col-span-2 lg:col-span-1"
+              className="group border border-primary/20 dark:border-secondary/20 bg-white/50 dark:bg-navy-light/40"
             >
               <div className="flex flex-col items-start text-left h-full relative overflow-hidden">
                 {/* Sunflower background SVG watermark */}
@@ -415,7 +415,7 @@ export const Home: React.FC<HomeProps> = ({
             {/* Card 6: Made to Bring Smiles */}
             <TiltCard 
               glowColor="rgba(255, 215, 0, 0.25)" 
-              className="group border border-primary/20 dark:border-secondary/20 bg-white/50 dark:bg-navy-light/40 col-span-2 lg:col-span-1"
+              className="group border border-primary/20 dark:border-secondary/20 bg-white/50 dark:bg-navy-light/40"
             >
               <div className="flex flex-col items-start text-left h-full relative overflow-hidden">
                 {/* Daisy bloom background SVG watermark */}
