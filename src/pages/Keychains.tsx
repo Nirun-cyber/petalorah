@@ -12,6 +12,7 @@ interface Product {
   description: string;
   img: string;
   badge: string;
+  isComingSoon?: boolean;
 }
 
 interface KeychainsProps {
@@ -27,17 +28,20 @@ export const Keychains: React.FC<KeychainsProps> = ({
 }) => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  // 9 handmade products
+  // 12 handmade products (with 2 coming soon)
   const products: Product[] = [
     { id: 'rose', name: 'Rose', price: '₹50', description: 'A timeless symbol of love, meticulously handcrafted with rich crimson pipe cleaner petals and a deep green stem. Perfect as a romantic keepsake or a luxury bag charm.', img: '/assets/products/rose.jpg', badge: 'Best Seller' },
     { id: 'tulip', name: 'Tulip', price: '₹50', description: 'An elegant pink tulip keychain carrying the gentle warmth of spring. Carefully twisted loops ensure a soft, fluffy texture that stays pristine forever.', img: '/assets/products/tulip.png', badge: 'Cute Accent' },
     { id: 'evil_eye', name: 'Evil Eye', price: '₹50', description: 'A protective charm crafted with Concentric circles of royal blue, soft blue, and white pipe cleaners. A beautiful blend of folklore and handmade artistry.', img: '/assets/products/evil_eye.jpg', badge: 'Popular' },
     { id: 'duck', name: 'Duck', price: '₹80', description: 'An adorable round yellow duck keychain wearing a tiny blue head bow. Guaranteed to bring happy vibes and smiles wherever it goes.', img: '/assets/products/duck.png', badge: 'Super Cute' },
-    { id: 'moon_cloud', name: 'Cloud', price: '₹60', description: 'A soft, fluffy white cloud keychain. A miniature sky keepsake designed to bring a touch of daydreaming to your day.', img: '/assets/products/moon_cloud.jpg', badge: 'Dreamy' },
+    { id: 'moon_cloud', name: 'Moon & Cloud', price: '₹80', description: 'A dreamy crescent blue moon cradling soft, fluffy white clouds with elegant pearl accents. A miniature night sky keepsake designed for dreamers.', img: '/assets/products/moon_cloud.jpg', badge: 'Dreamy' },
+    { id: 'lily', name: 'Lily', price: '₹60', description: 'A gorgeous light blue five-petal lily flower keychain with a green leaf and delicate pearl accents at its core. Handcrafted to represent pure and elegant beauty.', img: '/assets/products/lily.jpg', badge: 'New Bloom' },
     { id: 'cherry', name: 'Cherry', price: '₹50', description: 'A sweet pair of twin red cherries suspended from green leafy stems. Adds a playful, delicious pop of color to keys and accessories.', img: '/assets/products/cherry.jpg', badge: 'Playful' },
     { id: 'rainbow', name: 'Rainbow', price: '₹60', description: 'A vibrant arched pastel rainbow anchored by two fluffy white clouds. Handcrafted with precision wire twisting to maintain a perfect arch shape.', img: '/assets/products/rainbow.jpg', badge: 'Colorful' },
     { id: 'daisy_pot', name: 'Daisy Pot', price: '₹60', description: 'Miniature flowerpots featuring blooming white and purple daisies. Ideal as a happy dashboard companion or workspace decoration.', img: '/assets/products/daisy_pot.png', badge: 'Table Decor' },
     { id: 'bow', name: 'Bow', price: '₹35', description: 'A classic blue pipe cleaner ribbon bow keychain with an elegant pearl accent. Simple, elegant, and perfectly handcrafted, representing the pure aesthetics of line art crafts.', img: '/assets/products/bow.png', badge: 'Classic' },
+    { id: 'batman', name: 'Batman', price: 'Coming Soon', description: 'Classic Batman logo keychain handcrafted from rich black pipe cleaners. Perfect for superhero fans and comic enthusiasts.', img: '/assets/products/batman.jpg', badge: 'Hero', isComingSoon: true },
+    { id: 'spiderman', name: 'Spider-Man', price: 'Coming Soon', description: 'Vibrant Spider-Man spider icon keychain handcrafted from rich red pipe cleaners. A bold accessory for hero fans.', img: '/assets/products/spiderman.jpg', badge: 'Hero', isComingSoon: true },
   ];
 
   return (
@@ -137,8 +141,12 @@ export const Keychains: React.FC<KeychainsProps> = ({
                     <h3 className="font-serif text-xs sm:text-lg md:text-2xl font-bold text-primary dark:text-white group-hover:text-primary-dark dark:group-hover:text-secondary-light transition-colors line-clamp-1 sm:line-clamp-none">
                       {prod.name}
                     </h3>
-                    <span className="px-1 py-0.5 sm:px-3.5 sm:py-1 text-[9px] sm:text-xs md:text-sm font-semibold rounded-full bg-primary/10 text-primary dark:bg-secondary/15 dark:text-secondary-light w-fit">
-                      {prod.price} / pc
+                    <span className={`px-1 py-0.5 sm:px-3.5 sm:py-1 text-[9px] sm:text-xs md:text-sm font-semibold rounded-full w-fit ${
+                      prod.isComingSoon 
+                        ? 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/25 dark:text-amber-300'
+                        : 'bg-primary/10 text-primary dark:bg-secondary/15 dark:text-secondary-light'
+                    }`}>
+                      {prod.isComingSoon ? prod.price : `${prod.price} / pc`}
                     </span>
                   </div>
 
@@ -240,8 +248,8 @@ export const Keychains: React.FC<KeychainsProps> = ({
                     <h2 className="font-serif text-3xl font-bold text-primary dark:text-white">
                       {selectedProduct.name}
                     </h2>
-                    <span className="text-xl font-bold text-primary dark:text-secondary-light">
-                      {selectedProduct.price} / pc
+                    <span className={`text-xl font-bold ${selectedProduct.isComingSoon ? 'text-amber-600 dark:text-amber-400' : 'text-primary dark:text-secondary-light'}`}>
+                      {selectedProduct.isComingSoon ? selectedProduct.price : `${selectedProduct.price} / pc`}
                     </span>
                   </div>
 
