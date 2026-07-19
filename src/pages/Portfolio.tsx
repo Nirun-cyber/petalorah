@@ -268,7 +268,7 @@ export const Portfolio: React.FC<PortfolioProps> = ({
                         {prod.name}
                       </h3>
                       <span className="px-1 py-0.5 sm:px-3.5 sm:py-1 text-[9px] sm:text-xs md:text-sm font-semibold rounded-full bg-primary/10 text-primary dark:bg-secondary/15 dark:text-secondary-light w-fit">
-                        {prod.price}
+                        {prod.price} / pc
                       </span>
                     </div>
 
@@ -426,7 +426,7 @@ export const Portfolio: React.FC<PortfolioProps> = ({
                       {selectedProduct.name}
                     </h2>
                     <span className="text-xl font-bold text-primary dark:text-secondary-light">
-                      {selectedProduct.price}
+                      {selectedProduct.price} / pc
                     </span>
                   </div>
 
