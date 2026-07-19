@@ -22,17 +22,17 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
         y: Math.sin(rad) * distance - 50, // offset upward to match flower center
         rotate: Math.random() * 720 - 360,
         scale: Math.random() * 0.6 + 0.4,
-        delay: 4.5 + Math.random() * 0.8,
+        delay: 2.6 + Math.random() * 0.5,
       };
     });
     setPetals(tempPetals);
 
-    // Sequence timelines
-    const timer1 = setTimeout(() => setStage(1), 1800); // start stem
-    const timer2 = setTimeout(() => setStage(2), 3000); // start bloom
-    const timer3 = setTimeout(() => setStage(3), 4500); // start glow & flying petals
-    const timer4 = setTimeout(() => setStage(4), 6200); // fade out
-    const timer5 = setTimeout(onComplete, 7200); // complete
+    // Sequence timelines (Reduced total duration from 7.2s to 4.0s)
+    const timer1 = setTimeout(() => setStage(1), 1000); // start stem
+    const timer2 = setTimeout(() => setStage(2), 1800); // start bloom
+    const timer3 = setTimeout(() => setStage(3), 2600); // start glow & flying petals
+    const timer4 = setTimeout(() => setStage(4), 3400); // fade out
+    const timer5 = setTimeout(onComplete, 4000); // complete
 
     return () => {
       clearTimeout(timer1);
@@ -106,7 +106,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
             fill="none"
             initial={{ pathLength: 0, opacity: 0 }}
             animate={{ pathLength: 1, opacity: 1 }}
-            transition={{ duration: 1.8, ease: 'easeInOut' }}
+            transition={{ duration: 1.0, ease: 'easeInOut' }}
           />
           {/* Decorative Serif foot for the 'P' */}
           <motion.path
@@ -117,7 +117,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
             fill="none"
             initial={{ pathLength: 0, opacity: 0 }}
             animate={stage >= 0 ? { pathLength: 1, opacity: 1 } : {}}
-            transition={{ duration: 0.8, delay: 0.8, ease: 'easeOut' }}
+            transition={{ duration: 0.4, delay: 0.4, ease: 'easeOut' }}
           />
 
           {/* Growing Pipe Cleaner Stem */}
@@ -130,7 +130,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
               fill="none"
               initial={{ pathLength: 0, opacity: 0 }}
               animate={{ pathLength: 1, opacity: 1 }}
-              transition={{ duration: 1.5, ease: [0.215, 0.61, 0.355, 1] }}
+              transition={{ duration: 0.8, ease: [0.215, 0.61, 0.355, 1] }}
             />
           )}
 
@@ -143,7 +143,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
                 fill="#2e7d32"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ duration: 0.5 }}
+                transition={{ duration: 0.3 }}
               />
 
               {/* Individual Petals Blooming */}
@@ -157,9 +157,9 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
                   initial={{ scale: 0, rotate: angle }}
                   animate={{ scale: 1, rotate: angle }}
                   transition={{
-                    duration: 1.2,
+                    duration: 0.6,
                     ease: [0.34, 1.56, 0.64, 1], // elastic overshoot look
-                    delay: idx * 0.1,
+                    delay: idx * 0.05,
                   }}
                 />
               ))}
@@ -174,7 +174,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
                 strokeWidth="2"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ duration: 0.6, delay: 0.8 }}
+                transition={{ duration: 0.3, delay: 0.4 }}
               />
             </g>
           )}
@@ -216,9 +216,9 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
                   opacity: [1, 1, 0.8, 0],
                 }}
                 transition={{
-                  duration: 2.0,
+                  duration: 1.2,
                   ease: [0.25, 1, 0.5, 1],
-                  delay: petal.delay - 4.5, // normalize delay
+                  delay: petal.delay - 2.6, // normalize delay
                 }}
               />
             ))}
@@ -231,7 +231,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
           className="font-serif text-3xl font-semibold tracking-wider text-primary text-center"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
         >
           PETALORAH
         </motion.h2>
@@ -239,7 +239,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
           className="text-sm uppercase tracking-[0.25em] text-gray-400 mt-2 font-medium"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 1 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
         >
           Handmade With Love
         </motion.p>
