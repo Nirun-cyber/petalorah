@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { InteractiveGarden } from '../components/InteractiveGarden';
 import { InteractiveButton } from '../components/InteractiveButton';
 import { TiltCard } from '../components/TiltCard';
-import { Sparkles, X, Heart, Sun, Moon } from 'lucide-react';
+import { Sparkles, X, Heart, Sun, Moon, ChevronDown } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface Product {
@@ -29,6 +29,8 @@ export const Portfolio: React.FC<PortfolioProps> = ({
 }) => {
   const [boxState, setBoxState] = useState<'closed' | 'untying' | 'opening' | 'opened'>('closed');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<'default' | 'price-low-high' | 'price-high-low' | 'most-selling'>('default');
 
   // 12 handmade products (with 2 coming soon)
   const products: Product[] = [
@@ -219,75 +221,184 @@ export const Portfolio: React.FC<PortfolioProps> = ({
 
         {/* ================= PRODUCT DISPLAY GRID (BLOOMED) ================= */}
         {boxState === 'opened' && (
-          <motion.div
-            className="w-full max-w-[95rem] mx-auto px-2 sm:px-6 grid grid-cols-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-6 py-10"
-            initial="hidden"
-            animate="visible"
-            variants={{
-              visible: {
-                transition: {
-                  staggerChildren: 0.15,
-                },
-              },
-            }}
-          >
-            {products.map((prod) => (
-              <motion.div
-                key={prod.id}
-                variants={{
-                  hidden: { opacity: 0, scale: 0.3, y: 150, rotate: -15 },
-                  visible: {
-                    opacity: 1,
-                    scale: 1,
-                    y: 0,
-                    rotate: 0,
-                    transition: { type: 'spring', damping: 18, stiffness: 100 },
-                  },
-                }}
-                className="group"
-              >
-                <TiltCard
-                  glowColor="rgba(30, 78, 156, 0.15)"
-                  className="h-full flex flex-col justify-between cursor-pointer"
-                  onClick={() => setSelectedProduct(prod)}
+          <div className="w-full max-w-[95rem] mx-auto px-2 sm:px-6 py-10">
+            {/* Dropdown in the left upside */}
+            <div className="mb-8 flex justify-start items-center">
+              <div className="relative z-30">
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full border border-primary/20 bg-white/80 dark:border-white/10 dark:bg-navy-light/80 backdrop-blur-md text-xs sm:text-sm font-semibold text-primary dark:text-secondary-light hover:border-primary/40 dark:hover:border-white/20 transition-all duration-300 shadow-sm"
                 >
-                  <div>
-                    {/* Image Arched Container */}
-                    <div className="w-full aspect-[4/5] rounded-[16px] sm:rounded-[24px] md:rounded-[32px] overflow-hidden border border-primary/40 bg-white/40 dark:border-white/10 dark:bg-navy-light/20 p-1 sm:p-2 mb-2 sm:mb-6">
-                      <div className="w-full h-full rounded-[12px] sm:rounded-[18px] md:rounded-[24px] overflow-hidden relative shadow-inner">
-                        <img
-                          src={prod.img}
-                          alt={prod.name}
-                          className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
-                        />
-                        {/* Handmade Badge */}
-                        <span className="absolute top-1 left-1 sm:top-4 sm:left-4 px-1 py-0.5 sm:px-3.5 sm:py-1 text-[8px] sm:text-xs font-semibold rounded-full bg-white/90 text-primary dark:bg-navy-light/95 dark:text-secondary-light shadow-md border border-primary/10">
-                          {prod.badge}
-                        </span>
+                  <span>
+                    {sortBy === 'default' && 'Default Sorting'}
+                    {sortBy === 'price-low-high' && 'Price: Low to High'}
+                    {sortBy === 'price-high-low' && 'Price: High to Low'}
+                    {sortBy === 'most-selling' && 'Most Selling'}
+                  </span>
+                  <motion.div
+                    animate={{ rotate: isDropdownOpen ? 180 : 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <ChevronDown size={14} />
+                  </motion.div>
+                </button>
+
+                <AnimatePresence>
+                  {isDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute left-0 mt-2 w-48 sm:w-56 rounded-2xl border border-primary/10 bg-white/95 dark:border-white/5 dark:bg-navy-light/95 backdrop-blur-xl shadow-xl z-20 overflow-hidden py-1.5"
+                      >
+                        {[
+                          { value: 'default', label: 'Default Sorting' },
+                          { value: 'price-low-high', label: 'Price: Low to High' },
+                          { value: 'price-high-low', label: 'Price: High to Low' },
+                          { value: 'most-selling', label: 'Most Selling' },
+                        ].map((opt) => (
+                          <button
+                            key={opt.value}
+                            onClick={() => {
+                              setSortBy(opt.value as any);
+                              setIsDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-4 py-2.5 text-xs sm:text-sm transition-colors duration-200 flex items-center justify-between ${
+                              sortBy === opt.value
+                                ? 'text-primary dark:text-secondary-light font-bold bg-primary/5 dark:bg-white/5'
+                                : 'text-primary/70 dark:text-gray-300 hover:bg-primary/5 dark:hover:bg-white/5'
+                            }`}
+                          >
+                            <span>{opt.label}</span>
+                            {sortBy === opt.value && <div className="w-1.5 h-1.5 rounded-full bg-primary dark:bg-secondary-light" />}
+                          </button>
+                        ))}
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+
+            <motion.div
+              className="grid grid-cols-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-6"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                visible: {
+                  transition: {
+                    staggerChildren: 0.15,
+                  },
+                },
+              }}
+            >
+              {(() => {
+                const getNumericPrice = (priceStr: string) => {
+                  if (priceStr.toLowerCase().includes('coming soon')) return Infinity;
+                  const match = priceStr.match(/\d+/);
+                  return match ? parseInt(match[0], 10) : 0;
+                };
+
+                const sorted = [...products].sort((a, b) => {
+                  if (sortBy === 'price-low-high') {
+                    return getNumericPrice(a.price) - getNumericPrice(b.price);
+                  }
+                  if (sortBy === 'price-high-low') {
+                    const isAComingSoon = a.isComingSoon || a.price.toLowerCase().includes('coming soon');
+                    const isBComingSoon = b.isComingSoon || b.price.toLowerCase().includes('coming soon');
+                    if (isAComingSoon && !isBComingSoon) return 1;
+                    if (!isAComingSoon && isBComingSoon) return -1;
+                    if (isAComingSoon && isBComingSoon) return 0;
+                    return getNumericPrice(b.price) - getNumericPrice(a.price);
+                  }
+                  if (sortBy === 'most-selling') {
+                    const isAComingSoon = a.isComingSoon || a.price.toLowerCase().includes('coming soon');
+                    const isBComingSoon = b.isComingSoon || b.price.toLowerCase().includes('coming soon');
+                    if (isAComingSoon && !isBComingSoon) return 1;
+                    if (!isAComingSoon && isBComingSoon) return -1;
+                    if (isAComingSoon && isBComingSoon) return 0;
+
+                    const clicks = JSON.parse(localStorage.getItem('petalorah-clicks') || '{}');
+                    const clicksA = clicks[a.id] || 0;
+                    const clicksB = clicks[b.id] || 0;
+                    if (clicksB === clicksA) {
+                      const scoreA = a.badge === 'Best Seller' ? 2 : a.badge === 'Popular' ? 1 : 0;
+                      const scoreB = b.badge === 'Best Seller' ? 2 : b.badge === 'Popular' ? 1 : 0;
+                      return scoreB - scoreA;
+                    }
+                    return clicksB - clicksA;
+                  }
+                  return 0; // default (no change)
+                });
+
+                return sorted.map((prod) => (
+                  <motion.div
+                    key={prod.id}
+                    variants={{
+                      hidden: { opacity: 0, scale: 0.3, y: 150, rotate: -15 },
+                      visible: {
+                        opacity: 1,
+                        scale: 1,
+                        y: 0,
+                        rotate: 0,
+                        transition: { type: 'spring', damping: 18, stiffness: 100 },
+                      },
+                    }}
+                    className="group"
+                  >
+                    <TiltCard
+                      glowColor="rgba(30, 78, 156, 0.15)"
+                      className="h-full flex flex-col justify-between cursor-pointer"
+                      onClick={() => {
+                        // Track click count
+                        const clicks = JSON.parse(localStorage.getItem('petalorah-clicks') || '{}');
+                        clicks[prod.id] = (clicks[prod.id] || 0) + 1;
+                        localStorage.setItem('petalorah-clicks', JSON.stringify(clicks));
+                        setSelectedProduct(prod);
+                      }}
+                    >
+                      <div>
+                        {/* Image Arched Container */}
+                        <div className="w-full aspect-[4/5] rounded-[16px] sm:rounded-[24px] md:rounded-[32px] overflow-hidden border border-primary/40 bg-white/40 dark:border-white/10 dark:bg-navy-light/20 p-1 sm:p-2 mb-2 sm:mb-6">
+                          <div className="w-full h-full rounded-[12px] sm:rounded-[18px] md:rounded-[24px] overflow-hidden relative shadow-inner">
+                            <img
+                              src={prod.img}
+                              alt={prod.name}
+                              className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
+                            />
+                            {/* Handmade Badge */}
+                            <span className="absolute top-1 left-1 sm:top-4 sm:left-4 px-1 py-0.5 sm:px-3.5 sm:py-1 text-[8px] sm:text-xs font-semibold rounded-full bg-white/90 text-primary dark:bg-navy-light/95 dark:text-secondary-light shadow-md border border-primary/10">
+                              {prod.badge}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 w-full mb-1.5 sm:mb-3">
+                          <h3 className="font-serif text-xs sm:text-lg md:text-2xl font-bold text-primary dark:text-white group-hover:text-primary-dark dark:group-hover:text-secondary-light transition-colors line-clamp-1 sm:line-clamp-none">
+                            {prod.name}
+                          </h3>
+                          <span className={`px-1 py-0.5 sm:px-3.5 sm:py-1 text-[9px] sm:text-xs md:text-sm font-semibold rounded-full w-fit ${
+                            prod.isComingSoon 
+                              ? 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/25 dark:text-amber-300'
+                              : 'bg-primary/10 text-primary dark:bg-secondary/15 dark:text-secondary-light'
+                          }`}>
+                            {prod.isComingSoon ? prod.price : `${prod.price} / pc`}
+                          </span>
+                        </div>
+
+                        <p className="text-sm text-primary/70 dark:text-gray-300 leading-relaxed mb-6 text-left line-clamp-3 hidden sm:block">
+                          {prod.description}
+                        </p>
                       </div>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 w-full mb-1.5 sm:mb-3">
-                      <h3 className="font-serif text-xs sm:text-lg md:text-2xl font-bold text-primary dark:text-white group-hover:text-primary-dark dark:group-hover:text-secondary-light transition-colors line-clamp-1 sm:line-clamp-none">
-                        {prod.name}
-                      </h3>
-                      <span className={`px-1 py-0.5 sm:px-3.5 sm:py-1 text-[9px] sm:text-xs md:text-sm font-semibold rounded-full w-fit ${
-                        prod.isComingSoon 
-                          ? 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/25 dark:text-amber-300'
-                          : 'bg-primary/10 text-primary dark:bg-secondary/15 dark:text-secondary-light'
-                      }`}>
-                        {prod.isComingSoon ? prod.price : `${prod.price} / pc`}
-                      </span>
-                    </div>
-
-                    <p className="text-sm text-primary/70 dark:text-gray-300 leading-relaxed mb-6 text-left line-clamp-3 hidden sm:block">
-                      {prod.description}
-                    </p>
-                  </div>
-                </TiltCard>
-              </motion.div>
-            ))}
-          </motion.div>
+                    </TiltCard>
+                  </motion.div>
+                ));
+              })()}
+            </motion.div>
+          </div>
         )}
       </section>
 
