@@ -42,8 +42,8 @@ export const Keychains: React.FC<KeychainsProps> = ({
     { id: 'rainbow', name: 'Rainbow', price: '₹60', description: 'A vibrant arched pastel rainbow anchored by two fluffy white clouds. Handcrafted with precision wire twisting to maintain a perfect arch shape.', img: '/assets/products/rainbow.jpg', badge: 'Colorful' },
     { id: 'daisy_pot', name: 'Daisy Pot', price: '₹60', description: 'Miniature flowerpots featuring blooming white and purple daisies. Ideal as a happy dashboard companion or workspace decoration.', img: '/assets/products/daisy_pot.png', badge: 'Table Decor' },
     { id: 'bow', name: 'Bow', price: '₹35', description: 'A classic blue pipe cleaner ribbon bow keychain with an elegant pearl accent. Simple, elegant, and perfectly handcrafted, representing the pure aesthetics of line art crafts.', img: '/assets/products/bow.png', badge: 'Classic' },
-    { id: 'batman', name: 'Batman', price: 'Coming Soon', description: 'Classic Batman logo keychain handcrafted from rich black pipe cleaners. Perfect for superhero fans and comic enthusiasts.', img: '/assets/products/batman.jpg', badge: 'Hero', isComingSoon: true },
-    { id: 'spiderman', name: 'Spider-Man', price: 'Coming Soon', description: 'Vibrant Spider-Man spider icon keychain handcrafted from rich red pipe cleaners. A bold accessory for hero fans.', img: '/assets/products/spiderman.jpg', badge: 'Hero', isComingSoon: true },
+    { id: 'batman', name: 'Batman', price: '₹90', description: 'Classic Batman logo keychain handcrafted from rich black pipe cleaners. Perfect for superhero fans and comic enthusiasts.', img: '/assets/products/batman.jpg', badge: 'Hero' },
+    { id: 'spiderman', name: 'Spider-Man', price: '₹90', description: 'Vibrant Spider-Man spider icon keychain handcrafted from rich red pipe cleaners. A bold accessory for hero fans.', img: '/assets/products/spiderman.jpg', badge: 'Hero' },
   ];
 
   return (
@@ -336,7 +336,7 @@ export const Keychains: React.FC<KeychainsProps> = ({
               </button>
 
               {/* Modal Left: Product Image */}
-              <div className="w-full md:w-1/2 aspect-[4/5] md:aspect-[4/5] rounded-[24px] md:rounded-[28px] overflow-hidden border border-white/60 bg-white/20 dark:border-white/5 p-2 flex-shrink-0 max-h-[250px] md:max-h-none">
+              <div className="w-full md:w-1/2 aspect-[4/5] rounded-[24px] md:rounded-[28px] overflow-hidden border border-white/60 bg-white/20 dark:border-white/5 p-2 flex-shrink-0">
                 <div className="w-full h-full rounded-[20px] overflow-hidden shadow-inner">
                   <img
                     src={selectedProduct.img}
