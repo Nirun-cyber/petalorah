@@ -383,7 +383,7 @@ export const Portfolio: React.FC<PortfolioProps> = ({
                           <h3 className="font-serif text-xs sm:text-lg md:text-2xl font-bold text-primary dark:text-white group-hover:text-primary-dark dark:group-hover:text-secondary-light transition-colors line-clamp-1 sm:line-clamp-none">
                             {prod.name}
                           </h3>
-                          <span className={`px-1 py-0.5 sm:px-3.5 sm:py-1 text-[9px] sm:text-xs md:text-sm font-semibold rounded-full w-fit ${
+                          <span className={`px-1 py-0.5 sm:px-3.5 sm:py-1 text-[9px] sm:text-xs md:text-sm font-semibold rounded-full whitespace-nowrap w-fit ${
                             prod.isComingSoon 
                               ? 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/25 dark:text-amber-300'
                               : 'bg-primary/10 text-primary dark:bg-secondary/15 dark:text-secondary-light'
