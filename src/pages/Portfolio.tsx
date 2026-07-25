@@ -46,7 +46,6 @@ export const Portfolio: React.FC<PortfolioProps> = ({
     { id: 'daisy_pot', name: 'Daisy Pot', price: '₹60', description: 'Miniature flowerpots featuring blooming white and purple daisies. Ideal as a happy dashboard companion or workspace decoration.', img: '/assets/products/daisy_pot.png', badge: 'Table Decor' },
     { id: 'bow', name: 'Bow', price: '₹35', description: 'A classic blue pipe cleaner ribbon bow keychain with an elegant pearl accent. Simple, elegant, and perfectly handcrafted, representing the pure aesthetics of line art crafts.', img: '/assets/products/bow.png', badge: 'Classic' },
     { id: 'batman', name: 'Batman', price: '₹90', description: 'Classic Batman logo keychain handcrafted from rich black pipe cleaners. Perfect for superhero fans and comic enthusiasts.', img: '/assets/products/batman.jpg', badge: 'Hero' },
-    { id: 'spiderman', name: 'Spider-Man', price: '₹90', description: 'Vibrant Spider-Man spider icon keychain handcrafted from rich red pipe cleaners. A bold accessory for hero fans.', img: '/assets/products/spiderman.jpg', badge: 'Hero' },
   ];
 
   // Instagram gallery items
