@@ -30,19 +30,22 @@ export const Keychains: React.FC<KeychainsProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [sortBy, setSortBy] = useState<'default' | 'price-low-high' | 'price-high-low' | 'most-selling'>('default');
 
-  // 12 handmade products (with 2 coming soon)
+  // 14 handmade products
   const products: Product[] = [
     { id: 'rose', name: 'Rose', price: '₹50', description: 'A timeless symbol of love, meticulously handcrafted with rich crimson pipe cleaner petals and a deep green stem. Perfect as a romantic keepsake or a luxury bag charm.', img: '/assets/products/rose.jpg', badge: 'Best Seller' },
     { id: 'tulip', name: 'Tulip', price: '₹50', description: 'An elegant pink tulip keychain carrying the gentle warmth of spring. Carefully twisted loops ensure a soft, fluffy texture that stays pristine forever.', img: '/assets/products/tulip.png', badge: 'Cute Accent' },
     { id: 'evil_eye', name: 'Evil Eye', price: '₹50', description: 'A protective charm crafted with Concentric circles of royal blue, soft blue, and white pipe cleaners. A beautiful blend of folklore and handmade artistry.', img: '/assets/products/evil_eye.jpg', badge: 'Popular' },
     { id: 'duck', name: 'Duck', price: '₹80', description: 'An adorable round yellow duck keychain wearing a tiny blue head bow. Guaranteed to bring happy vibes and smiles wherever it goes.', img: '/assets/products/duck.png', badge: 'Super Cute' },
     { id: 'moon_cloud', name: 'Moon & Cloud', price: '₹80', description: 'A dreamy crescent blue moon cradling soft, fluffy white clouds with elegant pearl accents. A miniature night sky keepsake designed for dreamers.', img: '/assets/products/moon_cloud.jpg', badge: 'Dreamy' },
+    { id: 'cloud', name: 'Cloud', price: '₹60', description: 'A soft, fluffy white cloud keychain. A miniature sky keepsake designed to bring a touch of daydreaming to your day.', img: '/assets/products/cloud.jpg', badge: 'Fluffy' },
     { id: 'paw_print', name: 'Paw Print', price: '₹80', description: 'Adorable cat paw print keychains handcrafted with fluffy pink pads on solid black and white bases. A perfect, cute accessory for animal lovers.', img: '/assets/products/paw_print.jpg', badge: 'Cute Paw' },
     { id: 'lily', name: 'Lily', price: '₹60', description: 'A gorgeous light blue five-petal lily flower keychain with a green leaf and delicate pearl accents at its core. Handcrafted to represent pure and elegant beauty.', img: '/assets/products/lily.jpg', badge: 'New Bloom' },
     { id: 'cherry', name: 'Cherry', price: '₹50', description: 'A sweet pair of twin red cherries suspended from green leafy stems. Adds a playful, delicious pop of color to keys and accessories.', img: '/assets/products/cherry.jpg', badge: 'Playful' },
     { id: 'rainbow', name: 'Rainbow', price: '₹60', description: 'A vibrant arched pastel rainbow anchored by two fluffy white clouds. Handcrafted with precision wire twisting to maintain a perfect arch shape.', img: '/assets/products/rainbow.jpg', badge: 'Colorful' },
     { id: 'daisy_pot', name: 'Daisy Pot', price: '₹60', description: 'Miniature flowerpots featuring blooming white and purple daisies. Ideal as a happy dashboard companion or workspace decoration.', img: '/assets/products/daisy_pot.png', badge: 'Table Decor' },
     { id: 'bow', name: 'Bow', price: '₹35', description: 'A classic blue pipe cleaner ribbon bow keychain with an elegant pearl accent. Simple, elegant, and perfectly handcrafted, representing the pure aesthetics of line art crafts.', img: '/assets/products/bow.png', badge: 'Classic' },
+    { id: 'custom_jersey', name: 'Customized Jersey', price: '₹89', description: 'Handcrafted custom sports jersey keychains tailored to your favorite numbers and teams. Perfect gift for sports enthusiasts and active creators.', img: '/assets/products/custom_jersey.jpg', badge: 'Unique Gift' },
+    { id: 'custom_letter', name: 'Customized Letter', price: '₹60', description: 'Custom letter keychains designed in multi-shade colors with an accompanying heart charm. A lovely, personalized companion for your bag or keys.', img: '/assets/products/custom_letter.jpg', badge: 'Personalized' },
     { id: 'batman', name: 'Batman', price: '₹90', description: 'Classic Batman logo keychain handcrafted from rich black pipe cleaners. Perfect for superhero fans and comic enthusiasts.', img: '/assets/products/batman.jpg', badge: 'Hero' },
   ];
 
