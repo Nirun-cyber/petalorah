@@ -65,7 +65,7 @@ export const Home: React.FC<HomeProps> = ({
     <div ref={containerRef} className="relative w-full min-h-screen">
       
       {/* ================= HERO SECTION ================= */}
-      <section className="relative w-full min-h-screen lg:h-screen flex flex-col justify-between py-6 lg:py-0 overflow-hidden">
+      <section className="relative w-full min-h-screen lg:min-h-screen flex flex-col justify-between py-6 lg:py-12 overflow-hidden">
         {/* Full background interactive garden */}
         <InteractiveGarden />
 
