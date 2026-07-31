@@ -91,11 +91,11 @@ export const Home: React.FC<HomeProps> = ({
           </div>
         </header>
 
-        {/* Hero Content Grid */}
-        <div className="relative w-full max-w-7xl mx-auto px-6 flex-grow grid grid-cols-1 lg:grid-cols-2 items-center gap-8 z-20">
+        {/* Hero Content Block */}
+        <div className="relative w-full max-w-7xl mx-auto px-6 flex-grow flex flex-col justify-center items-center gap-12 sm:gap-16 z-20 py-8 lg:py-16">
           
-          {/* Hero Left: Text Content */}
-          <div className="flex flex-col items-start text-left max-w-xl">
+          {/* Hero Top: Centered Text Content */}
+          <div className="flex flex-col items-center text-center max-w-3xl w-full">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -107,7 +107,7 @@ export const Home: React.FC<HomeProps> = ({
             </motion.div>
 
             <motion.h1
-              className="font-serif text-5xl md:text-7xl font-bold tracking-tight text-primary dark:text-white leading-[1.1] mb-6"
+              className="font-serif text-5xl md:text-8xl font-bold tracking-tight text-primary dark:text-white leading-[1.1] mb-6"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
@@ -116,7 +116,7 @@ export const Home: React.FC<HomeProps> = ({
             </motion.h1>
 
             <motion.h2
-              className="text-lg md:text-xl font-medium tracking-[0.25em] text-primary/70 dark:text-secondary-light/80 uppercase mb-4"
+              className="text-lg md:text-2xl font-medium tracking-[0.25em] text-primary/70 dark:text-secondary-light/80 uppercase mb-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.4 }}
@@ -125,31 +125,18 @@ export const Home: React.FC<HomeProps> = ({
             </motion.h2>
 
             <motion.p
-              className="text-base text-primary/70 dark:text-gray-300 leading-relaxed mb-8"
+              className="text-base md:text-lg text-primary/70 dark:text-gray-300 leading-relaxed mb-8 max-w-2xl"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.5 }}
             >
               Beautiful handmade pipe cleaner flowers, keychains, miniatures and gifts crafted with creativity, patience and love. Each creation is designed to bring warm smiles and become a keepsake.
             </motion.p>
-
-            <motion.div
-              className="flex flex-wrap gap-4"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-            >
-              <InteractiveButton variant="glass" onClick={() => {
-                document.getElementById('featured')?.scrollIntoView({ behavior: 'smooth' });
-              }}>
-                View Featured
-              </InteractiveButton>
-            </motion.div>
           </div>
 
-          {/* Hero Right: Category Collections Grid */}
-          <div className="w-full py-6 lg:py-12 flex flex-col justify-center relative z-20">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-lg mx-auto lg:max-w-none w-full">
+          {/* Hero Bottom: Category Collections Horizontal Grid */}
+          <div className="w-full">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-5xl mx-auto w-full">
               {featuredProducts.map((prod, idx) => (
                 <div key={idx} className="col-span-1">
                   <TiltCard
@@ -162,7 +149,7 @@ export const Home: React.FC<HomeProps> = ({
                         onNavigateToCollection();
                       }
                     }}
-                    className={`h-full flex flex-col justify-between p-3 sm:p-4 text-left ${prod.isComingSoon ? "opacity-75" : "cursor-pointer"}`}
+                    className={`h-full flex flex-col justify-between p-3 sm:p-5 text-left ${prod.isComingSoon ? "opacity-75" : "cursor-pointer"}`}
                   >
                     <div className="flex flex-col items-center">
                       <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden border border-primary/20 bg-white/20 dark:border-white/10 p-1 mb-3">
