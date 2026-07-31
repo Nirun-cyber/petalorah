@@ -3,7 +3,7 @@ import { motion, useInView } from 'framer-motion';
 import { InteractiveGarden } from '../components/InteractiveGarden';
 import { InteractiveButton } from '../components/InteractiveButton';
 import { TiltCard } from '../components/TiltCard';
-import { Sparkles, ArrowRight, Heart, Moon, Sun, Smile, Flower, Flower2, Sprout } from 'lucide-react';
+import { Sparkles, Heart, Moon, Sun, Smile, Flower, Flower2, Sprout } from 'lucide-react';
 
 interface HomeProps {
   onNavigateToCollection: () => void;
@@ -65,7 +65,7 @@ export const Home: React.FC<HomeProps> = ({
     <div ref={containerRef} className="relative w-full min-h-screen">
       
       {/* ================= HERO SECTION ================= */}
-      <section className="relative w-full min-h-screen lg:min-h-screen flex flex-col justify-between py-6 lg:py-12 overflow-hidden">
+      <section className="relative w-full flex flex-col justify-start py-6 lg:py-12 overflow-hidden">
         {/* Full background interactive garden */}
         <InteractiveGarden />
 
@@ -92,10 +92,10 @@ export const Home: React.FC<HomeProps> = ({
         </header>
 
         {/* Hero Content Block */}
-        <div className="relative w-full max-w-7xl mx-auto px-6 flex-grow flex flex-col justify-center items-center gap-12 sm:gap-16 z-20 py-8 lg:py-16">
+        <div className="relative w-full max-w-7xl mx-auto px-6 flex-grow flex flex-col justify-center items-start gap-12 sm:gap-16 z-20 py-8 lg:py-16">
           
-          {/* Hero Top: Centered Text Content */}
-          <div className="flex flex-col items-center text-center max-w-3xl w-full">
+          {/* Hero Top: Left-aligned Text Content */}
+          <div className="flex flex-col items-start text-left max-w-3xl w-full">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -125,7 +125,7 @@ export const Home: React.FC<HomeProps> = ({
             </motion.h2>
 
             <motion.p
-              className="text-base md:text-lg text-primary/70 dark:text-gray-300 leading-relaxed mb-8 max-w-2xl"
+              className="text-base md:text-lg text-primary/70 dark:text-gray-300 leading-relaxed mb-8 max-w-2xl text-left"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.5 }}
@@ -194,21 +194,6 @@ export const Home: React.FC<HomeProps> = ({
             </div>
           </div>
 
-        </div>
-
-        {/* Scroll Indicator */}
-        <div className="relative pb-8 w-full flex justify-center items-center z-20">
-          <motion.div
-            className="flex flex-col items-center gap-1.5 cursor-pointer text-primary/40"
-            onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <span className="text-xs uppercase tracking-widest font-semibold text-primary/60 dark:text-secondary-light/60">Scroll Down</span>
-            <div className="w-1.5 h-6 rounded-full bg-primary/20 dark:bg-secondary/20 flex justify-center py-1">
-              <motion.div className="w-1 h-1.5 rounded-full bg-primary dark:bg-secondary-light" />
-            </div>
-          </motion.div>
         </div>
       </section>
 
@@ -496,76 +481,7 @@ export const Home: React.FC<HomeProps> = ({
 
 
 
-      {/* ================= FEATURED COLLECTION ================= */}
-      <section id="featured" className="relative w-full py-16 sm:py-28 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h2 className="font-serif text-base font-bold text-primary dark:text-secondary-light tracking-[0.25em] uppercase mb-4">
-            Spotlight
-          </h2>
-          <h3 className="font-serif text-3xl md:text-4xl font-semibold text-primary dark:text-white mb-16">
-            Featured Creations
-          </h3>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-8 mb-16">
-            {featuredProducts.map((prod, idx) => (
-              <TiltCard
-                key={idx}
-                glowColor={prod.isComingSoon ? "rgba(0, 0, 0, 0)" : "rgba(30, 78, 156, 0.15)"}
-                onClick={prod.isComingSoon ? undefined : () => {
-                  console.log("Spotlight card clicked:", prod.name);
-                  if (prod.name === 'Keychains') {
-                    onNavigateToKeychains();
-                  } else {
-                    onNavigateToCollection();
-                  }
-                }}
-                className={prod.isComingSoon ? "opacity-75" : ""}
-              >
-                <div className="flex flex-col items-center text-center">
-                  
-                  {/* Image container with nice arched shape */}
-                  <div className="w-full aspect-[4/5] rounded-[16px] sm:rounded-[32px] overflow-hidden border border-primary/40 bg-white/40 dark:border-white/10 dark:bg-navy-light/20 p-1 sm:p-2 mb-2 sm:mb-6">
-                    <div className="w-full h-full rounded-[12px] sm:rounded-[24px] overflow-hidden relative shadow-inner">
-                      <img
-                        src={prod.img}
-                        alt={prod.name}
-                        className={`w-full h-full object-cover ${prod.isComingSoon ? '' : 'hover:scale-105'} transition-transform duration-500`}
-                        loading="lazy"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 w-full mb-1.5 sm:mb-3">
-                    <h4 className="font-serif text-xs sm:text-lg md:text-2xl font-semibold text-primary dark:text-white text-left">{prod.name}</h4>
-                    <span className={`px-1.5 py-0.5 sm:px-3.5 sm:py-1 text-[9px] sm:text-xs md:text-sm font-semibold rounded-full whitespace-nowrap w-fit ${
-                      prod.isComingSoon 
-                        ? 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/25 dark:text-amber-300'
-                        : 'bg-primary/10 text-primary dark:bg-secondary/15 dark:text-secondary-light'
-                    }`}>
-                      {prod.price}
-                    </span>
-                  </div>
-
-                  <p className="text-sm text-primary/70 dark:text-gray-300 leading-relaxed text-left mb-6 hidden sm:block">
-                    {prod.desc}
-                  </p>
-
-                  <div className="w-full">
-                    <InteractiveButton
-                      variant="glass"
-                      className="w-full py-2 sm:py-3 text-[10px] sm:text-sm"
-                      disabled={prod.isComingSoon}
-                    >
-                      View Collection <ArrowRight size={14} className="hidden sm:inline-block ml-1" />
-                    </InteractiveButton>
-                  </div>
-
-                </div>
-              </TiltCard>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ================= FOOTER ================= */}
       <footer className="relative w-full pt-12 sm:pt-20 pb-8 border-t border-primary/10 dark:border-white/5 bg-white dark:bg-navy-dark/10 overflow-hidden">
