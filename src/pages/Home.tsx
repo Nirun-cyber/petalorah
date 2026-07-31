@@ -1,6 +1,5 @@
 import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { ThreeFlower } from '../components/ThreeFlower';
 import { InteractiveGarden } from '../components/InteractiveGarden';
 import { InteractiveButton } from '../components/InteractiveButton';
 import { TiltCard } from '../components/TiltCard';
@@ -148,9 +147,64 @@ export const Home: React.FC<HomeProps> = ({
             </motion.div>
           </div>
 
-          {/* Hero Right: 3D interactive flower Canvas */}
-          <div className="w-full h-[40vh] lg:h-[70vh] flex items-center justify-center relative select-none">
-            <ThreeFlower />
+          {/* Hero Right: Category Collections Grid */}
+          <div className="w-full py-6 lg:py-12 flex flex-col justify-center relative z-20">
+            <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto lg:max-w-none w-full">
+              {featuredProducts.map((prod, idx) => (
+                <div key={idx} className={idx === 2 ? "col-span-2 sm:col-span-1 lg:col-span-2" : "col-span-1"}>
+                  <TiltCard
+                    glowColor={prod.isComingSoon ? "rgba(0, 0, 0, 0)" : "rgba(30, 78, 156, 0.15)"}
+                    onClick={prod.isComingSoon ? undefined : () => {
+                      console.log("Hero card clicked:", prod.name);
+                      if (prod.name === 'Keychains') {
+                        onNavigateToKeychains();
+                      } else {
+                        onNavigateToCollection();
+                      }
+                    }}
+                    className={`h-full flex flex-col justify-between p-3 sm:p-4 text-left ${prod.isComingSoon ? "opacity-75" : "cursor-pointer"}`}
+                  >
+                    <div className="flex flex-col items-center">
+                      <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden border border-primary/20 bg-white/20 dark:border-white/10 p-1 mb-3">
+                        <div className="w-full h-full rounded-xl overflow-hidden relative shadow-inner">
+                          <img
+                            src={prod.img}
+                            alt={prod.name}
+                            className={`w-full h-full object-cover ${prod.isComingSoon ? '' : 'hover:scale-105'} transition-transform duration-500`}
+                            loading="lazy"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center w-full gap-2 mb-2">
+                        <h4 className="font-serif text-sm sm:text-lg font-bold text-primary dark:text-white line-clamp-1">{prod.name}</h4>
+                        <span className={`px-2 py-0.5 text-[9px] sm:text-xs font-semibold rounded-full whitespace-nowrap w-fit flex-shrink-0 ${
+                          prod.isComingSoon 
+                            ? 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/25 dark:text-amber-300'
+                            : 'bg-primary/10 text-primary dark:bg-secondary/15 dark:text-secondary-light'
+                        }`}>
+                          {prod.price}
+                        </span>
+                      </div>
+                      
+                      <p className="text-xs text-primary/70 dark:text-gray-300 leading-normal line-clamp-2 mb-3 hidden sm:block">
+                        {prod.desc}
+                      </p>
+                      
+                      <div className="w-full">
+                        <InteractiveButton
+                          variant="glass"
+                          className="w-full py-1.5 text-[9px] sm:text-xs"
+                          disabled={prod.isComingSoon}
+                        >
+                          View Collection
+                        </InteractiveButton>
+                      </div>
+                    </div>
+                  </TiltCard>
+                </div>
+              ))}
+            </div>
           </div>
 
         </div>
