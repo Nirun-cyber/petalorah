@@ -149,9 +149,9 @@ export const Home: React.FC<HomeProps> = ({
 
           {/* Hero Right: Category Collections Grid */}
           <div className="w-full py-6 lg:py-12 flex flex-col justify-center relative z-20">
-            <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto lg:max-w-none w-full">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-lg mx-auto lg:max-w-none w-full">
               {featuredProducts.map((prod, idx) => (
-                <div key={idx} className={idx === 2 ? "col-span-2 sm:col-span-1 lg:col-span-2" : "col-span-1"}>
+                <div key={idx} className="col-span-1">
                   <TiltCard
                     glowColor={prod.isComingSoon ? "rgba(0, 0, 0, 0)" : "rgba(30, 78, 156, 0.15)"}
                     onClick={prod.isComingSoon ? undefined : () => {
