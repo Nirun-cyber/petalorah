@@ -8,6 +8,7 @@ import { Sparkles, Heart, Moon, Sun, Smile, Flower, Flower2, Sprout } from 'luci
 interface HomeProps {
   onNavigateToCollection: () => void;
   onNavigateToKeychains: () => void;
+  onNavigateToTableTops: () => void;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
 }
@@ -20,6 +21,7 @@ interface HomeProps {
 export const Home: React.FC<HomeProps> = ({
   onNavigateToCollection,
   onNavigateToKeychains,
+  onNavigateToTableTops,
   isDarkMode,
   toggleDarkMode,
 }) => {
@@ -47,10 +49,10 @@ export const Home: React.FC<HomeProps> = ({
     },
     { 
       name: 'Table Tops', 
-      price: 'Coming Soon', 
+      price: 'Starts from ₹199', 
       desc: 'Handcrafted miniature flower pots and table decorations that bring a touch of nature to your workspace.', 
       img: '/assets/products/table_tops.jpg',
-      isComingSoon: true 
+      isComingSoon: false 
     },
     { 
       name: 'Flowers and Bouquets', 
@@ -145,6 +147,8 @@ export const Home: React.FC<HomeProps> = ({
                       console.log("Hero card clicked:", prod.name);
                       if (prod.name === 'Keychains') {
                         onNavigateToKeychains();
+                      } else if (prod.name === 'Table Tops') {
+                        onNavigateToTableTops();
                       } else {
                         onNavigateToCollection();
                       }

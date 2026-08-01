@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Home } from './pages/Home';
 import { Portfolio } from './pages/Portfolio';
 import { Keychains } from './pages/Keychains';
+import { TableTops } from './pages/TableTops';
 import { Preloader } from './components/Preloader';
 import { PageTransition } from './components/PageTransition';
 import { EasterEggs } from './components/EasterEggs';
@@ -9,9 +10,9 @@ import Lenis from 'lenis';
 
 export const App: React.FC = () => {
   const [isPreloaderActive, setIsPreloaderActive] = useState(true);
-  const [currentTab, setCurrentTab] = useState<'home' | 'portfolio' | 'keychains'>('home');
+  const [currentTab, setCurrentTab] = useState<'home' | 'portfolio' | 'keychains' | 'tabletops'>('home');
   const [isTransitionActive, setIsTransitionActive] = useState(false);
-  const [targetTab, setTargetTab] = useState<'home' | 'portfolio' | 'keychains' | null>(null);
+  const [targetTab, setTargetTab] = useState<'home' | 'portfolio' | 'keychains' | 'tabletops' | null>(null);
   
   // Dark Mode State
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -132,7 +133,7 @@ export const App: React.FC = () => {
   }, []);
 
   // Trigger page change with cinematic petal transition
-  const navigateToTab = (tab: 'home' | 'portfolio' | 'keychains') => {
+  const navigateToTab = (tab: 'home' | 'portfolio' | 'keychains' | 'tabletops') => {
     console.log("App: navigateToTab triggered with tab:", tab);
     if (tab === currentTab) return;
     setTargetTab(tab);
@@ -169,6 +170,7 @@ export const App: React.FC = () => {
             <Home
               onNavigateToCollection={() => navigateToTab('portfolio')}
               onNavigateToKeychains={() => navigateToTab('keychains')}
+              onNavigateToTableTops={() => navigateToTab('tabletops')}
               isDarkMode={isDarkMode}
               toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
             />
@@ -178,8 +180,14 @@ export const App: React.FC = () => {
               isDarkMode={isDarkMode}
               toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
             />
-          ) : (
+          ) : currentTab === 'keychains' ? (
             <Keychains
+              onNavigateHome={() => navigateToTab('home')}
+              isDarkMode={isDarkMode}
+              toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+            />
+          ) : (
+            <TableTops
               onNavigateHome={() => navigateToTab('home')}
               isDarkMode={isDarkMode}
               toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
