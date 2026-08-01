@@ -156,7 +156,7 @@ export const Home: React.FC<HomeProps> = ({
                     className={`h-full flex flex-col justify-between p-3 sm:p-5 text-left ${prod.isComingSoon ? "opacity-75" : "cursor-pointer"}`}
                   >
                     <div className="flex flex-col items-center">
-                      <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden border border-primary/20 bg-white/20 dark:border-white/10 p-1 mb-3">
+                      <div className="w-full aspect-[4/5] rounded-2xl overflow-hidden border border-primary/20 bg-white/20 dark:border-white/10 p-1 mb-3">
                         <div className="w-full h-full rounded-xl overflow-hidden relative shadow-inner">
                           <img
                             src={prod.img}

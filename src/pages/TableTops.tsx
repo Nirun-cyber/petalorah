@@ -45,12 +45,12 @@ export const TableTops: React.FC<TableTopsProps> = ({
   ];
 
   return (
-    <div className="relative w-full min-h-screen bg-white dark:bg-navy pb-20">
+    <div className="relative w-full min-h-screen bg-white dark:bg-navy pb-20 overflow-x-hidden">
       <InteractiveGarden />
 
       {/* Top Navbar */}
       <header className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 z-30 flex justify-between items-center">
-        <div className="flex items-center gap-2 sm:gap-3 select-none cursor-pointer logo-click-target" onClick={onNavigateHome}>
+        <div className="flex items-center gap-2 sm:gap-3 select-none cursor-pointer logo-click-target flex-shrink-0" onClick={onNavigateHome}>
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-primary/20 overflow-hidden shadow-sm">
             <img src="/assets/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
           </div>
@@ -59,7 +59,7 @@ export const TableTops: React.FC<TableTopsProps> = ({
           </span>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-shrink-0">
           <InteractiveButton variant="glass" onClick={onNavigateHome}>
             Back to Home
           </InteractiveButton>
