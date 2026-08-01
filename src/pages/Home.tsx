@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { InteractiveGarden } from '../components/InteractiveGarden';
 import { InteractiveButton } from '../components/InteractiveButton';
@@ -26,6 +26,22 @@ export const Home: React.FC<HomeProps> = ({
   toggleDarkMode,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [likes, setLikes] = useState(184);
+  const [heartExplosions, setHeartExplosions] = useState<Array<{ id: number; x: number; y: number }>>([]);
+
+  const handleLike = (e: React.MouseEvent) => {
+    setLikes(prev => prev + 1);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const newHeart = {
+      id: Date.now(),
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+    setHeartExplosions(prev => [...prev, newHeart]);
+    setTimeout(() => {
+      setHeartExplosions(prev => prev.filter(h => h.id !== newHeart.id));
+    }, 1500);
+  };
   
 
 
@@ -96,44 +112,138 @@ export const Home: React.FC<HomeProps> = ({
         {/* Hero Content Block */}
         <div className="relative w-full max-w-7xl mx-auto px-6 flex-grow flex flex-col justify-center items-start gap-12 sm:gap-16 z-20 py-8 lg:py-16">
           
-          {/* Hero Top: Left-aligned Text Content */}
-          <div className="flex flex-col items-start text-left max-w-3xl w-full">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, ease: 'easeOut' }}
-              className="flex items-center gap-2 px-4 py-1.5 rounded-full glass-card border-primary/10 text-primary dark:text-secondary-light text-xs font-semibold uppercase tracking-wider mb-6"
-            >
-              <Sparkles size={12} className="animate-pulse" />
-              Luxury Handmade Crafts
-            </motion.div>
+          {/* Split row for text and interactive showcase */}
+          <div className="w-full flex flex-col lg:flex-row gap-12 lg:gap-16 items-center justify-between">
+            
+            {/* Hero Top Left: Text Content */}
+            <div className="flex flex-col items-start text-left max-w-3xl lg:max-w-xl w-full">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
+                className="flex items-center gap-2 px-4 py-1.5 rounded-full glass-card border-primary/10 text-primary dark:text-secondary-light text-xs font-semibold uppercase tracking-wider mb-6"
+              >
+                <Sparkles size={12} className="animate-pulse" />
+                Luxury Handmade Crafts
+              </motion.div>
 
-            <motion.h1
-              className="font-serif text-5xl md:text-8xl font-bold tracking-tight text-primary dark:text-white leading-[1.1] mb-6"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              PETALORAH
-            </motion.h1>
+              <motion.h1
+                className="font-serif text-5xl md:text-8xl font-bold tracking-tight text-primary dark:text-white leading-[1.1] mb-6"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                PETALORAH
+              </motion.h1>
 
-            <motion.h2
-              className="text-lg md:text-2xl font-medium tracking-[0.25em] text-primary/70 dark:text-secondary-light/80 uppercase mb-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-            >
-              Handmade With Love
-            </motion.h2>
+              <motion.h2
+                className="text-lg md:text-2xl font-medium tracking-[0.25em] text-primary/70 dark:text-secondary-light/80 uppercase mb-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+              >
+                Handmade With Love
+              </motion.h2>
 
-            <motion.p
-              className="text-base md:text-lg text-primary/70 dark:text-gray-300 leading-relaxed mb-8 max-w-2xl text-left"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.5 }}
-            >
-              Beautiful handmade pipe cleaner flowers, keychains, miniatures and gifts crafted with creativity, patience and love. Each creation is designed to bring warm smiles and become a keepsake.
-            </motion.p>
+              <motion.p
+                className="text-base md:text-lg text-primary/70 dark:text-gray-300 leading-relaxed mb-8 max-w-2xl text-left"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+              >
+                Beautiful handmade pipe cleaner flowers, keychains, miniatures and gifts crafted with creativity, patience and love. Each creation is designed to bring warm smiles and become a keepsake.
+              </motion.p>
+            </div>
+
+            {/* Hero Top Right: Showcase Card */}
+            <div className="relative w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[400px] flex-shrink-0 mt-8 lg:mt-0 z-30">
+              {/* Decorative dynamic floating tags */}
+              <motion.div
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -top-6 -right-4 px-3 py-1 text-[10px] sm:text-xs rounded-full bg-pink-500/10 dark:bg-pink-400/20 text-pink-600 dark:text-pink-300 border border-pink-500/20 backdrop-blur-md shadow-sm z-40 select-none pointer-events-none"
+              >
+                🌸 100% Handcrafted
+              </motion.div>
+              <motion.div
+                animate={{ y: [0, 8, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                className="absolute -bottom-4 -left-6 px-3 py-1 text-[10px] sm:text-xs rounded-full bg-amber-500/10 dark:bg-amber-400/20 text-amber-600 dark:text-amber-300 border border-amber-500/20 backdrop-blur-md shadow-sm z-40 select-none pointer-events-none"
+              >
+                ✨ Everlasting Smiles
+              </motion.div>
+              <motion.div
+                animate={{ y: [0, -6, 0] }}
+                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                className="absolute top-1/2 -left-10 px-3 py-1 text-[10px] sm:text-xs rounded-full bg-indigo-500/10 dark:bg-indigo-400/20 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20 backdrop-blur-md shadow-sm z-40 select-none pointer-events-none hidden sm:block"
+              >
+                🧸 Soft & Fluffy
+              </motion.div>
+
+              <TiltCard
+                glowColor="rgba(244, 63, 94, 0.15)"
+                className="w-full flex flex-col justify-between p-4 sm:p-5 text-left cursor-pointer border border-primary/20 bg-white/20 dark:border-white/10 dark:bg-navy-light/10"
+              >
+                <div className="w-full aspect-[4/5] rounded-2xl overflow-hidden border border-primary/20 bg-white/20 dark:border-white/10 p-1 mb-4 relative group">
+                  <div className="w-full h-full rounded-xl overflow-hidden relative shadow-inner">
+                    <img
+                      src="/assets/products/sunflower_pot.jpg"
+                      alt="Creation of the Week"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute top-3 left-3 bg-primary/80 dark:bg-navy/80 text-white text-[9px] sm:text-xs px-2.5 py-1 rounded-full uppercase tracking-wider font-semibold border border-white/20 z-10">
+                      Creation of the Week
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col w-full relative">
+                  {/* Floating heart click particle effects */}
+                  {heartExplosions.map((heart) => (
+                    <motion.div
+                      key={heart.id}
+                      initial={{ opacity: 1, scale: 0.8, x: heart.x - 12, y: heart.y - 12 }}
+                      animate={{ opacity: 0, scale: 1.6, y: heart.y - 140, x: heart.x - 12 + (Math.random() - 0.5) * 80 }}
+                      transition={{ duration: 1.2, ease: 'easeOut' }}
+                      className="absolute text-pink-500 pointer-events-none z-50 font-bold"
+                    >
+                      <Heart size={20} className="fill-current" />
+                    </motion.div>
+                  ))}
+
+                  <div className="flex justify-between items-center w-full gap-2 mb-1">
+                    <h3 className="font-serif text-lg sm:text-xl font-bold text-primary dark:text-white truncate">
+                      Sunflower Pot
+                    </h3>
+                    <span className="text-sm font-semibold text-primary/80 dark:text-secondary-light/95">
+                      ₹199
+                    </span>
+                  </div>
+
+                  <p className="text-[10px] sm:text-xs text-primary/70 dark:text-gray-300 line-clamp-2 mb-4 leading-relaxed">
+                    A beautiful, handcrafted miniature sunflower pot that spreads sunshine and warm feelings anywhere it is placed.
+                  </p>
+
+                  <div className="flex justify-between items-center w-full gap-4 mt-2">
+                    <button
+                      onClick={handleLike}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-500/10 hover:bg-pink-500/20 text-pink-600 dark:text-pink-400 text-xs font-semibold transition-all border border-pink-500/10 hover:scale-105 active:scale-95"
+                    >
+                      <Heart size={14} className="fill-current animate-pulse" />
+                      <span>{likes}</span>
+                    </button>
+
+                    <InteractiveButton
+                      variant="glass"
+                      className="flex-grow py-1.5 text-xs"
+                      onClick={onNavigateToTableTops}
+                    >
+                      View Details
+                    </InteractiveButton>
+                  </div>
+                </div>
+              </TiltCard>
+            </div>
           </div>
 
           {/* Hero Bottom: Category Collections Horizontal Grid */}
