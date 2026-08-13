@@ -65,9 +65,9 @@ export const Home: React.FC<HomeProps> = ({
     },
     { 
       name: 'Table Tops', 
-      price: 'Starts from ₹199', 
+      price: 'Starts from ₹169', 
       desc: 'Handcrafted miniature flower pots and table decorations that bring a touch of nature to your workspace.', 
-      img: '/assets/products/table_tops.jpg',
+      img: '/assets/products/four_tulips_pot.jpg',
       isComingSoon: false 
     },
     { 

@@ -34,13 +34,31 @@ export const TableTops: React.FC<TableTopsProps> = ({
   // Table Tops products catalog
   const products: Product[] = [
     { 
+      id: 'single_tulip_pot', 
+      name: 'Single Pink Tulip Pot', 
+      price: '₹169', 
+      originalPrice: '₹199',
+      description: 'A charming handcrafted single pink tulip flower pot desk companion. Carefully twisted with vibrant pink petals, green leaves, and nestled in a cozy ribbed cream pot. A delicate touch of warmth for your desk or workspace.', 
+      img: '/assets/products/single_tulip_pot.jpg', 
+      badge: 'New Arrival' 
+    },
+    { 
+      id: 'four_tulips_pot', 
+      name: 'Pink Tulip Garden Pot', 
+      price: '₹199', 
+      originalPrice: '₹250',
+      description: 'A stunning handcrafted table top arrangement featuring 4 lush blooming pink tulips with green leaves in a dark ribbed pot. Stays fresh and vibrant forever, bringing life to any table.', 
+      img: '/assets/products/four_tulips_pot.jpg', 
+      badge: 'Best Seller' 
+    },
+    { 
       id: 'sunflower_pot', 
       name: 'Sunflower Pot', 
       price: '₹199', 
       originalPrice: '₹249',
       description: 'A cheerful handcrafted sunflower pot keychain or desk companion. Twisted with vibrant yellow petals, dark brown center, green leaves, and nestled in a cozy orange pot. A perfect touch of warmth for any desk or workspace.', 
       img: '/assets/products/sunflower_pot.jpg', 
-      badge: 'Best Seller' 
+      badge: 'Popular' 
     },
   ];
 
