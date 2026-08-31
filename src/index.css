@@ -114,69 +114,7 @@ html.lenis, html.lenis body {
   pointer-events: none;
 }
 
-/* Custom Cursor Follower */
-html.no-cursor,
-html.no-cursor * {
-  cursor: none !important;
-}
 
-.cursor-dot {
-  width: 8px;
-  height: 8px;
-  background-color: #124680;
-  position: fixed;
-  top: 0;
-  left: 0;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 9999;
-  transform: translate(-50%, -50%);
-  transition: width 0.2s, height 0.2s, background-color 0.2s;
-  will-change: transform;
-}
-
-.dark .cursor-dot {
-  background-color: #A5C4F2;
-}
-
-.cursor-follower {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #124680;
-  position: fixed;
-  top: 0;
-  left: 0;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 9998;
-  transform: translate(-50%, -50%);
-  transition: width 0.2s, height 0.2s, border-color 0.2s;
-  will-change: transform;
-}
-
-.dark .cursor-follower {
-  border-color: #A5C4F2;
-}
-
-.cursor-hover .cursor-dot {
-  width: 20px;
-  height: 20px;
-  background-color: rgba(18, 70, 128, 0.25);
-}
-
-.dark.cursor-hover .cursor-dot {
-  background-color: rgba(165, 196, 242, 0.25);
-}
-
-.cursor-hover .cursor-follower {
-  width: 48px;
-  height: 48px;
-  border-color: #124680;
-}
-
-.dark.cursor-hover .cursor-follower {
-  border-color: #A5C4F2;
-}
 
 /* Custom text selection */
 ::selection {
