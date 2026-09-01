@@ -22,7 +22,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   isAnnouncementVisible: true,
   whatsappNumber: '916382735751',
   instagramUsername: 'petalorah',
-  adminPin: '1234',
+  adminPin: '240812',
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

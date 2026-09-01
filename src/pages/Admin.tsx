@@ -196,7 +196,7 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
                 type="password"
                 required
                 autoFocus
-                placeholder="Enter Passcode (Default: 1234)"
+                placeholder="Enter Passcode"
                 value={pinInput}
                 onChange={(e) => {
                   setPinInput(e.target.value);
@@ -213,7 +213,7 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
 
             {authError && (
               <p className="text-xs font-bold text-rose-500 flex items-center justify-center gap-1">
-                <AlertCircle size={14} /> Incorrect passcode! (Try default: 1234)
+                <AlertCircle size={14} /> Incorrect passcode! Please try again.
               </p>
             )}
 
@@ -230,8 +230,8 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
             <button onClick={onNavigateHome} className="hover:text-rose-500 transition-colors font-medium">
               ← Return to Storefront
             </button>
-            <span className="font-mono text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
-              PIN: 1234
+            <span className="font-mono text-[10px] bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full font-bold text-slate-600 dark:text-slate-300">
+              🔒 Security Active
             </span>
           </div>
         </div>

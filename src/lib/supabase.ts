@@ -6,8 +6,9 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
   supabaseAnonKey &&
-  supabaseUrl !== 'YOUR_SUPABASE_URL' &&
-  !supabaseUrl.includes('YOUR_')
+  !supabaseUrl.includes('YOUR_') &&
+  !supabaseAnonKey.includes('YOUR_') &&
+  supabaseUrl.startsWith('http')
 );
 
 export const supabase = isSupabaseConfigured
