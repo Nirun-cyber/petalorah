@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Sparkles } from 'lucide-react';
-import { ALL_PRODUCTS } from '../data/products';
 import type { Product } from '../data/products';
+import { useProducts } from '../context/ProductContext';
 import { ProductModal } from '../components/ProductModal';
 import { ProductQuantityControl } from '../components/ProductQuantityControl';
 
@@ -12,6 +12,7 @@ interface PortfolioProps {
 }
 
 export const Portfolio: React.FC<PortfolioProps> = () => {
+  const { products } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'keychain' | 'tabletop' | 'bouquet' | 'custom'>('all');
@@ -25,7 +26,7 @@ export const Portfolio: React.FC<PortfolioProps> = () => {
   ] as const;
 
   const filteredProducts = useMemo(() => {
-    return ALL_PRODUCTS.filter((product) => {
+    return products.filter((product) => {
       const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
       const matchesSearch =
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -38,7 +39,7 @@ export const Portfolio: React.FC<PortfolioProps> = () => {
       if (sortBy === 'bestsellers') return (b.isBestSeller ? 1 : 0) - (a.isBestSeller ? 1 : 0);
       return 0;
     });
-  }, [selectedCategory, searchQuery, sortBy]);
+  }, [products, selectedCategory, searchQuery, sortBy]);
 
   return (
     <div className="w-full flex flex-col min-h-screen py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -60,12 +61,12 @@ export const Portfolio: React.FC<PortfolioProps> = () => {
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white/70 dark:bg-navy-light/60 border border-primary/10 dark:border-white/10 p-4 rounded-3xl shadow-sm mb-8 backdrop-blur-md">
         
         {/* Category Tabs */}
-        <div className="flex flex-wrap gap-2 justify-center md:justify-start w-full md:w-auto">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center md:justify-start w-full md:w-auto">
           {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(selectedCategory === cat.id ? 'all' : cat.id)}
-              className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all ${
+              className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl text-xs font-bold transition-all ${
                 selectedCategory === cat.id
                   ? 'bg-primary text-white dark:bg-secondary dark:text-navy shadow-sm'
                   : 'bg-primary/5 dark:bg-white/5 text-primary/80 dark:text-gray-300 hover:bg-primary/10'
@@ -76,28 +77,27 @@ export const Portfolio: React.FC<PortfolioProps> = () => {
           ))}
         </div>
 
-        {/* Search Input & Sort Dropdown */}
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          
-          {/* Search Box */}
-          <div className="relative flex-1 md:w-64">
+        {/* Search & Sort Controls */}
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          {/* Search */}
+          <div className="relative w-full sm:w-64">
             <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-primary/40 dark:text-gray-400" />
             <input
               type="text"
-              placeholder="Search crafts... e.g. Rose"
+              placeholder="Search catalog..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-4 py-2 rounded-2xl bg-white dark:bg-navy border border-primary/15 dark:border-white/15 text-xs text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary"
             />
           </div>
 
-          {/* Sort Select */}
+          {/* Sort */}
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as any)}
-            className="px-3 py-2 rounded-2xl bg-white dark:bg-navy border border-primary/15 dark:border-white/15 text-xs font-medium text-primary dark:text-white focus:outline-none"
+            className="w-full sm:w-auto px-3 py-2 rounded-2xl bg-white dark:bg-navy border border-primary/15 dark:border-white/15 text-xs text-primary dark:text-white font-medium focus:outline-none"
           >
-            <option value="default">Default Sort</option>
+            <option value="default">Sort: Default</option>
             <option value="low-high">Price: Low to High</option>
             <option value="high-low">Price: High to Low</option>
             <option value="bestsellers">Best Sellers</option>

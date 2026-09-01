@@ -3,8 +3,8 @@ import { Menu, X, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 interface NavbarProps {
-  currentTab: 'home' | 'portfolio' | 'keychains' | 'tabletops' | 'custom';
-  onNavigate: (tab: 'home' | 'portfolio' | 'keychains' | 'tabletops' | 'custom') => void;
+  currentTab: 'home' | 'portfolio' | 'keychains' | 'tabletops' | 'custom' | 'admin';
+  onNavigate: (tab: 'home' | 'portfolio' | 'keychains' | 'tabletops' | 'custom' | 'admin') => void;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
 }
@@ -29,13 +29,13 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Brand Logo & Title */}
         <div
           onClick={() => onNavigate('home')}
-          className="flex items-center gap-3 cursor-pointer group select-none"
+          className="flex items-center gap-2 sm:gap-3 cursor-pointer group select-none flex-shrink-0"
         >
-          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full border-2 border-primary/20 dark:border-secondary/30 overflow-hidden shadow-md group-hover:scale-105 transition-transform duration-300">
+          <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-full border-2 border-primary/20 dark:border-secondary/30 overflow-hidden shadow-md group-hover:scale-105 transition-transform duration-300">
             <img src="/assets/logo.jpg" alt="Petalorah Logo" className="w-full h-full object-cover" />
           </div>
           <div className="flex flex-col">
-            <span className="font-serif text-lg sm:text-2xl font-bold tracking-wider text-primary dark:text-secondary-light">
+            <span className="font-serif text-base sm:text-2xl font-bold tracking-wider text-primary dark:text-secondary-light">
               PETALORAH
             </span>
             <span className="text-[10px] sm:text-xs tracking-widest text-primary/60 dark:text-gray-400 font-medium uppercase -mt-1 hidden sm:block">
@@ -62,17 +62,18 @@ export const Navbar: React.FC<NavbarProps> = ({
         </nav>
 
         {/* Right Actions: Cart Button Alone with "check your cart" */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
           <button
             onClick={openCart}
-            className="relative inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-primary text-white dark:bg-secondary dark:text-navy font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+            className="relative inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full bg-primary text-white dark:bg-secondary dark:text-navy font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
             aria-label="Open shopping cart"
             title="Check your cart"
           >
-            <ShoppingBag size={18} />
-            <span>check your cart</span>
+            <ShoppingBag className="w-4 h-4 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">check your cart</span>
+            <span className="sm:hidden font-bold">Cart</span>
             {totalItems > 0 && (
-              <span className="ml-1 px-2 py-0.5 rounded-full bg-rose-500 text-white font-extrabold text-xs shadow-sm animate-in zoom-in duration-200">
+              <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-rose-500 text-white font-extrabold text-[10px] sm:text-xs shadow-sm animate-in zoom-in duration-200">
                 {totalItems}
               </span>
             )}
@@ -81,10 +82,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2.5 rounded-full text-primary dark:text-gray-200 hover:bg-primary/5 dark:hover:bg-white/10"
+            className="md:hidden p-2 rounded-full text-primary dark:text-gray-200 hover:bg-primary/5 dark:hover:bg-white/10"
             aria-label="Toggle menu"
           >
-            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>

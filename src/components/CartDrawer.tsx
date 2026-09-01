@@ -27,7 +27,7 @@ export const CartDrawer: React.FC = () => {
       <div className="relative w-full max-w-md h-full bg-white dark:bg-navy-light border-l border-primary/10 dark:border-white/10 shadow-2xl z-10 flex flex-col justify-between">
         
         {/* Header */}
-        <div className="p-4 sm:p-6 border-b border-primary/10 dark:border-white/10 flex items-center justify-between">
+        <div className="p-4 sm:p-6 border-b border-primary/10 dark:border-white/10 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
             <ShoppingBag className="text-primary dark:text-secondary-light" size={22} />
             <h2 className="font-serif text-xl font-bold text-primary dark:text-white">
@@ -48,7 +48,10 @@ export const CartDrawer: React.FC = () => {
         </div>
 
         {/* Cart Item List Body */}
-        <div className="flex-grow overflow-y-auto p-4 sm:p-6 space-y-4">
+        <div
+          data-lenis-prevent
+          className="flex-grow min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4"
+        >
           {cartItems.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-12">
               <div className="w-16 h-16 rounded-full bg-primary/5 dark:bg-white/5 flex items-center justify-center text-primary/40 dark:text-gray-500">
@@ -133,7 +136,7 @@ export const CartDrawer: React.FC = () => {
 
         {/* Footer Summary & Proceed CTA */}
         {cartItems.length > 0 && (
-          <div className="p-4 sm:p-6 border-t border-primary/10 dark:border-white/10 bg-white/50 dark:bg-navy/50 space-y-4">
+          <div className="p-4 sm:p-6 border-t border-primary/10 dark:border-white/10 bg-white/50 dark:bg-navy/50 space-y-4 flex-shrink-0">
             <div className="space-y-1.5 text-sm">
               <div className="flex justify-between text-primary/70 dark:text-gray-300">
                 <span>Total Items:</span>

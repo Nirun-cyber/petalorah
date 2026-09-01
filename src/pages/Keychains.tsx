@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Sparkles } from 'lucide-react';
-import { ALL_PRODUCTS } from '../data/products';
 import type { Product } from '../data/products';
+import { useProducts } from '../context/ProductContext';
 import { ProductModal } from '../components/ProductModal';
 import { ProductQuantityControl } from '../components/ProductQuantityControl';
 
@@ -12,12 +12,13 @@ interface KeychainsProps {
 }
 
 export const Keychains: React.FC<KeychainsProps> = () => {
+  const { products } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'default' | 'low-high' | 'high-low' | 'bestsellers'>('default');
 
   const keychains = useMemo(() => {
-    return ALL_PRODUCTS.filter(
+    return products.filter(
       (p) => p.category === 'keychain' || p.category === 'custom'
     ).filter((p) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -28,7 +29,7 @@ export const Keychains: React.FC<KeychainsProps> = () => {
       if (sortBy === 'bestsellers') return (b.isBestSeller ? 1 : 0) - (a.isBestSeller ? 1 : 0);
       return 0;
     });
-  }, [searchQuery, sortBy]);
+  }, [products, searchQuery, sortBy]);
 
   return (
     <div className="w-full flex flex-col min-h-screen py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -79,12 +80,12 @@ export const Keychains: React.FC<KeychainsProps> = () => {
       </div>
 
       {/* Keychain Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
         {keychains.map((product) => (
           <div
             key={product.id}
             onClick={() => setSelectedProduct(product)}
-            className="p-4 rounded-3xl bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between group"
+            className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between group"
           >
             <div>
               <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-50 dark:bg-navy mb-4">

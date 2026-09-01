@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Sparkles, CheckCircle } from 'lucide-react';
-import { ALL_PRODUCTS } from '../data/products';
 import type { Product } from '../data/products';
+import { useProducts } from '../context/ProductContext';
 import { ProductModal } from '../components/ProductModal';
 import { ProductQuantityControl } from '../components/ProductQuantityControl';
 
@@ -12,11 +12,12 @@ interface TableTopsProps {
 }
 
 export const TableTops: React.FC<TableTopsProps> = () => {
+  const { products } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const tabletops = useMemo(() => {
-    return ALL_PRODUCTS.filter((p) => p.category === 'tabletop');
-  }, []);
+    return products.filter((p) => p.category === 'tabletop');
+  }, [products]);
 
   return (
     <div className="w-full flex flex-col min-h-screen py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -34,13 +35,13 @@ export const TableTops: React.FC<TableTopsProps> = () => {
         </p>
       </div>
 
-      {/* Product Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto w-full">
+      {/* Table Top Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 max-w-5xl mx-auto w-full">
         {tabletops.map((product) => (
           <div
             key={product.id}
             onClick={() => setSelectedProduct(product)}
-            className="p-6 rounded-3xl bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer flex flex-col justify-between group"
+            className="p-4 sm:p-6 rounded-3xl bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer flex flex-col justify-between group"
           >
             <div>
               <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-50 dark:bg-navy mb-5">

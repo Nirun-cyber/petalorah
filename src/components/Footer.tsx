@@ -2,7 +2,7 @@ import React from 'react';
 import { Heart, MessageSquareCode } from 'lucide-react';
 
 interface FooterProps {
-  onNavigate: (tab: 'home' | 'portfolio' | 'keychains' | 'tabletops') => void;
+  onNavigate: (tab: 'home' | 'portfolio' | 'keychains' | 'tabletops' | 'admin') => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {

@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { Product } from '../data/products';
+import { useOrders } from './OrderContext';
+import { useSettings } from './SettingsContext';
 
 export const INSTAGRAM_USERNAME = "petalorah";
 
@@ -46,6 +48,9 @@ export const generateInstagramOrderMessage = (items: CartItem[]): string => {
 };
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { logOrder } = useOrders();
+  const { settings } = useSettings();
+
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -126,16 +131,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const proceedToWhatsAppOrder = () => {
     if (cartItems.length === 0) return;
+    logOrder(cartItems, 'WhatsApp');
     const message = generateInstagramOrderMessage(cartItems);
-    const whatsappUrl = `https://wa.me/916382735751?text=${encodeURIComponent(message)}`;
+    const phone = settings.whatsappNumber.replace(/[^0-9]/g, '') || '916382735751';
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   };
 
   const proceedToInstagramOrder = async () => {
     if (cartItems.length === 0) return;
+    logOrder(cartItems, 'Instagram');
 
     const message = generateInstagramOrderMessage(cartItems);
-    const instagramUrl = `https://instagram.com/petalorah`;
+    const instagramHandle = settings.instagramUsername || 'petalorah';
+    const instagramUrl = `https://instagram.com/${instagramHandle}`;
 
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {

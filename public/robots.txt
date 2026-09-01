@@ -1,0 +1,7 @@
+# Robots.txt for Petalorah (Vercel)
+User-agent: *
+Allow: /
+Disallow: /admin
+
+# Sitemap URL
+Sitemap: https://petalorah.vercel.app/sitemap.xml

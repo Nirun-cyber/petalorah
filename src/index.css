@@ -71,8 +71,10 @@
 }
 
 @layer base {
-  body {
-    @apply bg-white dark:bg-navy text-primary dark:text-gray-100 font-sans transition-colors duration-500 overflow-x-hidden;
+  html, body {
+    @apply bg-white dark:bg-navy text-primary dark:text-gray-100 font-sans transition-colors duration-500 overflow-x-hidden w-full;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
   body.dark {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, ArrowRight, MessageCircleHeart, CheckCircle, Gift, Star } from 'lucide-react';
-import { ALL_PRODUCTS } from '../data/products';
 import type { Product } from '../data/products';
+import { useProducts } from '../context/ProductContext';
 import { ProductModal } from '../components/ProductModal';
 import { OrderGuide } from '../components/OrderGuide';
 import { ProductQuantityControl } from '../components/ProductQuantityControl';
@@ -19,14 +19,15 @@ export const Home: React.FC<HomeProps> = ({
   onNavigateToKeychains,
   onNavigateToTableTops,
 }) => {
+  const { products } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   // Featured 6 highlight products
-  const featuredProducts = ALL_PRODUCTS.filter(
+  const featuredProducts = products.filter(
     (p) => p.isBestSeller || ['duck', 'single_tulip_pot', 'luffy', 'custom_jersey'].includes(p.id)
   ).slice(0, 6);
 
-  const creationOfTheWeek = ALL_PRODUCTS.find((p) => p.id === 'four_tulips_pot') || ALL_PRODUCTS[0];
+  const creationOfTheWeek = products.find((p) => p.id === 'four_tulips_pot') || products[0];
 
   return (
     <div className="w-full flex flex-col min-h-screen">
@@ -51,12 +52,12 @@ export const Home: React.FC<HomeProps> = ({
             </p>
 
             {/* CTAs */}
-            <div className="flex flex-wrap items-center gap-4 pt-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-2">
               <button
                 onClick={onNavigateToCollection}
-                className="px-6 py-3.5 rounded-2xl bg-primary text-white dark:bg-secondary dark:text-navy font-bold text-sm shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5 flex items-center gap-2"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-primary text-white dark:bg-secondary dark:text-navy font-bold text-sm shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5 flex items-center justify-center gap-2"
               >
-                Browse All Crafts ({ALL_PRODUCTS.length})
+                Browse All Crafts ({products.length})
                 <ArrowRight size={18} />
               </button>
 
@@ -64,7 +65,7 @@ export const Home: React.FC<HomeProps> = ({
                 href="https://instagram.com/petalorah"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-6 py-3.5 rounded-2xl bg-pink-50 dark:bg-pink-950/40 text-pink-700 dark:text-pink-300 border border-pink-200 dark:border-pink-800/50 font-bold text-sm hover:bg-pink-100 dark:hover:bg-pink-900/50 transition-all flex items-center gap-2"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-pink-50 dark:bg-pink-950/40 text-pink-700 dark:text-pink-300 border border-pink-200 dark:border-pink-800/50 font-bold text-sm hover:bg-pink-100 dark:hover:bg-pink-900/50 transition-all flex items-center justify-center gap-2"
               >
                 <MessageCircleHeart size={18} className="text-pink-500" />
                 Custom Order on IG
@@ -72,7 +73,7 @@ export const Home: React.FC<HomeProps> = ({
             </div>
 
             {/* Quick Feature Badges */}
-            <div className="grid grid-cols-3 gap-4 pt-6 border-t border-primary/10 dark:border-white/10 text-xs font-medium text-primary/80 dark:text-gray-300">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4 pt-6 border-t border-primary/10 dark:border-white/10 text-xs font-medium text-primary/80 dark:text-gray-300">
               <div className="flex items-center gap-2">
                 <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
                 <span>Soft & Durable</span>
@@ -202,7 +203,7 @@ export const Home: React.FC<HomeProps> = ({
             onClick={onNavigateToCollection}
             className="text-xs font-bold text-primary dark:text-secondary-light hover:underline flex items-center gap-1"
           >
-            View All ({ALL_PRODUCTS.length} items) <ArrowRight size={14} />
+            View All ({products.length} items) <ArrowRight size={14} />
           </button>
         </div>
 

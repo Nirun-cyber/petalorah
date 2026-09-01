@@ -22,7 +22,10 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) 
       <div className="fixed inset-0" onClick={onClose} />
 
       {/* Dialog Window */}
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 rounded-3xl shadow-2xl z-10 p-6 sm:p-8 flex flex-col md:flex-row gap-6 sm:gap-8">
+      <div
+        data-lenis-prevent
+        className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto overscroll-contain bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 rounded-3xl shadow-2xl z-10 p-4 sm:p-8 flex flex-col md:flex-row gap-6 sm:gap-8"
+      >
         
         {/* Close Button */}
         <button
@@ -39,7 +42,9 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) 
             <img
               src={product.img}
               alt={product.name}
+              loading="lazy"
               className="w-full h-full object-cover"
+              onError={(e) => (e.currentTarget.src = '/assets/products/rose.jpg')}
             />
             {product.badge && (
               <span className="absolute top-3 left-3 bg-primary text-white dark:bg-secondary dark:text-navy text-xs font-semibold px-3 py-1 rounded-full shadow-sm">
