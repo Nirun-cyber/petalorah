@@ -26,6 +26,7 @@ import { useProducts } from '../context/ProductContext';
 import { useOrders, type LoggedOrder } from '../context/OrderContext';
 import { useSettings } from '../context/SettingsContext';
 import { ProductFormModal } from '../components/admin/ProductFormModal';
+import { isSupabaseConfigured } from '../lib/supabase';
 import type { Product } from '../data/products';
 
 interface AdminProps {
@@ -59,6 +60,8 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
   // Product Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isSqlModalOpen, setIsSqlModalOpen] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
 
   // Product Filters & Search
   const [productSearch, setProductSearch] = useState('');
@@ -256,13 +259,25 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
                   Admin
                 </span>
                 {isCloudSynced ? (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 flex items-center gap-1">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 flex items-center gap-1 shadow-sm">
                     ☁️ Supabase Cloud Active
                   </span>
+                ) : isSupabaseConfigured ? (
+                  <button
+                    onClick={() => setIsSqlModalOpen(true)}
+                    className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 hover:bg-amber-200 transition-colors flex items-center gap-1 cursor-pointer shadow-sm"
+                    title="Click for 1-step SQL setup script"
+                  >
+                    ⚡ SQL Table Setup Required (Click here)
+                  </button>
                 ) : (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 flex items-center gap-1">
-                    💾 Local Storage Mode
-                  </span>
+                  <button
+                    onClick={() => setIsSqlModalOpen(true)}
+                    className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 transition-colors flex items-center gap-1 cursor-pointer shadow-sm"
+                    title="Click for database sync instructions"
+                  >
+                    💾 Local Storage Mode (Click to sync globally)
+                  </button>
                 )}
               </h1>
               <p className="text-xs text-slate-400 font-medium hidden sm:block">
@@ -947,6 +962,102 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveProduct}
       />
+
+      {/* SQL Setup Helper Modal */}
+      {isSqlModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden border border-rose-100 dark:border-slate-800 p-6 space-y-4 text-slate-800 dark:text-slate-100">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">⚡</span>
+                <h3 className="text-lg font-bold font-serif">Activate Supabase Live Cloud Sync</h3>
+              </div>
+              <button
+                onClick={() => setIsSqlModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 dark:text-slate-300 leading-relaxed">
+              Your Supabase Cloud database credentials are configured! To activate live syncing across all smartphones and laptops worldwide, run this 1-step SQL query in your <strong>Supabase SQL Editor</strong>:
+            </p>
+
+            <div className="relative bg-slate-900 text-emerald-400 font-mono text-xs p-4 rounded-2xl overflow-x-auto">
+              <pre>{`create table if not exists products (
+  id text primary key,
+  name text not null,
+  price text not null,
+  numeric_price numeric,
+  original_price text,
+  category text,
+  description text,
+  img text,
+  badge text,
+  is_best_seller boolean default false,
+  is_coming_soon boolean default false,
+  created_at timestamp default now()
+);
+
+create table if not exists orders (
+  id text primary key,
+  created_at timestamp default now(),
+  items jsonb,
+  total_items numeric,
+  total_amount numeric,
+  channel text,
+  status text
+);
+
+alter table products disable row level security;
+alter table orders disable row level security;`}</pre>
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-xs font-semibold text-rose-500">
+                {copiedSql ? '✓ SQL Copied to Clipboard!' : 'Copy SQL & paste into Supabase SQL Editor'}
+              </span>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`create table if not exists products (
+  id text primary key,
+  name text not null,
+  price text not null,
+  numeric_price numeric,
+  original_price text,
+  category text,
+  description text,
+  img text,
+  badge text,
+  is_best_seller boolean default false,
+  is_coming_soon boolean default false,
+  created_at timestamp default now()
+);
+
+create table if not exists orders (
+  id text primary key,
+  created_at timestamp default now(),
+  items jsonb,
+  total_items numeric,
+  total_amount numeric,
+  channel text,
+  status text
+);
+
+alter table products disable row level security;
+alter table orders disable row level security;`);
+                  setCopiedSql(true);
+                  setTimeout(() => setCopiedSql(false), 3000);
+                }}
+                className="px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-rose-500 hover:bg-rose-600 shadow transition-all"
+              >
+                Copy SQL Script
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
