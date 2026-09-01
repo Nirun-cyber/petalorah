@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, MessageCircleHeart } from 'lucide-react';
+import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, MessageCircleHeart, MessageSquareCode } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 export const CartDrawer: React.FC = () => {
@@ -12,7 +12,8 @@ export const CartDrawer: React.FC = () => {
     clearCart,
     totalItems,
     totalPrice,
-    proceedToOrder,
+    proceedToWhatsAppOrder,
+    proceedToInstagramOrder,
   } = useCart();
 
   if (!isCartOpen) return null;
@@ -144,19 +145,27 @@ export const CartDrawer: React.FC = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <button
-                onClick={proceedToOrder}
-                className="w-full flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-sm shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5"
+                onClick={proceedToWhatsAppOrder}
+                className="w-full flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5"
               >
-                <MessageCircleHeart size={18} />
-                Proceed to Order
+                <MessageSquareCode size={18} />
+                Order via WhatsApp (Pre-typed)
                 <ArrowRight size={16} />
               </button>
 
               <button
+                onClick={proceedToInstagramOrder}
+                className="w-full flex items-center justify-center gap-2.5 py-3 px-6 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5"
+              >
+                <MessageCircleHeart size={18} />
+                Order via Instagram DM (Copied)
+              </button>
+
+              <button
                 onClick={clearCart}
-                className="w-full py-1.5 text-xs text-primary/50 dark:text-gray-400 hover:text-rose-500 transition-colors"
+                className="w-full py-1 text-xs text-primary/50 dark:text-gray-400 hover:text-rose-500 transition-colors"
               >
                 Clear Cart
               </button>

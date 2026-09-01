@@ -35,11 +35,16 @@ export const ClipboardFallbackModal: React.FC = () => {
           </button>
         </div>
 
-        <p className="text-xs text-primary/70 dark:text-gray-300">
-          Copy your order message below and paste it in Instagram DM to send your order to <strong>@{INSTAGRAM_USERNAME}</strong>:
-        </p>
+        <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs leading-relaxed space-y-1">
+          <p className="font-bold flex items-center gap-1.5 text-amber-800">
+            <span>📋 Order Details Copied to Clipboard!</span>
+          </p>
+          <p>
+            <strong>Note:</strong> Instagram does not allow websites to automatically pre-type text into DMs. Simply tap <strong>Paste</strong> (or press <strong>Ctrl + V</strong>) in the Instagram chat box to send your order to <strong>@{INSTAGRAM_USERNAME}</strong>.
+          </p>
+        </div>
 
-        <div className="relative p-3.5 rounded-2xl bg-gray-50 dark:bg-navy border border-primary/10 dark:border-white/10 font-mono text-xs text-primary dark:text-gray-200 whitespace-pre-wrap max-h-48 overflow-y-auto">
+        <div className="relative p-3.5 rounded-2xl bg-gray-50 border border-primary/10 font-mono text-xs text-primary whitespace-pre-wrap max-h-48 overflow-y-auto">
           {clipboardFallbackMessage}
         </div>
 

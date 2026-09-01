@@ -23,6 +23,8 @@ interface CartContextType {
   totalItems: number;
   totalPrice: number;
   proceedToOrder: () => void;
+  proceedToInstagramOrder: () => void;
+  proceedToWhatsAppOrder: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -122,31 +124,33 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     0
   );
 
-  const proceedToOrder = async () => {
+  const proceedToWhatsAppOrder = () => {
+    if (cartItems.length === 0) return;
+    const message = generateInstagramOrderMessage(cartItems);
+    const whatsappUrl = `https://wa.me/916382735751?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const proceedToInstagramOrder = async () => {
     if (cartItems.length === 0) return;
 
     const message = generateInstagramOrderMessage(cartItems);
     const instagramUrl = `https://instagram.com/petalorah`;
 
-    let copiedSuccess = false;
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(message);
-        copiedSuccess = true;
       }
     } catch (err) {
       console.warn('Clipboard write failed:', err);
     }
 
-    if (copiedSuccess) {
-      showToast('Order message copied! Paste it in Instagram DM to send your order.');
-    } else {
-      setClipboardFallbackMessage(message);
-    }
-
-    // Open Instagram profile/chat
+    // Always show modal for clear instruction that user needs to paste
+    setClipboardFallbackMessage(message);
     window.open(instagramUrl, '_blank', 'noopener,noreferrer');
   };
+
+  const proceedToOrder = proceedToInstagramOrder;
 
   return (
     <CartContext.Provider
@@ -165,6 +169,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         totalItems,
         totalPrice,
         proceedToOrder,
+        proceedToInstagramOrder,
+        proceedToWhatsAppOrder,
       }}
     >
       {children}
