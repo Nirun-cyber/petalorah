@@ -66,6 +66,23 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
           }));
           setProducts(mapped);
           setIsCloudSynced(true);
+        } else if (data && data.length === 0) {
+          // Seed cloud database with initial default products
+          setIsCloudSynced(true);
+          const initialPayload = ALL_PRODUCTS.map((prod) => ({
+            id: prod.id,
+            name: prod.name,
+            price: prod.price,
+            numeric_price: prod.numericPrice,
+            original_price: prod.originalPrice,
+            category: prod.category,
+            description: prod.description,
+            img: prod.img,
+            badge: prod.badge,
+            is_best_seller: prod.isBestSeller,
+            is_coming_soon: prod.isComingSoon,
+          }));
+          await client.from('products').upsert(initialPayload);
         }
       } catch (err) {
         console.warn('Supabase product fetch fallback to local:', err);
