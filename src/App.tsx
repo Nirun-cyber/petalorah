@@ -14,25 +14,15 @@ import Lenis from 'lenis';
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<'home' | 'portfolio' | 'keychains' | 'tabletops'>('home');
   
-  // Dark Mode State
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('petalorah-theme');
-    if (saved) return saved === 'dark';
-    return true; // Default to dark theme
-  });
+  // Light Mode Only (Locked)
+  const isDarkMode = false;
 
-  // Apply Dark Mode Class
+  // Always force Light Mode
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      document.body.classList.add('dark');
-      localStorage.setItem('petalorah-theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.body.classList.remove('dark');
-      localStorage.setItem('petalorah-theme', 'light');
-    }
-  }, [isDarkMode]);
+    document.documentElement.classList.remove('dark');
+    document.body.classList.remove('dark');
+    localStorage.setItem('petalorah-theme', 'light');
+  }, []);
 
   // Initialize Smooth Scrolling (Lenis)
   useEffect(() => {
@@ -74,7 +64,7 @@ export const App: React.FC = () => {
           currentTab={currentTab}
           onNavigate={handleNavigate}
           isDarkMode={isDarkMode}
-          toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+          toggleDarkMode={() => {}}
         />
 
         {/* Main Content Area */}
@@ -85,28 +75,28 @@ export const App: React.FC = () => {
               onNavigateToKeychains={() => handleNavigate('keychains')}
               onNavigateToTableTops={() => handleNavigate('tabletops')}
               isDarkMode={isDarkMode}
-              toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+              toggleDarkMode={() => {}}
             />
           )}
           {currentTab === 'portfolio' && (
             <Portfolio
               onNavigateHome={() => handleNavigate('home')}
               isDarkMode={isDarkMode}
-              toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+              toggleDarkMode={() => {}}
             />
           )}
           {currentTab === 'keychains' && (
             <Keychains
               onNavigateHome={() => handleNavigate('home')}
               isDarkMode={isDarkMode}
-              toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+              toggleDarkMode={() => {}}
             />
           )}
           {currentTab === 'tabletops' && (
             <TableTops
               onNavigateHome={() => handleNavigate('home')}
               isDarkMode={isDarkMode}
-              toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+              toggleDarkMode={() => {}}
             />
           )}
         </main>
