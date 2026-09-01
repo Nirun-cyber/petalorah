@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Upload, Sparkles, CheckCircle, Trash2 } from 'lucide-react';
+import { X, Upload, Sparkles, CheckCircle, Trash2, Wand2 } from 'lucide-react';
 import type { Product } from '../../data/products';
 
 interface ProductFormModalProps {
@@ -27,6 +27,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const [isBestSeller, setIsBestSeller] = useState(product?.isBestSeller || false);
   const [isComingSoon, setIsComingSoon] = useState(product?.isComingSoon || false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
 
   // Handle local image file upload -> convert to Base64 data URL
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,6 +49,46 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // Smart AI Craft Description Generator
+  const handleGenerateAiDescription = () => {
+    setIsGeneratingAi(true);
+
+    setTimeout(() => {
+      const title = name.trim() || 'Handcrafted Gift Item';
+      const titleLower = title.toLowerCase();
+
+      let generatedDesc = '';
+      let suggestedBadge = badge;
+
+      if (titleLower.includes('panda')) {
+        generatedDesc = `An adorable handmade panda keychain meticulously crafted with soft monochrome pipe cleaners and fluffy detailing. Carefully twisted with patience to create a cozy, cuddly companion that brings happy smiles to your bag or keys.`;
+        suggestedBadge = 'Kawaii Special';
+      } else if (titleLower.includes('tulip')) {
+        generatedDesc = `An elegant handcrafted tulip creation carrying the gentle warmth of spring. Carefully twisted loops ensure a soft, fluffy texture with rich green leaves that stay fresh and vibrant forever.`;
+        suggestedBadge = 'Cute Accent';
+      } else if (titleLower.includes('rose')) {
+        generatedDesc = `A timeless symbol of love, meticulously handcrafted with rich crimson pipe cleaner petals and a deep green stem. Perfect as a romantic keepsake, luxury bag charm, or thoughtful handmade gift.`;
+        suggestedBadge = 'Best Seller';
+      } else if (titleLower.includes('duck')) {
+        generatedDesc = `An adorable round duck charm handcrafted from bright yellow pipe cleaners with a tiny blue head bow accent. Guaranteed to bring happy vibes and sweet smiles wherever you carry it.`;
+        suggestedBadge = 'Super Cute';
+      } else if (titleLower.includes('pot') || category === 'tabletop') {
+        generatedDesc = `A charming handcrafted miniature flower pot desk companion. Twisted with vibrant petals, green leaves, and nestled in a cozy ribbed pot to bring a touch of warm floral aesthetic to your workspace or home decor.`;
+        suggestedBadge = 'Table Decor';
+      } else if (category === 'bouquet') {
+        generatedDesc = `A stunning custom pipe cleaner flower bouquet handcrafted with intricate wire twisting and rich color harmony. Designed to stay fresh, vibrant, and blooming forever as an eternal romantic keepsake.`;
+        suggestedBadge = 'Custom Bouquet';
+      } else {
+        generatedDesc = `An exquisite handmade ${title} crafted with premium soft pipe cleaners and precision wire twisting. Meticulously handcrafted by Petalorah studio to bring sweet charm, eternal durability, and smiles to your daily accessories.`;
+        suggestedBadge = 'Handcrafted';
+      }
+
+      setDescription(generatedDesc);
+      setBadge(suggestedBadge);
+      setIsGeneratingAi(false);
+    }, 400);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -103,7 +144,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               <input
                 type="text"
                 required
-                placeholder="e.g. Pink Tulip Keychain"
+                placeholder="e.g. Cute Panda Keychain"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-400 transition-all font-medium text-slate-800 dark:text-white"
@@ -232,15 +273,27 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             </div>
           </div>
 
-          {/* Description */}
+          {/* Description & AI Generator */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
-              Description *
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                Description *
+              </label>
+              <button
+                type="button"
+                onClick={handleGenerateAiDescription}
+                disabled={isGeneratingAi}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500 hover:from-purple-700 hover:to-rose-600 shadow-sm hover:shadow transition-all transform active:scale-95 disabled:opacity-50"
+              >
+                <Wand2 size={13} className={isGeneratingAi ? 'animate-spin' : ''} />
+                <span>{isGeneratingAi ? 'Generating AI...' : '✨ Auto-Generate AI Description'}</span>
+              </button>
+            </div>
+
             <textarea
               rows={3}
               required
-              placeholder="Detailed description of handcrafted materials, design, aesthetics..."
+              placeholder="Enter product description or click ✨ Auto-Generate AI Description..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-400 transition-all font-medium text-slate-800 dark:text-white"
