@@ -37,12 +37,21 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
   const { orders, updateOrderStatus, deleteOrder, clearAllOrders } = useOrders();
   const { settings, updateSettings, verifyPin, changePin } = useSettings();
 
-  // Authentication State
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return sessionStorage.getItem('petalorah_admin_authed') === 'true';
-  });
+  // Authentication State (Strictly Transient In-Memory - Auto-locks on reload or navigating out)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [pinInput, setPinInput] = useState('');
   const [authError, setAuthError] = useState(false);
+
+  // Auto-lock when leaving Admin page or unmounting
+  React.useEffect(() => {
+    // Ensure any old session cache is cleared
+    sessionStorage.removeItem('petalorah_admin_authed');
+
+    return () => {
+      setIsAuthenticated(false);
+      sessionStorage.removeItem('petalorah_admin_authed');
+    };
+  }, []);
 
   // Active Admin Tab
   const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'banner' | 'settings'>('overview');
@@ -74,7 +83,6 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
     e.preventDefault();
     if (verifyPin(pinInput)) {
       setIsAuthenticated(true);
-      sessionStorage.setItem('petalorah_admin_authed', 'true');
       setAuthError(false);
       setPinInput('');
     } else {
@@ -84,7 +92,6 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
 
   const handleLogout = () => {
     setIsAuthenticated(false);
-    sessionStorage.removeItem('petalorah_admin_authed');
   };
 
   // Product Actions
