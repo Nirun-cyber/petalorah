@@ -11,6 +11,8 @@ import { SettingsProvider } from './context/SettingsContext';
 import { ProductProvider } from './context/ProductContext';
 import { OrderProvider } from './context/OrderContext';
 import { CartProvider } from './context/CartContext';
+import { AuthProvider } from './context/AuthContext';
+import { AuthModal } from './components/AuthModal';
 import { CartDrawer } from './components/CartDrawer';
 import { CartToast } from './components/CartToast';
 import { ClipboardFallbackModal } from './components/ClipboardFallbackModal';
@@ -84,63 +86,66 @@ export const App: React.FC = () => {
       <ProductProvider>
         <OrderProvider>
           <CartProvider>
-            <div className="relative w-full min-h-screen flex flex-col justify-between text-primary dark:text-gray-100 bg-white dark:bg-navy font-sans antialiased selection:bg-pink-500/20">
-              {/* Announcement Banner Ticker */}
-              <AnnouncementBar />
+            <AuthProvider>
+              <div className="relative w-full min-h-screen flex flex-col justify-between text-primary dark:text-gray-100 bg-white dark:bg-navy font-sans antialiased selection:bg-pink-500/20">
+                {/* Announcement Banner Ticker */}
+                <AnnouncementBar />
 
-              {/* Top Navbar */}
-              <Navbar
-                currentTab={currentTab}
-                onNavigate={handleNavigate}
-                isDarkMode={isDarkMode}
-                toggleDarkMode={() => {}}
-              />
+                {/* Top Navbar */}
+                <Navbar
+                  currentTab={currentTab}
+                  onNavigate={handleNavigate}
+                  isDarkMode={isDarkMode}
+                  toggleDarkMode={() => {}}
+                />
 
-              {/* Main Content Area */}
-              <main className="flex-grow w-full">
-                {currentTab === 'home' && (
-                  <Home
-                    onNavigateToCollection={() => handleNavigate('portfolio')}
-                    onNavigateToKeychains={() => handleNavigate('keychains')}
-                    onNavigateToTableTops={() => handleNavigate('tabletops')}
-                    isDarkMode={isDarkMode}
-                    toggleDarkMode={() => {}}
-                  />
-                )}
-                {currentTab === 'portfolio' && (
-                  <Portfolio
-                    onNavigateHome={() => handleNavigate('home')}
-                    isDarkMode={isDarkMode}
-                    toggleDarkMode={() => {}}
-                  />
-                )}
-                {currentTab === 'keychains' && (
-                  <Keychains
-                    onNavigateHome={() => handleNavigate('home')}
-                    isDarkMode={isDarkMode}
-                    toggleDarkMode={() => {}}
-                  />
-                )}
-                {currentTab === 'tabletops' && (
-                  <TableTops
-                    onNavigateHome={() => handleNavigate('home')}
-                    isDarkMode={isDarkMode}
-                    toggleDarkMode={() => {}}
-                  />
-                )}
-                {currentTab === 'admin' && (
-                  <Admin onNavigateHome={() => handleNavigate('home')} />
-                )}
-              </main>
+                {/* Main Content Area */}
+                <main className="flex-grow w-full">
+                  {currentTab === 'home' && (
+                    <Home
+                      onNavigateToCollection={() => handleNavigate('portfolio')}
+                      onNavigateToKeychains={() => handleNavigate('keychains')}
+                      onNavigateToTableTops={() => handleNavigate('tabletops')}
+                      isDarkMode={isDarkMode}
+                      toggleDarkMode={() => {}}
+                    />
+                  )}
+                  {currentTab === 'portfolio' && (
+                    <Portfolio
+                      onNavigateHome={() => handleNavigate('home')}
+                      isDarkMode={isDarkMode}
+                      toggleDarkMode={() => {}}
+                    />
+                  )}
+                  {currentTab === 'keychains' && (
+                    <Keychains
+                      onNavigateHome={() => handleNavigate('home')}
+                      isDarkMode={isDarkMode}
+                      toggleDarkMode={() => {}}
+                    />
+                  )}
+                  {currentTab === 'tabletops' && (
+                    <TableTops
+                      onNavigateHome={() => handleNavigate('home')}
+                      isDarkMode={isDarkMode}
+                      toggleDarkMode={() => {}}
+                    />
+                  )}
+                  {currentTab === 'admin' && (
+                    <Admin onNavigateHome={() => handleNavigate('home')} />
+                  )}
+                </main>
 
-              {/* Footer */}
-              <Footer onNavigate={handleNavigate} />
+                {/* Footer */}
+                <Footer onNavigate={handleNavigate} />
 
-              {/* Cart Drawer & Modals */}
-              <CartDrawer />
-              <CartToast />
-              <ClipboardFallbackModal />
-            </div>
+                {/* Cart Drawer & Modals */}
+                <CartDrawer />
+                <CartToast />
+                <ClipboardFallbackModal />
+                <AuthModal onNavigateToAdmin={() => handleNavigate('admin')} />
+              </div>
+            </AuthProvider>
           </CartProvider>
         </OrderProvider>
       </ProductProvider>

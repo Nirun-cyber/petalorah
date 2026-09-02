@@ -127,6 +127,61 @@ export const Home: React.FC<HomeProps> = ({
         </div>
       </section>
 
+      {/* FEATURED CRAFTS GRID */}
+      <section className="w-full py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 gap-4">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-widest text-primary/70 dark:text-secondary-light">
+              Popular Picks
+            </span>
+            <h2 className="font-serif text-3xl font-bold text-primary dark:text-white mt-1">
+              Featured Handmade Crafts
+            </h2>
+          </div>
+          <button
+            onClick={onNavigateToCollection}
+            className="text-xs font-bold text-primary dark:text-secondary-light hover:underline flex items-center gap-1"
+          >
+            View All ({products.length} items) <ArrowRight size={14} />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
+          {featuredProducts.map((prod) => (
+            <div
+              key={prod.id}
+              onClick={() => setSelectedProduct(prod)}
+              className="p-3 rounded-2xl bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-between group"
+            >
+              <div>
+                <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 dark:bg-navy mb-3">
+                  <img
+                    src={prod.img}
+                    alt={prod.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  {prod.badge && (
+                    <span className="absolute top-2 left-2 bg-primary/90 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                      {prod.badge}
+                    </span>
+                  )}
+                </div>
+                <h4 className="font-serif text-sm font-bold text-primary dark:text-white line-clamp-1">
+                  {prod.name}
+                </h4>
+              </div>
+
+              <div className="mt-2 flex items-center justify-between pt-2 border-t border-primary/5 dark:border-white/5">
+                <span className="text-sm font-extrabold text-primary dark:text-secondary-light">
+                  {prod.price}
+                </span>
+                <ProductQuantityControl product={prod} size="sm" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* QUICK CATEGORY SELECTOR CARDS */}
       <section className="w-full py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -185,61 +240,6 @@ export const Home: React.FC<HomeProps> = ({
             </span>
           </div>
 
-        </div>
-      </section>
-
-      {/* FEATURED CRAFTS GRID */}
-      <section className="w-full py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 gap-4">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-primary/70 dark:text-secondary-light">
-              Popular Picks
-            </span>
-            <h2 className="font-serif text-3xl font-bold text-primary dark:text-white mt-1">
-              Featured Handmade Crafts
-            </h2>
-          </div>
-          <button
-            onClick={onNavigateToCollection}
-            className="text-xs font-bold text-primary dark:text-secondary-light hover:underline flex items-center gap-1"
-          >
-            View All ({products.length} items) <ArrowRight size={14} />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
-          {featuredProducts.map((prod) => (
-            <div
-              key={prod.id}
-              onClick={() => setSelectedProduct(prod)}
-              className="p-3 rounded-2xl bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-between group"
-            >
-              <div>
-                <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 dark:bg-navy mb-3">
-                  <img
-                    src={prod.img}
-                    alt={prod.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  {prod.badge && (
-                    <span className="absolute top-2 left-2 bg-primary/90 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
-                      {prod.badge}
-                    </span>
-                  )}
-                </div>
-                <h4 className="font-serif text-sm font-bold text-primary dark:text-white line-clamp-1">
-                  {prod.name}
-                </h4>
-              </div>
-
-              <div className="mt-2 flex items-center justify-between pt-2 border-t border-primary/5 dark:border-white/5">
-                <span className="text-sm font-extrabold text-primary dark:text-secondary-light">
-                  {prod.price}
-                </span>
-                <ProductQuantityControl product={prod} size="sm" />
-              </div>
-            </div>
-          ))}
         </div>
       </section>
 

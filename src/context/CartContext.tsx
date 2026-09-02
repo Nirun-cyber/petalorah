@@ -44,7 +44,26 @@ export const generateInstagramOrderMessage = (items: CartItem[]): string => {
   const totalItemsCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPriceSum = items.reduce((sum, item) => sum + (item.product.numericPrice * item.quantity), 0);
 
-  return `Hi! I am willing to buy these products:\n\n${itemLines}\n\nTotal Items: ${totalItemsCount}\nTotal: ₹${totalPriceSum}\n\nPlease let me know the next steps. Thank you!`;
+  let customerDetails = '';
+  try {
+    const savedUser = localStorage.getItem('petalorah_customer_user');
+    if (savedUser) {
+      const parsed = JSON.parse(savedUser);
+      if (parsed?.name) {
+        customerDetails += `\n\nCustomer & Delivery Details:`;
+        customerDetails += `\nName: ${parsed.name}`;
+        if (parsed.phone) customerDetails += `\nContact: ${parsed.phone}`;
+        if (parsed.address?.street) {
+          customerDetails += `\nAddress: ${parsed.address.street}, ${parsed.address.city}, ${parsed.address.state} - ${parsed.address.pincode}`;
+          if (parsed.address.landmark) customerDetails += ` (Landmark: ${parsed.address.landmark})`;
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Failed to read customer address for order:', e);
+  }
+
+  return `Hi! I would like to order these items:\n\n${itemLines}\n\nTotal Items: ${totalItemsCount}\nTotal Amount: ₹${totalPriceSum}${customerDetails}\n\nPlease confirm availability and payment details. Thank you!`;
 };
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

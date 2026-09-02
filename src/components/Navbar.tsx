@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Menu, X, ShoppingBag } from 'lucide-react';
+import { Menu, X, ShoppingBag, User, ShieldCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 interface NavbarProps {
   currentTab: 'home' | 'portfolio' | 'keychains' | 'tabletops' | 'custom' | 'admin';
@@ -15,6 +16,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { totalItems, openCart } = useCart();
+  const { user, isAdmin, openAuthModal } = useAuth();
 
   const navLinks = [
     { id: 'home', label: 'Home' },
@@ -61,8 +63,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           ))}
         </nav>
 
-        {/* Right Actions: Cart Button Alone with "check your cart" */}
+        {/* Right Actions: Cart Button & Login Button */}
         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          
+          {/* Cart Button */}
           <button
             onClick={openCart}
             className="relative inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full bg-primary text-white dark:bg-secondary dark:text-navy font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
@@ -77,6 +81,29 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {totalItems}
               </span>
             )}
+          </button>
+
+          {/* Login / Account Button (Right to Cart) */}
+          <button
+            onClick={() => openAuthModal(isAdmin ? 'admin' : 'customer')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-full border transition-all duration-200 hover:scale-105 ${
+              isAdmin
+                ? 'bg-amber-500/10 border-amber-500/40 text-amber-600 dark:text-amber-300 font-bold'
+                : user
+                ? 'bg-primary/5 dark:bg-white/10 border-primary/20 dark:border-white/20 text-primary dark:text-white font-bold'
+                : 'border-primary/20 dark:border-white/20 text-primary/80 dark:text-gray-300 hover:text-primary dark:hover:text-white hover:bg-primary/5 dark:hover:bg-white/5 font-medium'
+            } text-xs sm:text-sm`}
+            aria-label="User Account Login"
+            title={isAdmin ? 'Admin Active' : user ? `Signed in as ${user.name}` : 'Sign In / Account'}
+          >
+            {isAdmin ? (
+              <ShieldCheck className="w-4 h-4 text-amber-500" />
+            ) : (
+              <User className="w-4 h-4 text-primary dark:text-secondary-light" />
+            )}
+            <span className="hidden sm:inline">
+              {isAdmin ? 'Admin' : user ? user.name.split(' ')[0] : 'Sign In'}
+            </span>
           </button>
 
           {/* Mobile Menu Button */}
@@ -109,6 +136,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {link.label}
             </button>
           ))}
+
           <button
             onClick={() => {
               openCart();
@@ -123,6 +151,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-xs font-bold">
               {totalItems}
             </span>
+          </button>
+
+          <button
+            onClick={() => {
+              openAuthModal(isAdmin ? 'admin' : 'customer');
+              setMobileMenuOpen(false);
+            }}
+            className="w-full flex items-center gap-2 px-4 py-3 rounded-xl border border-primary/15 dark:border-white/15 text-primary dark:text-gray-200 font-bold text-sm"
+          >
+            {isAdmin ? <ShieldCheck size={18} className="text-amber-500" /> : <User size={18} />}
+            <span>{isAdmin ? 'Admin Portal' : user ? `Account (${user.name})` : 'Sign In / Account'}</span>
           </button>
         </div>
       )}
