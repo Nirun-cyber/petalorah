@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { ALL_PRODUCTS, type Product } from '../data/products';
+import { ALL_PRODUCTS, type Product, DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE } from '../data/products';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 interface ProductContextType {
@@ -25,7 +25,17 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          const ALLOWED_BADGES = ['New', 'Best Seller', 'Limited'];
+          return parsed.map((p: Product) => {
+            let updated = p;
+            if (p.description && !p.description.includes('Size:') && !p.description.includes('Material:')) {
+              updated = { ...updated, description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE };
+            }
+            if (p.badge && !ALLOWED_BADGES.includes(p.badge)) {
+              updated = { ...updated, badge: '' };
+            }
+            return updated;
+          });
         }
       }
     } catch (e) {

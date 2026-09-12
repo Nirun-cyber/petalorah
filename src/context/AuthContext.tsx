@@ -14,6 +14,8 @@ export interface CustomerUser {
   email: string;
   phone: string;
   isLoggedIn: boolean;
+  avatar?: string;
+  createdDate?: string;
   address?: DeliveryAddress;
 }
 
@@ -24,9 +26,11 @@ interface AuthContextType {
   initialTab: 'customer' | 'admin';
   openAuthModal: (tab?: 'customer' | 'admin') => void;
   closeAuthModal: () => void;
-  loginCustomer: (data: { name: string; email: string; phone: string }) => void;
+  loginCustomer: (data: { name: string; email: string; phone: string; address?: DeliveryAddress; avatar?: string }) => void;
+  loginCustomerWithGoogle: () => void;
   logoutCustomer: () => void;
   updateCustomerAddress: (address: DeliveryAddress) => void;
+  updateCustomerProfile: (data: Partial<CustomerUser>) => void;
   loginAdmin: (pin: string) => boolean;
   logoutAdmin: () => void;
 }
@@ -79,14 +83,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsAuthModalOpen(false);
   };
 
-  const loginCustomer = (data: { name: string; email: string; phone: string }) => {
+  const loginCustomer = (data: {
+    name: string;
+    email: string;
+    phone: string;
+    address?: DeliveryAddress;
+    avatar?: string;
+  }) => {
     setUser((prev) => ({
       name: data.name.trim(),
       email: data.email.trim(),
       phone: data.phone.trim(),
       isLoggedIn: true,
-      address: prev?.address,
+      avatar: data.avatar || prev?.avatar,
+      createdDate: prev?.createdDate || new Date().toISOString(),
+      address: data.address || prev?.address,
     }));
+  };
+
+  const loginCustomerWithGoogle = () => {
+    setUser({
+      name: 'Priya Sharma (Google)',
+      email: 'priya.sharma.crafts@gmail.com',
+      phone: '+91 98765 43210',
+      isLoggedIn: true,
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
+      createdDate: new Date().toISOString(),
+      address: {
+        street: '14 Lotus Blossom Street, Anna Nagar',
+        city: 'Chennai',
+        state: 'Tamil Nadu',
+        pincode: '600040',
+        landmark: 'Near Eco Park',
+      },
+    });
   };
 
   const logoutCustomer = () => {
@@ -95,6 +125,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateCustomerAddress = (address: DeliveryAddress) => {
     setUser((prev) => (prev ? { ...prev, address } : null));
+  };
+
+  const updateCustomerProfile = (data: Partial<CustomerUser>) => {
+    setUser((prev) => (prev ? { ...prev, ...data } : null));
   };
 
   const loginAdmin = (pin: string): boolean => {
@@ -121,8 +155,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         openAuthModal,
         closeAuthModal,
         loginCustomer,
+        loginCustomerWithGoogle,
         logoutCustomer,
         updateCustomerAddress,
+        updateCustomerProfile,
         loginAdmin,
         logoutAdmin,
       }}

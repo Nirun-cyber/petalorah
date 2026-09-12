@@ -60,9 +60,6 @@ export const TableTops: React.FC<TableTopsProps> = () => {
               <h3 className="font-serif text-xl font-bold text-primary dark:text-white mb-2">
                 {product.name}
               </h3>
-              <p className="text-sm text-primary/70 dark:text-gray-300 leading-relaxed mb-4">
-                {product.description}
-              </p>
 
               <ul className="space-y-1.5 text-xs text-primary/80 dark:text-gray-300 mb-4">
                 <li className="flex items-center gap-2">
@@ -74,9 +71,9 @@ export const TableTops: React.FC<TableTopsProps> = () => {
               </ul>
             </div>
 
-            <div className="pt-4 border-t border-primary/10 dark:border-white/10 flex items-center justify-between gap-3">
+            <div className="pt-4 border-t border-primary/10 dark:border-white/10 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-3">
               <div>
-                <span className="text-2xl font-extrabold text-primary dark:text-secondary-light">
+                <span className="text-xl sm:text-2xl font-extrabold text-primary dark:text-secondary-light">
                   {product.price}
                 </span>
                 {product.originalPrice && (
@@ -86,14 +83,14 @@ export const TableTops: React.FC<TableTopsProps> = () => {
                 )}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full xs:w-auto justify-between xs:justify-end">
                 <ProductQuantityControl product={product} size="sm" />
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setSelectedProduct(product);
                   }}
-                  className="px-3 py-2 rounded-2xl bg-gray-100 dark:bg-navy text-primary dark:text-gray-200 font-bold text-xs hover:bg-primary hover:text-white transition-colors"
+                  className="hidden sm:inline-block px-3 py-2 rounded-2xl bg-gray-100 dark:bg-navy text-primary dark:text-gray-200 font-bold text-xs hover:bg-primary hover:text-white transition-colors"
                 >
                   Details
                 </button>

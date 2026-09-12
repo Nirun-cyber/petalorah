@@ -120,58 +120,55 @@ export const Portfolio: React.FC<PortfolioProps> = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-6">
           {filteredProducts.map((product) => (
             <div
               key={product.id}
               onClick={() => setSelectedProduct(product)}
-              className="p-4 rounded-3xl bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between group"
+              className="p-2.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between group min-w-0"
             >
-              <div>
-                <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-50 dark:bg-navy mb-4">
+              <div className="min-w-0">
+                <div className="relative aspect-square rounded-xl sm:rounded-2xl overflow-hidden bg-gray-50 dark:bg-navy mb-3 sm:mb-4">
                   <img
                     src={product.img}
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   {product.badge && (
-                    <span className="absolute top-3 left-3 bg-primary text-white dark:bg-secondary dark:text-navy text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm">
+                    <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-primary text-white dark:bg-secondary dark:text-navy text-[9px] sm:text-[11px] font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-sm">
                       {product.badge}
                     </span>
                   )}
                 </div>
 
-                <span className="text-[10px] font-bold uppercase tracking-wider text-primary/50 dark:text-secondary/70">
+                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-primary/50 dark:text-secondary/70">
                   {product.category}
                 </span>
-                <h3 className="font-serif text-base font-bold text-primary dark:text-white line-clamp-1">
+                <h3 className="font-serif text-xs sm:text-base font-bold text-primary dark:text-white line-clamp-1">
                   {product.name}
                 </h3>
-                <p className="text-xs text-primary/70 dark:text-gray-300 line-clamp-2 mt-1">
-                  {product.description}
-                </p>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-primary/5 dark:border-white/5 flex items-center justify-between gap-2">
+              <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-primary/5 dark:border-white/5 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-1.5 sm:gap-2">
                 <div>
-                  <span className="text-base font-extrabold text-primary dark:text-secondary-light">
+                  <span className="text-xs sm:text-base font-extrabold text-primary dark:text-secondary-light">
                     {product.price}
                   </span>
                   {product.originalPrice && (
-                    <span className="text-xs line-through text-gray-400 ml-1">
+                    <span className="text-[10px] sm:text-xs line-through text-gray-400 ml-1">
                       {product.originalPrice}
                     </span>
                   )}
                 </div>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 w-full xs:w-auto justify-between xs:justify-end">
                   <ProductQuantityControl product={product} size="sm" />
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedProduct(product);
                     }}
-                    className="px-2.5 py-1.5 rounded-xl bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 font-bold text-xs group-hover:bg-pink-500 group-hover:text-white transition-colors"
+                    className="hidden sm:inline-block px-2.5 py-1.5 rounded-xl bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 font-bold text-xs group-hover:bg-pink-500 group-hover:text-white transition-colors"
                   >
                     Details
                   </button>

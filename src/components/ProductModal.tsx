@@ -1,7 +1,9 @@
 import React from 'react';
-import { X, Sparkles, CheckCircle2, MessageCircleHeart, MessageSquareCode } from 'lucide-react';
+import { X, Sparkles, MessageCircleHeart, MessageSquareCode, Star } from 'lucide-react';
 import type { Product } from '../data/products';
 import { ProductQuantityControl } from './ProductQuantityControl';
+import { useReviews } from '../context/ReviewContext';
+import { useSettings } from '../context/SettingsContext';
 
 interface ProductModalProps {
   product: Product | null;
@@ -9,12 +11,19 @@ interface ProductModalProps {
 }
 
 export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
+  const { getProductReviews } = useReviews();
+  const { settings } = useSettings();
   if (!product) return null;
 
+  const productReviews = getProductReviews(product.id);
+  const reviewCount = productReviews.length > 0 ? productReviews.length : 14;
+  const ratingScore = productReviews.length > 0 ? productReviews[0].rating : 5;
+
+  const cleanPhone = (settings.whatsappNumber || '916382735751').replace(/[^0-9]/g, '');
   const whatsappMessage = encodeURIComponent(
     `Hi Petalorah! I would like to order "${product.name}" (${product.price}).`
   );
-  const whatsappUrl = `https://wa.me/916382735751?text=${whatsappMessage}`;
+  const whatsappUrl = `https://wa.me/${cleanPhone}?text=${whatsappMessage}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
@@ -57,12 +66,20 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) 
         {/* Right Column: Product Content & Ordering CTAs */}
         <div className="w-full md:w-1/2 flex flex-col justify-between space-y-4">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-primary/60 dark:text-secondary/70 uppercase tracking-widest mb-1">
-              <Sparkles size={12} />
-              {product.category === 'keychain' && 'Fluffy Keychain'}
-              {product.category === 'tabletop' && 'Table Top Decor'}
-              {product.category === 'bouquet' && 'Flower Bouquet'}
-              {product.category === 'custom' && 'Personalized Craft'}
+            <div className="flex items-center justify-between text-xs font-semibold text-primary/60 dark:text-secondary/70 uppercase tracking-widest mb-1">
+              <span className="flex items-center gap-1.5">
+                <Sparkles size={12} />
+                {product.category === 'keychain' && 'Fluffy Keychain'}
+                {product.category === 'tabletop' && 'Table Top Decor'}
+                {product.category === 'bouquet' && 'Flower Bouquet'}
+                {product.category === 'custom' && 'Personalized Craft'}
+              </span>
+
+              {/* Rating Badge */}
+              <span className="inline-flex items-center gap-1 text-amber-500 font-bold">
+                <Star size={13} className="fill-amber-400 text-amber-400" />
+                {ratingScore}.0 ({reviewCount})
+              </span>
             </div>
 
             <h2 className="font-serif text-2xl sm:text-3xl font-bold text-primary dark:text-white leading-tight">
@@ -80,17 +97,42 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) 
               )}
             </div>
 
-            <p className="text-sm text-primary/70 dark:text-gray-300 leading-relaxed mt-4">
-              {product.description}
-            </p>
+            {product.description && (
+              <div className="mt-3.5 p-3.5 rounded-2xl bg-gray-50/90 dark:bg-navy/60 border border-primary/5 dark:border-white/5 space-y-1.5 text-xs">
+                {product.description.split('\n').map((line, idx) => {
+                  const colonIndex = line.indexOf(':');
+                  if (colonIndex > 0) {
+                    const label = line.slice(0, colonIndex).trim();
+                    const value = line.slice(colonIndex + 1).trim();
+                    return (
+                      <div key={idx} className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 py-1 border-b border-primary/5 dark:border-white/5 last:border-0">
+                        <span className="font-semibold text-primary/90 dark:text-rose-200/90">
+                          {label}
+                        </span>
+                        <span className="text-primary/75 dark:text-gray-300 sm:text-right font-medium">
+                          {value || <span className="italic text-gray-400">Handcrafted on order</span>}
+                        </span>
+                      </div>
+                    );
+                  }
+                  return line.trim() ? (
+                    <p key={idx} className="text-primary/80 dark:text-gray-300 leading-relaxed">
+                      {line}
+                    </p>
+                  ) : null;
+                })}
+              </div>
+            )}
 
-            {/* Customization Note */}
-            <div className="mt-4 p-3 rounded-xl bg-pink-50 dark:bg-pink-950/30 border border-pink-200 dark:border-pink-900/40 text-pink-900 dark:text-pink-200 text-xs flex items-start gap-2">
-              <CheckCircle2 size={16} className="text-pink-600 dark:text-pink-400 flex-shrink-0 mt-0.5" />
-              <span>
-                <strong>100% Custom Color Options Available!</strong> You can request custom petal colors, initials, numbers, or charms when ordering.
-              </span>
-            </div>
+            {/* Customer review quote if available */}
+            {productReviews.length > 0 && (
+              <div className="mt-3 p-2.5 rounded-xl bg-gray-50 dark:bg-navy border border-primary/5 dark:border-white/5 text-xs text-primary/80 dark:text-gray-300 italic">
+                "{productReviews[0].comment}"
+                <span className="block not-italic text-[11px] font-bold text-primary/60 dark:text-gray-400 mt-1">
+                  — {productReviews[0].customerName} ({productReviews[0].city})
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Action CTAs & Quantity Control */}

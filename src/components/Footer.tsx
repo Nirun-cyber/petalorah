@@ -2,10 +2,11 @@ import React from 'react';
 import { Heart, MessageSquareCode } from 'lucide-react';
 
 interface FooterProps {
-  onNavigate: (tab: 'home' | 'portfolio' | 'keychains' | 'tabletops' | 'admin') => void;
+  onNavigate: (tab: 'home' | 'portfolio' | 'keychains' | 'tabletops' | 'admin' | 'login') => void;
+  onOpenTracking?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenTracking }) => {
   const whatsappUrl = `https://wa.me/916382735751?text=${encodeURIComponent("Hi Petalorah! I would like to place an order.")}`;
 
   return (
@@ -43,6 +44,19 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               </li>
               <li>
                 <button onClick={() => onNavigate('tabletops')} className="hover:underline">Table Top Pots</button>
+              </li>
+              {onOpenTracking && (
+                <li>
+                  <button
+                    onClick={onOpenTracking}
+                    className="hover:underline text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1.5"
+                  >
+                    Track Your Order 🚚
+                  </button>
+                </li>
+              )}
+              <li>
+                <button onClick={() => onNavigate('login')} className="hover:underline text-rose-500 font-semibold">Account / Login</button>
               </li>
             </ul>
           </div>

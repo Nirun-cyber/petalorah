@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   Lock,
+  Heart,
   Package,
   ShoppingCart,
   Megaphone,
@@ -18,24 +19,33 @@ import {
   Key,
   MessageSquare,
   ArrowRight,
-  ShieldCheck,
   AlertCircle,
   Clock,
+  Truck,
+  FileSpreadsheet,
+  Copy,
+  Check,
+  X,
 } from 'lucide-react';
 import { useProducts } from '../context/ProductContext';
 import { useOrders, type LoggedOrder } from '../context/OrderContext';
 import { useSettings } from '../context/SettingsContext';
 import { ProductFormModal } from '../components/admin/ProductFormModal';
-import { isSupabaseConfigured } from '../lib/supabase';
 import type { Product } from '../data/products';
+import {
+  syncOrderToGoogleSheets,
+  syncBatchOrdersToGoogleSheets,
+  testGoogleSheetsConnection,
+  GOOGLE_APPS_SCRIPT_CODE,
+} from '../lib/googleSheets';
 
 interface AdminProps {
   onNavigateHome: () => void;
 }
 
 export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
-  const { products, isCloudSynced, addProduct, updateProduct, deleteProduct, toggleBestSeller, toggleComingSoon, resetToDefaultProducts } = useProducts();
-  const { orders, updateOrderStatus, deleteOrder, clearAllOrders } = useOrders();
+  const { products, addProduct, updateProduct, deleteProduct, toggleBestSeller, toggleComingSoon, resetToDefaultProducts } = useProducts();
+  const { orders, updateOrderStatus, updateOrderTracking, deleteOrder, clearAllOrders, pullOrdersFromGoogleSheet } = useOrders();
   const { settings, updateSettings, verifyPin, changePin } = useSettings();
 
   // Authentication State (Strictly Transient In-Memory - Auto-locks on reload or navigating out)
@@ -60,8 +70,6 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
   // Product Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [isSqlModalOpen, setIsSqlModalOpen] = useState(false);
-  const [copiedSql, setCopiedSql] = useState(false);
 
   // Product Filters & Search
   const [productSearch, setProductSearch] = useState('');
@@ -79,7 +87,17 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
   const [announcementInput, setAnnouncementInput] = useState(settings.announcementText);
   const [whatsappInput, setWhatsappInput] = useState(settings.whatsappNumber);
   const [instagramInput, setInstagramInput] = useState(settings.instagramUsername);
+  const [googleSheetInput, setGoogleSheetInput] = useState(settings.googleSheetWebhookUrl || '');
   const [settingsSuccessMsg, setSettingsSuccessMsg] = useState<string | null>(null);
+
+  // Google Sheets Integration State
+  const [isTestingSheet, setIsTestingSheet] = useState(false);
+  const [sheetTestStatus, setSheetTestStatus] = useState<string | null>(null);
+  const [isSyncingAll, setIsSyncingAll] = useState(false);
+  const [syncStatusMsg, setSyncStatusMsg] = useState<string | null>(null);
+  const [isScriptModalOpen, setIsScriptModalOpen] = useState(false);
+  const [copiedScript, setCopiedScript] = useState(false);
+  const [syncedOrderIds, setSyncedOrderIds] = useState<Record<string, boolean>>({});
 
   // Auth Submit
   const handleLogin = (e: React.FormEvent) => {
@@ -101,6 +119,91 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
   const handleOpenAddModal = () => {
     setEditingProduct(null);
     setIsModalOpen(true);
+  };
+
+  // Settings Actions
+  const handleSaveSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateSettings({
+      announcementText: announcementInput,
+      whatsappNumber: whatsappInput,
+      instagramUsername: instagramInput,
+      googleSheetWebhookUrl: googleSheetInput.trim(),
+    });
+    setSettingsSuccessMsg('Store & Google Sheets settings saved successfully!');
+    setTimeout(() => setSettingsSuccessMsg(null), 3000);
+  };
+
+  const handleTestGoogleSheet = async () => {
+    const url = googleSheetInput.trim() || settings.googleSheetWebhookUrl;
+    if (!url) {
+      alert('Please enter your Google Sheet link or Apps Script Webhook URL first.');
+      return;
+    }
+    setIsTestingSheet(true);
+    setSheetTestStatus(null);
+    const res = await testGoogleSheetsConnection(url);
+    setIsTestingSheet(false);
+    if (res.success) {
+      setSheetTestStatus(`✅ ${res.message}`);
+    } else {
+      setSheetTestStatus(`❌ ${res.message}`);
+    }
+    setTimeout(() => setSheetTestStatus(null), 6000);
+  };
+
+  const handlePullOrdersFromSheet = async () => {
+    const url = googleSheetInput.trim() || settings.googleSheetWebhookUrl;
+    if (!url) {
+      alert('Please enter and save your Google Sheet link or Apps Script URL first.');
+      return;
+    }
+    setIsSyncingAll(true);
+    setSyncStatusMsg(null);
+    const res = await pullOrdersFromGoogleSheet();
+    setIsSyncingAll(false);
+    if (res.error) {
+      setSyncStatusMsg(`❌ ${res.error}`);
+    } else {
+      setSyncStatusMsg(`✅ Imported ${res.count} new orders from Google Sheet! Total store orders: ${orders.length + res.count}`);
+    }
+    setTimeout(() => setSyncStatusMsg(null), 5000);
+  };
+
+  const handleSyncAllOrders = async () => {
+    const url = googleSheetInput.trim() || settings.googleSheetWebhookUrl;
+    if (!url) {
+      alert('Please enter and save your Google Sheet Webhook URL first.');
+      return;
+    }
+    if (orders.length === 0) {
+      alert('No orders to sync yet.');
+      return;
+    }
+    setIsSyncingAll(true);
+    setSyncStatusMsg(null);
+    const res = await syncBatchOrdersToGoogleSheets(orders, url);
+    setIsSyncingAll(false);
+    setSyncStatusMsg(`✅ Dispatched ${res.success} of ${res.total} orders to Google Sheets!`);
+    setTimeout(() => setSyncStatusMsg(null), 4500);
+  };
+
+  const handleSyncSingleOrder = async (order: LoggedOrder) => {
+    const url = googleSheetInput.trim() || settings.googleSheetWebhookUrl;
+    if (!url) {
+      alert('Please configure your Google Sheet Webhook URL in Settings first.');
+      return;
+    }
+    const ok = await syncOrderToGoogleSheets(order, url);
+    if (ok) {
+      setSyncedOrderIds((prev) => ({ ...prev, [order.id]: true }));
+    }
+  };
+
+  const handleCopyScript = () => {
+    navigator.clipboard.writeText(GOOGLE_APPS_SCRIPT_CODE);
+    setCopiedScript(true);
+    setTimeout(() => setCopiedScript(false), 3000);
   };
 
   const handleOpenEditModal = (prod: Product) => {
@@ -126,18 +229,6 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
     if (window.confirm('Reset all products to initial default Petalorah list? Any custom products added will be removed.')) {
       resetToDefaultProducts();
     }
-  };
-
-  // Settings Actions
-  const handleSaveSettings = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateSettings({
-      announcementText: announcementInput,
-      whatsappNumber: whatsappInput,
-      instagramUsername: instagramInput,
-    });
-    setSettingsSuccessMsg('Store settings saved successfully!');
-    setTimeout(() => setSettingsSuccessMsg(null), 3000);
   };
 
   const handleChangePinSubmit = (e: React.FormEvent) => {
@@ -183,7 +274,7 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
       <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 bg-gradient-to-b from-rose-50/50 via-white to-pink-50/30 dark:from-slate-900 dark:to-slate-950">
         <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-2xl border border-rose-100 dark:border-slate-800 text-center animate-in fade-in zoom-in duration-300">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-rose-500 to-pink-600 text-white flex items-center justify-center mx-auto mb-6 shadow-lg shadow-rose-200 dark:shadow-none">
-            <ShieldCheck className="w-8 h-8" />
+            <Heart className="w-8 h-8 fill-white/20" />
           </div>
 
           <h1 className="text-2xl font-bold font-serif text-slate-800 dark:text-white mb-2">
@@ -229,13 +320,10 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center text-xs text-slate-400">
             <button onClick={onNavigateHome} className="hover:text-rose-500 transition-colors font-medium">
               ← Return to Storefront
             </button>
-            <span className="font-mono text-[10px] bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full font-bold text-slate-600 dark:text-slate-300">
-              🔒 Security Active
-            </span>
           </div>
         </div>
       </div>
@@ -250,35 +338,14 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-500 to-pink-600 text-white flex items-center justify-center shadow-md">
-              <ShieldCheck className="w-5 h-5" />
+              <Package className="w-5 h-5" />
             </div>
             <div>
               <h1 className="text-xl font-bold font-serif text-slate-800 dark:text-white flex flex-wrap items-center gap-2">
                 Petalorah Control Center
-                <span className="px-2 py-0.5 rounded-full text-[10px] uppercase font-sans font-extrabold bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] uppercase font-sans font-extrabold bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400">
                   Admin
                 </span>
-                {isCloudSynced ? (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 flex items-center gap-1 shadow-sm">
-                    ☁️ Supabase Cloud Active
-                  </span>
-                ) : isSupabaseConfigured ? (
-                  <button
-                    onClick={() => setIsSqlModalOpen(true)}
-                    className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 hover:bg-amber-200 transition-colors flex items-center gap-1 cursor-pointer shadow-sm"
-                    title="Click for 1-step SQL setup script"
-                  >
-                    ⚡ SQL Table Setup Required (Click here)
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setIsSqlModalOpen(true)}
-                    className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 transition-colors flex items-center gap-1 cursor-pointer shadow-sm"
-                    title="Click for database sync instructions"
-                  >
-                    💾 Local Storage Mode (Click to sync globally)
-                  </button>
-                )}
               </h1>
               <p className="text-xs text-slate-400 font-medium hidden sm:block">
                 Manage products, track order logs, edit announcement banners & store configuration
@@ -552,7 +619,7 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
                             </div>
                             <div className="min-w-0">
                               <p className="font-bold text-slate-800 dark:text-white truncate max-w-xs">{prod.name}</p>
-                              <p className="text-[11px] text-slate-400 truncate max-w-xs">{prod.description}</p>
+                              <p className="text-[11px] text-slate-400 truncate max-w-xs">{prod.description?.replace(/\n+/g, ' • ')}</p>
                             </div>
                           </div>
                         </td>
@@ -659,11 +726,25 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
                 >
                   <option value="all">All Statuses</option>
                   <option value="New">New</option>
+                  <option value="Crafting">Crafting</option>
                   <option value="Contacted">Contacted</option>
                   <option value="Packed">Packed</option>
+                  <option value="Dispatched">Dispatched</option>
                   <option value="Delivered">Delivered</option>
                   <option value="Cancelled">Cancelled</option>
                 </select>
+
+                {orders.length > 0 && (
+                  <button
+                    onClick={handleSyncAllOrders}
+                    disabled={isSyncingAll}
+                    className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-all"
+                    title="Sync all orders to Google Sheets for your accounting app"
+                  >
+                    <FileSpreadsheet size={15} />
+                    <span>{isSyncingAll ? 'Syncing...' : 'Sync to Sheets'}</span>
+                  </button>
+                )}
 
                 {orders.length > 0 && (
                   <button
@@ -677,6 +758,12 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
                 )}
               </div>
             </div>
+
+            {syncStatusMsg && (
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-2xl flex items-center gap-2">
+                <Check size={16} /> {syncStatusMsg}
+              </div>
+            )}
 
             {filteredOrders.length === 0 ? (
               <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center border border-slate-100 dark:border-slate-800">
@@ -694,7 +781,7 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
                     className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-wrap">
                         <span className="font-mono font-bold text-rose-500 text-sm">{ord.id}</span>
                         <span
                           className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
@@ -703,29 +790,56 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
                         >
                           Via {ord.channel}
                         </span>
+                        {ord.customerName && (
+                          <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                            {ord.customerName} {ord.customerPhone ? `(${ord.customerPhone})` : ''}
+                          </span>
+                        )}
                         <span className="text-xs text-slate-400">
                           {new Date(ord.createdAt).toLocaleString()}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         <select
                           value={ord.status}
                           onChange={(e) => updateOrderStatus(ord.id, e.target.value as LoggedOrder['status'])}
                           className={`px-3 py-1 rounded-xl text-xs font-bold border ${
                             ord.status === 'Delivered'
                               ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                              : ord.status === 'Dispatched'
+                              ? 'bg-blue-50 text-blue-600 border-blue-200'
+                              : ord.status === 'Crafting'
+                              ? 'bg-amber-50 text-amber-600 border-amber-200'
                               : ord.status === 'New'
                               ? 'bg-rose-50 text-rose-600 border-rose-200'
-                              : 'bg-amber-50 text-amber-600 border-amber-200'
+                              : 'bg-slate-50 text-slate-600 border-slate-200'
                           }`}
                         >
                           <option value="New">Status: New</option>
+                          <option value="Crafting">Status: Crafting</option>
                           <option value="Contacted">Status: Contacted</option>
                           <option value="Packed">Status: Packed</option>
+                          <option value="Dispatched">Status: Dispatched</option>
                           <option value="Delivered">Status: Delivered</option>
                           <option value="Cancelled">Status: Cancelled</option>
                         </select>
+
+                        {/* Sync Single Order to Sheet */}
+                        <button
+                          onClick={() => handleSyncSingleOrder(ord)}
+                          className={`px-2 py-1 rounded-lg border text-xs font-bold flex items-center gap-1 transition-colors ${
+                            syncedOrderIds[ord.id]
+                              ? 'bg-emerald-50 text-emerald-600 border-emerald-300'
+                              : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-emerald-600 hover:bg-emerald-50'
+                          }`}
+                          title="Sync this order row to Google Sheets"
+                        >
+                          <FileSpreadsheet size={14} className="text-emerald-600" />
+                          <span className="hidden sm:inline">
+                            {syncedOrderIds[ord.id] ? 'Synced' : 'Sheet'}
+                          </span>
+                        </button>
 
                         <button
                           onClick={() => deleteOrder(ord.id)}
@@ -751,6 +865,35 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
                           </div>
                         </div>
                       ))}
+                    </div>
+
+                    {/* Shipping & Tracking Control Row */}
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 flex flex-wrap items-center gap-3 text-xs">
+                      <div className="flex items-center gap-1.5 font-bold text-slate-600 dark:text-slate-300">
+                        <Truck size={14} className="text-indigo-500" />
+                        <span>Tracking:</span>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Courier (e.g. Delhivery, India Post)"
+                        defaultValue={ord.courierPartner || ''}
+                        onBlur={(e) => updateOrderTracking(ord.id, { courierPartner: e.target.value })}
+                        className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white text-[11px] w-44"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Tracking AWB #"
+                        defaultValue={ord.trackingNumber || ''}
+                        onBlur={(e) => updateOrderTracking(ord.id, { trackingNumber: e.target.value })}
+                        className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white font-mono text-[11px] w-36"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Est. Delivery (e.g. In 3 days)"
+                        defaultValue={ord.estimatedDelivery || ''}
+                        onBlur={(e) => updateOrderTracking(ord.id, { estimatedDelivery: e.target.value })}
+                        className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white text-[11px] w-36"
+                      />
                     </div>
 
                     <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
@@ -951,6 +1094,121 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
                 </button>
               </form>
             </div>
+
+            {/* Google Sheets & AI Studio Accounting Sync */}
+            <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                    <FileSpreadsheet size={22} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold font-serif text-slate-800 dark:text-white flex items-center gap-2">
+                      Google Sheets & Accounting Sync
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                        Google AI Studio Ready
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Sync every order ID, items breakdown, and revenue in real-time to your Google Spreadsheet.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsScriptModalOpen(true)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors flex items-center gap-1.5 self-start sm:self-auto"
+                >
+                  <FileSpreadsheet size={14} className="text-emerald-600" />
+                  View Setup Guide & Script
+                </button>
+              </div>
+
+              <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                    Google Sheet Link or Apps Script Webhook URL
+                  </label>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="url"
+                      placeholder="Paste Google Sheet URL (docs.google.com/spreadsheets/d/...) or Apps Script URL"
+                      value={googleSheetInput}
+                      onChange={(e) => setGoogleSheetInput(e.target.value)}
+                      className="flex-grow px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono text-xs text-slate-800 dark:text-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSaveSettings}
+                      className="px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow transition-all flex-shrink-0"
+                    >
+                      Save URL
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 leading-normal">
+                    ✨ <strong>Option 1 (Easiest):</strong> Paste your Google Sheet URL directly (make sure Google Drive sharing is set to <em>&quot;Anyone with the link can view&quot;</em>). Orders created in your accounts app can be tracked immediately!<br />
+                    ⚡ <strong>Option 2 (Bidirectional):</strong> Paste your Google Apps Script Web App URL to both live query and sync orders back and forth.
+                  </p>
+                </div>
+
+                {sheetTestStatus && (
+                  <div
+                    className={`p-3 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                      sheetTestStatus.startsWith('✅')
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-rose-50 text-rose-700 border border-rose-200'
+                    }`}
+                  >
+                    {sheetTestStatus}
+                  </div>
+                )}
+
+                {syncStatusMsg && (
+                  <div
+                    className={`p-3 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                      syncStatusMsg.startsWith('✅')
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-rose-50 text-rose-700 border border-rose-200'
+                    }`}
+                  >
+                    {syncStatusMsg}
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleTestGoogleSheet}
+                    disabled={isTestingSheet}
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs transition-colors flex items-center gap-1.5"
+                  >
+                    <Check size={14} className="text-emerald-500" />
+                    <span>{isTestingSheet ? 'Testing Connection...' : 'Test Connection & Orders'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handlePullOrdersFromSheet}
+                    disabled={isSyncingAll}
+                    className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow transition-colors flex items-center gap-1.5"
+                  >
+                    <FileSpreadsheet size={14} className="text-white" />
+                    <span>{isSyncingAll ? 'Importing...' : 'Import Orders from Google Sheet'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSyncAllOrders}
+                    disabled={isSyncingAll}
+                    className="px-4 py-2.5 rounded-xl bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 text-white font-bold text-xs shadow transition-colors flex items-center gap-1.5"
+                  >
+                    <FileSpreadsheet size={14} className="text-emerald-400" />
+                    <span>{isSyncingAll ? 'Syncing...' : `Export Petalorah Orders to Sheet (${orders.length})`}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -963,96 +1221,71 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
         onSave={handleSaveProduct}
       />
 
-      {/* SQL Setup Helper Modal */}
-      {isSqlModalOpen && (
+
+
+      {/* GOOGLE APPS SCRIPT SETUP MODAL */}
+      {isScriptModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden border border-rose-100 dark:border-slate-800 p-6 space-y-4 text-slate-800 dark:text-slate-100">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">⚡</span>
-                <h3 className="text-lg font-bold font-serif">Activate Supabase Live Cloud Sync</h3>
+          <div className="fixed inset-0" onClick={() => setIsScriptModalOpen(false)} />
+          <div
+            data-lenis-prevent
+            className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 z-10 max-h-[90vh] overflow-y-auto overscroll-contain space-y-5"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <FileSpreadsheet className="text-emerald-600" size={22} />
+                <h3 className="text-lg font-bold font-serif text-slate-800 dark:text-white">
+                  Google Sheets & Accounting Setup
+                </h3>
               </div>
               <button
-                onClick={() => setIsSqlModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                onClick={() => setIsScriptModalOpen(false)}
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
               >
-                ✕
+                <X size={18} />
               </button>
             </div>
 
-            <p className="text-xs text-slate-500 dark:text-slate-300 leading-relaxed">
-              Your Supabase Cloud database credentials are configured! To activate live syncing across all smartphones and laptops worldwide, run this 1-step SQL query in your <strong>Supabase SQL Editor</strong>:
-            </p>
-
-            <div className="relative bg-slate-900 text-emerald-400 font-mono text-xs p-4 rounded-2xl overflow-x-auto">
-              <pre>{`create table if not exists products (
-  id text primary key,
-  name text not null,
-  price text not null,
-  numeric_price numeric,
-  original_price text,
-  category text,
-  description text,
-  img text,
-  badge text,
-  is_best_seller boolean default false,
-  is_coming_soon boolean default false,
-  created_at timestamp default now()
-);
-
-create table if not exists orders (
-  id text primary key,
-  created_at timestamp default now(),
-  items jsonb,
-  total_items numeric,
-  total_amount numeric,
-  channel text,
-  status text
-);
-
-alter table products disable row level security;
-alter table orders disable row level security;`}</pre>
+            <div className="text-xs text-slate-600 dark:text-slate-300 space-y-2 leading-relaxed">
+              <p className="font-semibold text-slate-800 dark:text-white">
+                Follow these 4 simple steps to connect Petalorah to your Google Sheet:
+              </p>
+              <ol className="list-decimal list-inside space-y-1.5 pl-1">
+                <li>Open your Google Sheet (used by your Google AI Studio accounting app).</li>
+                <li>Click <strong>Extensions</strong> → <strong>Apps Script</strong>.</li>
+                <li>Delete any default code, paste the script below, and click <strong>Save</strong> (💾).</li>
+                <li>Click <strong>Deploy</strong> → <strong>New deployment</strong> → Select type: <strong>Web app</strong>:
+                  <ul className="list-disc list-inside pl-4 mt-1 space-y-0.5 text-slate-500">
+                    <li>Execute as: <strong>Me</strong></li>
+                    <li>Who has access: <strong>Anyone</strong></li>
+                  </ul>
+                </li>
+                <li>Copy the generated <strong>Web App URL</strong> and paste it into the setting input above!</li>
+              </ol>
             </div>
 
-            <div className="flex items-center justify-between pt-2">
-              <span className="text-xs font-semibold text-rose-500">
-                {copiedSql ? '✓ SQL Copied to Clipboard!' : 'Copy SQL & paste into Supabase SQL Editor'}
-              </span>
+            <div className="relative">
+              <div className="flex items-center justify-between bg-slate-800 text-slate-200 px-4 py-2 rounded-t-2xl text-[11px] font-mono">
+                <span>Code.gs (Google Apps Script)</span>
+                <button
+                  onClick={handleCopyScript}
+                  className="flex items-center gap-1 font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
+                >
+                  {copiedScript ? <Check size={14} /> : <Copy size={14} />}
+                  <span>{copiedScript ? 'Copied!' : 'Copy Script'}</span>
+                </button>
+              </div>
+              <pre className="p-4 bg-slate-950 text-slate-200 text-xs font-mono rounded-b-2xl overflow-x-auto max-h-56 leading-relaxed border border-slate-800">
+                {GOOGLE_APPS_SCRIPT_CODE}
+              </pre>
+            </div>
+
+            <div className="flex justify-end pt-2">
               <button
-                onClick={() => {
-                  navigator.clipboard.writeText(`create table if not exists products (
-  id text primary key,
-  name text not null,
-  price text not null,
-  numeric_price numeric,
-  original_price text,
-  category text,
-  description text,
-  img text,
-  badge text,
-  is_best_seller boolean default false,
-  is_coming_soon boolean default false,
-  created_at timestamp default now()
-);
-
-create table if not exists orders (
-  id text primary key,
-  created_at timestamp default now(),
-  items jsonb,
-  total_items numeric,
-  total_amount numeric,
-  channel text,
-  status text
-);
-
-alter table products disable row level security;
-alter table orders disable row level security;`);
-                  setCopiedSql(true);
-                  setTimeout(() => setCopiedSql(false), 3000);
-                }}
-                className="px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-rose-500 hover:bg-rose-600 shadow transition-all"
+                onClick={() => setIsScriptModalOpen(false)}
+                className="px-5 py-2.5 rounded-xl bg-slate-800 text-white hover:bg-slate-900 font-bold text-xs"
               >
-                Copy SQL Script
+                Close
               </button>
             </div>
           </div>

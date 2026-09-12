@@ -6,6 +6,7 @@ interface SiteSettings {
   whatsappNumber: string;
   instagramUsername: string;
   adminPin: string;
+  googleSheetWebhookUrl?: string;
 }
 
 interface SettingsContextType {
@@ -23,6 +24,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   whatsappNumber: '916382735751',
   instagramUsername: 'petalorah',
   adminPin: '240812',
+  googleSheetWebhookUrl: (import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL as string) || '',
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -33,8 +35,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Force update legacy 1234 PIN to 240812
-        if (parsed.adminPin === '1234') {
+        // Force update legacy PINs to 240812
+        if (parsed.adminPin === '1234' || parsed.adminPin === '240312') {
           parsed.adminPin = '240812';
         }
         return { ...DEFAULT_SETTINGS, ...parsed };

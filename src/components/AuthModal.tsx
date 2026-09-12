@@ -2,16 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   X,
   User,
-  ShieldCheck,
-  Lock,
   LogOut,
+  Mail,
+  Phone,
+  MapPin,
+  CheckCircle2,
   PackageCheck,
   Sparkles,
-  CheckCircle2,
-  ArrowRight,
-  Phone,
-  Mail,
-  MapPin,
   Edit3,
   Save,
   Plus,
@@ -20,26 +17,20 @@ import { useAuth } from '../context/AuthContext';
 import { useOrders } from '../context/OrderContext';
 
 interface AuthModalProps {
-  onNavigateToAdmin: () => void;
+  onNavigateToAdmin?: () => void;
 }
 
-export const AuthModal: React.FC<AuthModalProps> = ({ onNavigateToAdmin }) => {
+export const AuthModal: React.FC<AuthModalProps> = () => {
   const {
     user,
-    isAdmin,
     isAuthModalOpen,
-    initialTab,
     closeAuthModal,
     loginCustomer,
     logoutCustomer,
     updateCustomerAddress,
-    loginAdmin,
-    logoutAdmin,
   } = useAuth();
 
   const { orders } = useOrders();
-
-  const [activeTab, setActiveTab] = useState<'customer' | 'admin'>(initialTab);
 
   // Customer Sign In Form state
   const [custName, setCustName] = useState('');
@@ -54,18 +45,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onNavigateToAdmin }) => {
   const [pincodeInput, setPincodeInput] = useState('');
   const [landmarkInput, setLandmarkInput] = useState('');
 
-  // Admin Form state
-  const [adminPin, setAdminPin] = useState('');
-  const [pinError, setPinError] = useState(false);
-
   useEffect(() => {
     if (isAuthModalOpen) {
-      setActiveTab(initialTab);
-      setPinError(false);
-      setAdminPin('');
       setIsEditingAddress(false);
     }
-  }, [isAuthModalOpen, initialTab]);
+  }, [isAuthModalOpen]);
 
   useEffect(() => {
     if (user?.address) {
@@ -102,19 +86,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onNavigateToAdmin }) => {
     setIsEditingAddress(false);
   };
 
-  const handleAdminSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const success = loginAdmin(adminPin);
-    if (success) {
-      setPinError(false);
-      setAdminPin('');
-      closeAuthModal();
-      onNavigateToAdmin();
-    } else {
-      setPinError(true);
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy/60 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div
@@ -125,16 +96,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onNavigateToAdmin }) => {
         <div className="px-6 pt-6 pb-4 border-b border-primary/5 dark:border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-2xl bg-primary/10 dark:bg-secondary/20 text-primary dark:text-secondary-light flex items-center justify-center font-bold">
-              {activeTab === 'customer' ? <User size={20} /> : <ShieldCheck size={20} />}
+              <User size={20} />
             </div>
             <div>
               <h3 className="font-serif text-lg font-bold text-primary dark:text-white leading-tight">
-                {activeTab === 'customer' ? 'Customer Profile' : 'Store Admin Portal'}
+                Customer Profile
               </h3>
               <p className="text-xs text-primary/60 dark:text-gray-400">
-                {activeTab === 'customer'
-                  ? 'Track orders & manage saved delivery details'
-                  : 'Manage store products & customer orders'}
+                Track orders & manage saved delivery details
               </p>
             </div>
           </div>
@@ -147,37 +116,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onNavigateToAdmin }) => {
           </button>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="grid grid-cols-2 p-1.5 bg-gray-100 dark:bg-navy mx-6 mt-4 rounded-2xl">
-          <button
-            onClick={() => setActiveTab('customer')}
-            className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === 'customer'
-                ? 'bg-white dark:bg-navy-light text-primary dark:text-secondary-light shadow-sm'
-                : 'text-primary/60 dark:text-gray-400 hover:text-primary dark:hover:text-white'
-            }`}
-          >
-            <User size={14} />
-            Customer Profile
-          </button>
-
-          <button
-            onClick={() => setActiveTab('admin')}
-            className={`py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === 'admin'
-                ? 'bg-white dark:bg-navy-light text-primary dark:text-secondary-light shadow-sm'
-                : 'text-primary/60 dark:text-gray-400 hover:text-primary dark:hover:text-white'
-            }`}
-          >
-            <ShieldCheck size={14} />
-            Admin Portal
-          </button>
-        </div>
-
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto space-y-5">
-          {activeTab === 'customer' ? (
-            user ? (
+          {user ? (
               // Logged-in Customer Profile View
               <div className="space-y-5">
                 {/* Profile Card Header */}
@@ -461,87 +402,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onNavigateToAdmin }) => {
                   Sign In & Save Profile
                 </button>
               </form>
-            )
-          ) : (
-            // Admin Portal Tab
-            <form onSubmit={handleAdminSubmit} className="space-y-4">
-              {isAdmin ? (
-                <div className="space-y-4 text-center">
-                  <div className="w-12 h-12 mx-auto rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                    <ShieldCheck size={28} />
-                  </div>
-                  <div>
-                    <h4 className="font-serif text-base font-bold text-primary dark:text-white">
-                      Admin Access Active
-                    </h4>
-                    <p className="text-xs text-primary/60 dark:text-gray-400 mt-1">
-                      You are authenticated as the store owner.
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      closeAuthModal();
-                      onNavigateToAdmin();
-                    }}
-                    className="w-full py-3 rounded-xl bg-primary text-white dark:bg-secondary dark:text-navy font-bold text-xs shadow-md flex items-center justify-center gap-2"
-                  >
-                    Open Control Center
-                    <ArrowRight size={16} />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={logoutAdmin}
-                    className="w-full py-2.5 rounded-xl border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 hover:bg-rose-50 font-bold text-xs flex items-center justify-center gap-2"
-                  >
-                    <Lock size={14} />
-                    Lock Admin Access
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/40 text-xs text-indigo-900 dark:text-indigo-200 flex items-start gap-2.5">
-                    <Lock size={16} className="text-indigo-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-bold">Store Admin Area:</span> Enter your secret passcode PIN to unlock the store control dashboard.
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-primary dark:text-gray-300 mb-1">
-                      Security Passcode PIN
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      placeholder="Enter admin PIN..."
-                      value={adminPin}
-                      onChange={(e) => {
-                        setAdminPin(e.target.value);
-                        setPinError(false);
-                      }}
-                      className="w-full px-4 py-2.5 rounded-xl border border-primary/15 dark:border-white/15 bg-white dark:bg-navy text-xs text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-secondary tracking-widest font-mono"
-                    />
-                    {pinError && (
-                      <p className="text-[11px] font-bold text-rose-500 mt-1">
-                        Incorrect PIN. Please try again!
-                      </p>
-                    )}
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full py-3 rounded-xl bg-primary text-white dark:bg-secondary dark:text-navy font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
-                  >
-                    <ShieldCheck size={16} />
-                    Unlock Store Control Center
-                  </button>
-                </>
-              )}
-            </form>
-          )}
+            )}
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Minus, ShoppingBag } from 'lucide-react';
+import { Plus, Minus, ShoppingBag, Clock } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import type { Product } from '../data/products';
 
@@ -14,6 +14,22 @@ export const ProductQuantityControl: React.FC<ProductQuantityControlProps> = ({
 }) => {
   const { cartItems, addToCart, updateQuantity } = useCart();
 
+  // Polished product unavailable / coming soon state
+  if (product.isComingSoon) {
+    return (
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className={`inline-flex items-center justify-center gap-1.5 rounded-xl font-bold bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 select-none cursor-not-allowed ${
+          size === 'sm' ? 'px-2.5 py-1.5 text-xs' : 'w-full py-3 px-5 text-sm'
+        }`}
+        title="This creation is temporarily unavailable or in preparation"
+      >
+        <Clock size={size === 'sm' ? 13 : 16} />
+        <span>Currently Unavailable</span>
+      </div>
+    );
+  }
+
   const cartItem = cartItems.find((item) => item.product.id === product.id);
   const quantity = cartItem ? cartItem.quantity : 0;
 
@@ -26,7 +42,7 @@ export const ProductQuantityControl: React.FC<ProductQuantityControlProps> = ({
         }}
         className={`inline-flex items-center justify-center gap-1.5 rounded-xl font-bold transition-all shadow-sm ${
           size === 'sm'
-            ? 'px-2.5 py-1.5 bg-primary/10 dark:bg-secondary/20 text-primary dark:text-secondary-light hover:bg-primary hover:text-white dark:hover:bg-secondary dark:hover:text-navy text-xs'
+            ? 'px-2 xs:px-2.5 py-1.5 bg-primary/10 dark:bg-secondary/20 text-primary dark:text-secondary-light hover:bg-primary hover:text-white dark:hover:bg-secondary dark:hover:text-navy text-xs'
             : 'w-full py-3 px-5 bg-primary text-white dark:bg-secondary dark:text-navy hover:scale-[1.02] text-sm'
         }`}
         title="Add to Cart"
@@ -41,7 +57,7 @@ export const ProductQuantityControl: React.FC<ProductQuantityControlProps> = ({
     <div
       onClick={(e) => e.stopPropagation()}
       className={`inline-flex items-center justify-between border rounded-xl font-bold bg-pink-50 dark:bg-pink-950/50 border-pink-300 dark:border-pink-800 text-pink-700 dark:text-pink-300 shadow-sm ${
-        size === 'sm' ? 'px-2 py-1 text-xs gap-2' : 'w-full py-2.5 px-4 text-sm gap-4'
+        size === 'sm' ? 'px-1.5 xs:px-2 py-1 text-xs gap-1.5 xs:gap-2' : 'w-full py-2.5 px-4 text-sm gap-4'
       }`}
     >
       <button

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import type { Product } from '../data/products';
 import { useOrders } from './OrderContext';
 import { useSettings } from './SettingsContext';
@@ -8,6 +8,16 @@ export const INSTAGRAM_USERNAME = "petalorah";
 export interface CartItem {
   product: Product;
   quantity: number;
+}
+
+export interface CustomerCheckoutInfo {
+  name: string;
+  phone: string;
+  address: string;
+  city?: string;
+  state?: string;
+  pincode: string;
+  notes?: string;
 }
 
 interface CartContextType {
@@ -24,76 +34,109 @@ interface CartContextType {
   closeClipboardFallback: () => void;
   totalItems: number;
   totalPrice: number;
-  proceedToOrder: () => void;
-  proceedToInstagramOrder: () => void;
-  proceedToWhatsAppOrder: () => void;
+  proceedToOrder: (shippingFee?: number, shippingRegion?: string, customerInfo?: CustomerCheckoutInfo) => void;
+  proceedToInstagramOrder: (shippingFee?: number, shippingRegion?: string, customerInfo?: CustomerCheckoutInfo) => Promise<string>;
+  proceedToWhatsAppOrder: (shippingFee?: number, shippingRegion?: string, customerInfo?: CustomerCheckoutInfo) => string;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY = 'petalorah_cart_items';
+/**
+ * Calculates delivery shipping charges based on destination pincode:
+ * - Coimbatore pincodes (641xxx) or city 'Coimbatore': ₹60
+ * - Other Tamil Nadu pincodes (60xxxx - 64xxxx) or state 'Tamil Nadu': ₹80
+ * - Other Indian pincodes: ₹100
+ */
+export const calculateShippingFee = (
+  pincode: string = '',
+  city?: string,
+  state?: string
+): { fee: number; region: string } => {
+  const cleanPin = (pincode || '').replace(/[^0-9]/g, '').trim();
+  const cleanCity = (city || '').toLowerCase().trim();
+  const cleanState = (state || '').toLowerCase().trim();
 
-export const generateInstagramOrderMessage = (items: CartItem[]): string => {
-  if (!items || items.length === 0) return '';
-
-  const itemLines = items.map((item, index) => {
-    const itemSubtotal = item.product.numericPrice * item.quantity;
-    return `${index + 1}. ${item.product.name} × ${item.quantity} — ₹${itemSubtotal}`;
-  }).join('\n');
-
-  const totalItemsCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPriceSum = items.reduce((sum, item) => sum + (item.product.numericPrice * item.quantity), 0);
-
-  let customerDetails = '';
-  try {
-    const savedUser = localStorage.getItem('petalorah_customer_user');
-    if (savedUser) {
-      const parsed = JSON.parse(savedUser);
-      if (parsed?.name) {
-        customerDetails += `\n\nCustomer & Delivery Details:`;
-        customerDetails += `\nName: ${parsed.name}`;
-        if (parsed.phone) customerDetails += `\nContact: ${parsed.phone}`;
-        if (parsed.address?.street) {
-          customerDetails += `\nAddress: ${parsed.address.street}, ${parsed.address.city}, ${parsed.address.state} - ${parsed.address.pincode}`;
-          if (parsed.address.landmark) customerDetails += ` (Landmark: ${parsed.address.landmark})`;
-        }
-      }
-    }
-  } catch (e) {
-    console.error('Failed to read customer address for order:', e);
+  // 1. Coimbatore Local (641xxx)
+  if (cleanPin.startsWith('641') || cleanCity.includes('coimbatore') || cleanCity === 'cbe') {
+    return { fee: 60, region: 'Coimbatore Local' };
   }
 
-  return `Hi! I would like to order these items:\n\n${itemLines}\n\nTotal Items: ${totalItemsCount}\nTotal Amount: ₹${totalPriceSum}${customerDetails}\n\nPlease confirm availability and payment details. Thank you!`;
+  // 2. Tamil Nadu Standard (60xxxx - 64xxxx)
+  if (
+    cleanPin.startsWith('60') ||
+    cleanPin.startsWith('61') ||
+    cleanPin.startsWith('62') ||
+    cleanPin.startsWith('63') ||
+    cleanPin.startsWith('64') ||
+    cleanState.includes('tamil nadu') ||
+    cleanState === 'tn'
+  ) {
+    return { fee: 80, region: 'Tamil Nadu Standard' };
+  }
+
+  // 3. Other Indian regions
+  if (cleanPin.length === 6) {
+    return { fee: 100, region: 'Interstate Standard' };
+  }
+
+  // Default standard Tamil Nadu rate if empty
+  return { fee: 80, region: 'Tamil Nadu Standard' };
 };
+
+export const generateWhatsAppOrderMessage = (
+  items: CartItem[],
+  shippingFee: number = 80,
+  _shippingRegion: string = 'Tamil Nadu Standard',
+  customerInfo?: CustomerCheckoutInfo,
+  _orderId?: string
+): string => {
+  if (!items || items.length === 0) return '';
+
+  const itemLines = items
+    .map((item) => `${item.product.name} × ${item.quantity} — ₹${item.product.numericPrice * item.quantity}`)
+    .join('\n');
+
+  const itemsSubtotal = items.reduce((sum, item) => sum + item.product.numericPrice * item.quantity, 0);
+  const grandTotal = itemsSubtotal + shippingFee;
+
+  const freeCharmLine = itemsSubtotal >= 200
+    ? '\n🎁 Free Mini Gift Charm: Unlocked (₹0)'
+    : '';
+
+  const customerName = customerInfo?.name || '';
+  const customerPhone = customerInfo?.phone || '';
+  const customerAddress = customerInfo ? [customerInfo.address, customerInfo.city, customerInfo.state].filter(Boolean).join(', ') : '';
+  const customerPincode = customerInfo?.pincode || '';
+
+  return `🌸 Petalorah Order
+
+Products:
+${itemLines}
+
+Subtotal: ₹${itemsSubtotal}
+Shipping: ₹${shippingFee}${freeCharmLine}
+Total: ₹${grandTotal}
+
+Customer Name: ${customerName}
+Phone: ${customerPhone}
+Address: ${customerAddress}
+Pincode: ${customerPincode}
+
+"Please confirm my order. Thank you! 💗"`;
+};
+
+export const generateInstagramOrderMessage = generateWhatsAppOrderMessage;
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { logOrder } = useOrders();
   const { settings } = useSettings();
 
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    try {
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.error('Failed to load cart from localStorage:', e);
-    }
-    return [];
-  });
+  // Cart starts clean on refresh
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [clipboardFallbackMessage, setClipboardFallbackMessage] = useState<string | null>(null);
-
-  // Sync to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cartItems));
-    } catch (e) {
-      console.error('Failed to save cart to localStorage:', e);
-    }
-  }, [cartItems]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -148,20 +191,93 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     0
   );
 
-  const proceedToWhatsAppOrder = () => {
-    if (cartItems.length === 0) return;
-    logOrder(cartItems, 'WhatsApp');
-    const message = generateInstagramOrderMessage(cartItems);
+  const proceedToWhatsAppOrder = (
+    shippingFee: number = 80,
+    shippingRegion: string = 'Tamil Nadu Standard',
+    customerInfo?: CustomerCheckoutInfo
+  ): string => {
+    if (cartItems.length === 0) return '';
+    const finalTotal = totalPrice + shippingFee;
+    const orderId = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+
+    const fullAddress = customerInfo
+      ? [
+          customerInfo.address,
+          customerInfo.city,
+          customerInfo.state,
+          customerInfo.pincode ? `PIN: ${customerInfo.pincode}` : '',
+        ]
+          .filter(Boolean)
+          .join(', ')
+      : undefined;
+
+    logOrder(cartItems, 'WhatsApp', {
+      orderId,
+      name: customerInfo?.name || 'Guest Customer',
+      phone: customerInfo?.phone || '',
+      deliveryAddress: fullAddress,
+      pincode: customerInfo?.pincode,
+      city: customerInfo?.city,
+      state: customerInfo?.state,
+      totalAmount: finalTotal,
+    });
+
+    const message = generateWhatsAppOrderMessage(cartItems, shippingFee, shippingRegion, customerInfo, orderId);
     const phone = settings.whatsappNumber.replace(/[^0-9]/g, '') || '916382735751';
     const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(message).catch(() => {});
+      }
+    } catch {}
+
+    try {
+      const win = window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      if (!win || win.closed || typeof win.closed === 'undefined') {
+        // Pop-up was blocked or failed to launch directly
+        setClipboardFallbackMessage(message);
+      }
+    } catch (err) {
+      console.warn('WhatsApp window open failed:', err);
+      setClipboardFallbackMessage(message);
+    }
+
+    return orderId;
   };
 
-  const proceedToInstagramOrder = async () => {
-    if (cartItems.length === 0) return;
-    logOrder(cartItems, 'Instagram');
+  const proceedToInstagramOrder = async (
+    shippingFee: number = 80,
+    shippingRegion: string = 'Tamil Nadu Standard',
+    customerInfo?: CustomerCheckoutInfo
+  ): Promise<string> => {
+    if (cartItems.length === 0) return '';
+    const finalTotal = totalPrice + shippingFee;
+    const orderId = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
 
-    const message = generateInstagramOrderMessage(cartItems);
+    const fullAddress = customerInfo
+      ? [
+          customerInfo.address,
+          customerInfo.city,
+          customerInfo.state,
+          customerInfo.pincode ? `PIN: ${customerInfo.pincode}` : '',
+        ]
+          .filter(Boolean)
+          .join(', ')
+      : undefined;
+
+    logOrder(cartItems, 'Instagram', {
+      orderId,
+      name: customerInfo?.name || 'Guest Customer',
+      phone: customerInfo?.phone || '',
+      deliveryAddress: fullAddress,
+      pincode: customerInfo?.pincode,
+      city: customerInfo?.city,
+      state: customerInfo?.state,
+      totalAmount: finalTotal,
+    });
+
+    const message = generateInstagramOrderMessage(cartItems, shippingFee, shippingRegion, customerInfo, orderId);
     const instagramHandle = settings.instagramUsername || 'petalorah';
     const instagramUrl = `https://instagram.com/${instagramHandle}`;
 
@@ -173,9 +289,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.warn('Clipboard write failed:', err);
     }
 
-    // Always show modal for clear instruction that user needs to paste
     setClipboardFallbackMessage(message);
     window.open(instagramUrl, '_blank', 'noopener,noreferrer');
+
+    return orderId;
   };
 
   const proceedToOrder = proceedToInstagramOrder;

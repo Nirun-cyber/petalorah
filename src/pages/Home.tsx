@@ -5,11 +5,13 @@ import { useProducts } from '../context/ProductContext';
 import { ProductModal } from '../components/ProductModal';
 import { OrderGuide } from '../components/OrderGuide';
 import { ProductQuantityControl } from '../components/ProductQuantityControl';
+import { CustomerReviews } from '../components/CustomerReviews';
 
 interface HomeProps {
   onNavigateToCollection: () => void;
   onNavigateToKeychains: () => void;
   onNavigateToTableTops: () => void;
+  onOpenTracking?: () => void;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
 }
@@ -43,7 +45,7 @@ export const Home: React.FC<HomeProps> = ({
               100% Handcrafted Pipe Cleaner Art
             </div>
 
-            <h1 className="font-serif text-4xl sm:text-6xl font-extrabold text-primary dark:text-white leading-[1.1] tracking-tight">
+            <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-extrabold text-primary dark:text-white leading-[1.15] sm:leading-[1.1] tracking-tight break-words">
               Handmade Keepsakes Twisted With Love
             </h1>
 
@@ -90,10 +92,10 @@ export const Home: React.FC<HomeProps> = ({
           </div>
 
           {/* Right Column Showcase Card */}
-          <div className="lg:col-span-5 flex justify-center">
+          <div className="lg:col-span-5 flex justify-center w-full">
             <div
               onClick={() => setSelectedProduct(creationOfTheWeek)}
-              className="relative w-full max-w-sm rounded-3xl p-4 bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-2xl cursor-pointer group hover:scale-[1.02] transition-all duration-300"
+              className="relative w-full max-w-sm rounded-3xl p-3.5 sm:p-4 bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-2xl cursor-pointer group hover:scale-[1.02] transition-all duration-300"
             >
               <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-gray-100 dark:bg-navy mb-4">
                 <img
@@ -105,17 +107,17 @@ export const Home: React.FC<HomeProps> = ({
                   ✨ Creation of the Week
                 </span>
               </div>
-              <div className="flex justify-between items-center px-2 pb-2">
+              <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2 px-1 sm:px-2 pb-1 sm:pb-2">
                 <div>
-                  <h3 className="font-serif text-lg font-bold text-primary dark:text-white">
+                  <h3 className="font-serif text-base sm:text-lg font-bold text-primary dark:text-white">
                     {creationOfTheWeek.name}
                   </h3>
                   <p className="text-xs text-primary/60 dark:text-gray-400">
                     Handcrafted Premium Flower Pot
                   </p>
                 </div>
-                <div className="flex flex-col items-end gap-1.5">
-                  <span className="text-lg font-bold text-primary dark:text-secondary-light">
+                <div className="flex items-center xs:flex-col xs:items-end gap-1.5 w-full xs:w-auto justify-between xs:justify-start">
+                  <span className="text-base sm:text-lg font-bold text-primary dark:text-secondary-light">
                     {creationOfTheWeek.price}
                   </span>
                   <ProductQuantityControl product={creationOfTheWeek} size="sm" />
@@ -134,7 +136,7 @@ export const Home: React.FC<HomeProps> = ({
             <span className="text-xs font-bold uppercase tracking-widest text-primary/70 dark:text-secondary-light">
               Popular Picks
             </span>
-            <h2 className="font-serif text-3xl font-bold text-primary dark:text-white mt-1">
+            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-primary dark:text-white mt-1">
               Featured Handmade Crafts
             </h2>
           </div>
@@ -146,33 +148,33 @@ export const Home: React.FC<HomeProps> = ({
           </button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-6">
           {featuredProducts.map((prod) => (
             <div
               key={prod.id}
               onClick={() => setSelectedProduct(prod)}
-              className="p-3 rounded-2xl bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-between group"
+              className="p-2.5 sm:p-3 rounded-2xl bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-between group min-w-0"
             >
-              <div>
-                <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 dark:bg-navy mb-3">
+              <div className="min-w-0">
+                <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 dark:bg-navy mb-2.5 sm:mb-3">
                   <img
                     src={prod.img}
                     alt={prod.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   {prod.badge && (
-                    <span className="absolute top-2 left-2 bg-primary/90 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                    <span className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 bg-primary/90 text-white text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full">
                       {prod.badge}
                     </span>
                   )}
                 </div>
-                <h4 className="font-serif text-sm font-bold text-primary dark:text-white line-clamp-1">
+                <h4 className="font-serif text-xs sm:text-sm font-bold text-primary dark:text-white line-clamp-1">
                   {prod.name}
                 </h4>
               </div>
 
-              <div className="mt-2 flex items-center justify-between pt-2 border-t border-primary/5 dark:border-white/5">
-                <span className="text-sm font-extrabold text-primary dark:text-secondary-light">
+              <div className="mt-2 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-1.5 pt-2 border-t border-primary/5 dark:border-white/5">
+                <span className="text-xs sm:text-sm font-extrabold text-primary dark:text-secondary-light">
                   {prod.price}
                 </span>
                 <ProductQuantityControl product={prod} size="sm" />
@@ -242,6 +244,9 @@ export const Home: React.FC<HomeProps> = ({
 
         </div>
       </section>
+
+      {/* CUSTOMER REVIEWS & TESTIMONIALS */}
+      <CustomerReviews />
 
       {/* HOW TO ORDER GUIDE */}
       <OrderGuide />

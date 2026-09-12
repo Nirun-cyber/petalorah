@@ -68,17 +68,17 @@ export const OrderGuide: React.FC = () => {
       </div>
 
       {/* Direct Ordering Action Buttons */}
-      <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+      <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 max-w-xl mx-auto">
         {/* Instagram DM Button */}
         <a
           href="https://instagram.com/petalorah"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-primary text-white dark:bg-secondary dark:text-navy font-bold text-sm shadow-md hover:shadow-lg transition-all hover:scale-105"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-full bg-primary text-white dark:bg-secondary dark:text-navy font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all hover:scale-105"
         >
-          <MessageCircleHeart size={18} />
-          Send a DM to @petalorah
-          <ArrowRight size={16} />
+          <MessageCircleHeart size={16} className="shrink-0" />
+          <span>Send a DM to @petalorah</span>
+          <ArrowRight size={14} className="shrink-0" />
         </a>
 
         {/* WhatsApp Button */}
@@ -86,11 +86,11 @@ export const OrderGuide: React.FC = () => {
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md hover:shadow-lg transition-all hover:scale-105"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all hover:scale-105"
         >
-          <MessageSquareCode size={18} />
-          Order on WhatsApp (6382735751)
-          <ArrowRight size={16} />
+          <MessageSquareCode size={16} className="shrink-0" />
+          <span>Order on WhatsApp (6382735751)</span>
+          <ArrowRight size={14} className="shrink-0" />
         </a>
       </div>
     </section>

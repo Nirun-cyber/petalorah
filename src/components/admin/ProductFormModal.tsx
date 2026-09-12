@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { X, Upload, Sparkles, CheckCircle, Trash2, Wand2 } from 'lucide-react';
-import type { Product } from '../../data/products';
+import React, { useState, useEffect } from 'react';
+import { X, Upload, Sparkles, CheckCircle, Trash2, Wand2, FileText } from 'lucide-react';
+import { type Product, DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE } from '../../data/products';
 
 interface ProductFormModalProps {
   product?: Product | null;
@@ -15,19 +15,46 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   onClose,
   onSave,
 }) => {
-  if (!isOpen) return null;
-
   const [name, setName] = useState(product?.name || '');
   const [numericPrice, setNumericPrice] = useState<number>(product?.numericPrice || 50);
   const [originalPrice, setOriginalPrice] = useState(product?.originalPrice || '');
   const [category, setCategory] = useState<Product['category']>(product?.category || 'keychain');
-  const [description, setDescription] = useState(product?.description || '');
+  const [description, setDescription] = useState(product?.description || DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE);
   const [img, setImg] = useState(product?.img || '');
-  const [badge, setBadge] = useState(product?.badge || 'New Arrival');
+  const [badge, setBadge] = useState(product?.badge || '');
   const [isBestSeller, setIsBestSeller] = useState(product?.isBestSeller || false);
   const [isComingSoon, setIsComingSoon] = useState(product?.isComingSoon || false);
   const [isUploading, setIsUploading] = useState(false);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+
+  // Sync state whenever modal opens or active product changes
+  useEffect(() => {
+    if (isOpen) {
+      if (product) {
+        setName(product.name || '');
+        setNumericPrice(product.numericPrice || 50);
+        setOriginalPrice(product.originalPrice || '');
+        setCategory(product.category || 'keychain');
+        setDescription(product.description || DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE);
+        setImg(product.img || '');
+        setBadge(product.badge || '');
+        setIsBestSeller(product.isBestSeller || false);
+        setIsComingSoon(product.isComingSoon || false);
+      } else {
+        setName('');
+        setNumericPrice(50);
+        setOriginalPrice('');
+        setCategory('keychain');
+        setDescription(DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE);
+        setImg('');
+        setBadge('');
+        setIsBestSeller(false);
+        setIsComingSoon(false);
+      }
+    }
+  }, [product, isOpen]);
+
+  if (!isOpen) return null;
 
   // Handle local image file upload -> convert to Base64 data URL
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,44 +78,42 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
     }
   };
 
-  // Smart AI Craft Description Generator
+  // Smart AI Craft Description Generator matching standard fields
   const handleGenerateAiDescription = () => {
     setIsGeneratingAi(true);
 
     setTimeout(() => {
-      const title = name.trim() || 'Handcrafted Gift Item';
+      const title = name.trim() || 'Handcrafted Craft';
       const titleLower = title.toLowerCase();
 
-      let generatedDesc = '';
+      let sizeText = 'Approx 8-10 cm (Compact charm)';
+      let materialText = 'Premium chenille pipe cleaners & durable metal keychain ring';
+      let handmadeInfo = '100% meticulously handcrafted with delicate wire twisting';
+      let customText = 'Custom colors, initials & charm accents available on request';
+      let prepTime = '1-2 business days';
       let suggestedBadge = badge;
 
-      if (titleLower.includes('panda')) {
-        generatedDesc = `An adorable handmade panda keychain meticulously crafted with soft monochrome pipe cleaners and fluffy detailing. Carefully twisted with patience to create a cozy, cuddly companion that brings happy smiles to your bag or keys.`;
-        suggestedBadge = 'Kawaii Special';
-      } else if (titleLower.includes('tulip')) {
-        generatedDesc = `An elegant handcrafted tulip creation carrying the gentle warmth of spring. Carefully twisted loops ensure a soft, fluffy texture with rich green leaves that stay fresh and vibrant forever.`;
-        suggestedBadge = 'Cute Accent';
-      } else if (titleLower.includes('rose')) {
-        generatedDesc = `A timeless symbol of love, meticulously handcrafted with rich crimson pipe cleaner petals and a deep green stem. Perfect as a romantic keepsake, luxury bag charm, or thoughtful handmade gift.`;
+      if (category === 'bouquet' || titleLower.includes('custom') || titleLower.includes('jersey')) {
+        suggestedBadge = 'Limited';
+      } else if (titleLower.includes('rose') || isBestSeller) {
         suggestedBadge = 'Best Seller';
-      } else if (titleLower.includes('duck')) {
-        generatedDesc = `An adorable round duck charm handcrafted from bright yellow pipe cleaners with a tiny blue head bow accent. Guaranteed to bring happy vibes and sweet smiles wherever you carry it.`;
-        suggestedBadge = 'Super Cute';
-      } else if (titleLower.includes('pot') || category === 'tabletop') {
-        generatedDesc = `A charming handcrafted miniature flower pot desk companion. Twisted with vibrant petals, green leaves, and nestled in a cozy ribbed pot to bring a touch of warm floral aesthetic to your workspace or home decor.`;
-        suggestedBadge = 'Table Decor';
-      } else if (category === 'bouquet') {
-        generatedDesc = `A stunning custom pipe cleaner flower bouquet handcrafted with intricate wire twisting and rich color harmony. Designed to stay fresh, vibrant, and blooming forever as an eternal romantic keepsake.`;
-        suggestedBadge = 'Custom Bouquet';
+      } else if (badge && ['New', 'Best Seller', 'Limited'].includes(badge)) {
+        suggestedBadge = badge;
       } else {
-        generatedDesc = `An exquisite handmade ${title} crafted with premium soft pipe cleaners and precision wire twisting. Meticulously handcrafted by Petalorah studio to bring sweet charm, eternal durability, and smiles to your daily accessories.`;
-        suggestedBadge = 'Handcrafted';
+        suggestedBadge = '';
       }
+
+      const generatedDesc = 
+`Size: ${sizeText}
+Material: ${materialText}
+Handmade information: ${handmadeInfo}
+Customization availability: ${customText}
+Approximate preparation time: ${prepTime}`;
 
       setDescription(generatedDesc);
       setBadge(suggestedBadge);
       setIsGeneratingAi(false);
-    }, 400);
+    }, 350);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -275,44 +300,61 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
           {/* Description & AI Generator */}
           <div>
-            <div className="flex items-center justify-between mb-1">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                Description *
+                Product Specifications / Description *
               </label>
-              <button
-                type="button"
-                onClick={handleGenerateAiDescription}
-                disabled={isGeneratingAi}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500 hover:from-purple-700 hover:to-rose-600 shadow-sm hover:shadow transition-all transform active:scale-95 disabled:opacity-50"
-              >
-                <Wand2 size={13} className={isGeneratingAi ? 'animate-spin' : ''} />
-                <span>{isGeneratingAi ? 'Generating AI...' : '✨ Auto-Generate AI Description'}</span>
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setDescription(DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE)}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-900/40 shadow-xs transition-all active:scale-95"
+                  title="Reset or pre-type standard specification fields"
+                >
+                  <FileText size={12} />
+                  <span>Pre-typed Template</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleGenerateAiDescription}
+                  disabled={isGeneratingAi}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500 hover:from-purple-700 hover:to-rose-600 shadow-sm hover:shadow transition-all transform active:scale-95 disabled:opacity-50"
+                >
+                  <Wand2 size={13} className={isGeneratingAi ? 'animate-spin' : ''} />
+                  <span>{isGeneratingAi ? 'Generating AI...' : '✨ Auto-Fill AI'}</span>
+                </button>
+              </div>
             </div>
 
             <textarea
-              rows={3}
+              rows={6}
               required
-              placeholder="Enter product description or click ✨ Auto-Generate AI Description..."
+              placeholder="Size:&#10;Material:&#10;Handmade information:&#10;Customization availability:&#10;Approximate preparation time:"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-400 transition-all font-medium text-slate-800 dark:text-white"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-400 transition-all font-mono text-xs sm:text-sm text-slate-800 dark:text-white leading-relaxed"
             />
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              Pre-typed with Size, Material, Handmade info, Customization, and Preparation time. Add your item info on each line.
+            </p>
           </div>
 
           {/* Badge & Toggles */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
-                Badge Label
+                Badge
               </label>
-              <input
-                type="text"
-                placeholder="e.g. Best Seller, New"
+              <select
                 value={badge}
                 onChange={(e) => setBadge(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-semibold"
-              />
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-rose-400"
+              >
+                <option value="">None</option>
+                <option value="New">New</option>
+                <option value="Best Seller">Best Seller</option>
+                <option value="Limited">Limited</option>
+              </select>
             </div>
 
             <div className="flex items-center gap-2 pt-5">
