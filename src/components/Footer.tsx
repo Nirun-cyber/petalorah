@@ -48,6 +48,32 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenTracking }) =>
               <li>
                 <button onClick={() => onNavigate('tabletops')} className="hover:underline">Table Top Pots</button>
               </li>
+              <li>
+                <button
+                  onClick={() => {
+                    onNavigate('home');
+                    setTimeout(() => {
+                      document.getElementById('our-story')?.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }}
+                  className="hover:underline"
+                >
+                  Our Story
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => {
+                    onNavigate('home');
+                    setTimeout(() => {
+                      document.getElementById('delivery-info')?.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }}
+                  className="hover:underline"
+                >
+                  Delivery &amp; Shipping
+                </button>
+              </li>
               {onOpenTracking && (
                 <li>
                   <button

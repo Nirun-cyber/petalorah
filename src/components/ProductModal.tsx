@@ -160,6 +160,13 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) 
                 Instagram
               </a>
             </div>
+
+            {/* Subtle Trust Reminder */}
+            <div className="pt-1 flex items-center justify-center gap-3 text-[11px] text-primary/60 dark:text-gray-400">
+              <span>🌸 Handmade with care</span>
+              <span>•</span>
+              <span>💬 Direct artisan support</span>
+            </div>
           </div>
         </div>
 

@@ -6,6 +6,10 @@ import { ProductModal } from '../components/ProductModal';
 import { OrderGuide } from '../components/OrderGuide';
 import { ProductQuantityControl } from '../components/ProductQuantityControl';
 import { CustomerReviews } from '../components/CustomerReviews';
+import { RealCreationsGallery } from '../components/RealCreationsGallery';
+import { BrandStory } from '../components/BrandStory';
+import { HowItsMade } from '../components/HowItsMade';
+import { DeliveryAndPolicies } from '../components/DeliveryAndPolicies';
 
 interface HomeProps {
   onNavigateToCollection: () => void;
@@ -247,6 +251,18 @@ export const Home: React.FC<HomeProps> = ({
 
       {/* CUSTOMER REVIEWS & TESTIMONIALS */}
       <CustomerReviews />
+
+      {/* MADE FOR REAL PEOPLE / REAL CREATIONS */}
+      <RealCreationsGallery />
+
+      {/* OUR STORY & WHY PETALORAH */}
+      <BrandStory />
+
+      {/* HOW IT'S MADE — 4-STEP PROCESS */}
+      <HowItsMade />
+
+      {/* DELIVERY & RETURN POLICIES */}
+      <DeliveryAndPolicies />
 
       {/* HOW TO ORDER GUIDE */}
       <OrderGuide />

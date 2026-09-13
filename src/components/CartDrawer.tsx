@@ -709,6 +709,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
               </button>
             </div>
 
+            {/* Subtle Trust Note */}
+            <div className="flex items-center justify-center gap-2 text-[10px] text-primary/50 dark:text-gray-400 pt-1">
+              <span>🌸 100% Handcrafted</span>
+              <span>•</span>
+              <span>💬 Direct Order Confirmation</span>
+            </div>
+
             {/* Clear Cart Link */}
             <div className="text-center pt-0.5">
               <button
