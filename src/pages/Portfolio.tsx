@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Search, Sparkles } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Search } from 'lucide-react';
 import type { Product } from '../data/products';
 import { useProducts } from '../context/ProductContext';
 import { ProductModal } from '../components/ProductModal';
@@ -7,18 +7,28 @@ import { ProductQuantityControl } from '../components/ProductQuantityControl';
 
 interface PortfolioProps {
   onNavigateHome: () => void;
-  isDarkMode: boolean;
-  toggleDarkMode: () => void;
+  initialCategory?: 'all' | 'keychain' | 'tabletop' | 'bouquet' | 'custom';
+  isDarkMode?: boolean;
+  toggleDarkMode?: () => void;
 }
 
-export const Portfolio: React.FC<PortfolioProps> = () => {
+export const Portfolio: React.FC<PortfolioProps> = ({
+  initialCategory = 'all',
+}) => {
   const { products } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'keychain' | 'tabletop' | 'bouquet' | 'custom'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'keychain' | 'tabletop' | 'bouquet' | 'custom'>(initialCategory);
   const [sortBy, setSortBy] = useState<'default' | 'low-high' | 'high-low' | 'bestsellers'>('default');
 
+  useEffect(() => {
+    if (initialCategory) {
+      setSelectedCategory(initialCategory);
+    }
+  }, [initialCategory]);
+
   const categories = [
+    { id: 'all', label: 'All' },
     { id: 'keychain', label: 'Keychains' },
     { id: 'tabletop', label: 'Table Tops' },
     { id: 'bouquet', label: 'Bouquets' },
@@ -46,14 +56,11 @@ export const Portfolio: React.FC<PortfolioProps> = () => {
       
       {/* Header Headline */}
       <div className="text-center max-w-3xl mx-auto mb-4 sm:mb-8 space-y-1 sm:space-y-2">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-primary/10 dark:bg-secondary/20 text-primary dark:text-secondary-light text-[10px] sm:text-xs font-semibold uppercase tracking-wider">
-          <Sparkles size={12} /> Full Handmade Collection
-        </div>
         <h1 className="font-serif text-2xl sm:text-5xl font-extrabold text-primary dark:text-white">
-          All Crafts & Gifts
+          Handmade Crafts &amp; Gifts
         </h1>
         <p className="text-xs sm:text-base text-primary/70 dark:text-gray-300">
-          Browse our complete catalog of handcrafted pipe cleaner keychains, table tops, anime charms, and flower bouquets.
+          Browse our fluffy keychains, tabletop flower pots, anime charms, and forever flower bouquets.
         </p>
       </div>
 
@@ -65,10 +72,10 @@ export const Portfolio: React.FC<PortfolioProps> = () => {
           {categories.map((cat) => (
             <button
               key={cat.id}
-              onClick={() => setSelectedCategory(selectedCategory === cat.id ? 'all' : cat.id)}
-              className={`px-2.5 py-1 sm:px-4 sm:py-2 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-bold transition-all ${
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-bold transition-all ${
                 selectedCategory === cat.id
-                  ? 'bg-primary text-white dark:bg-secondary dark:text-navy shadow-xs'
+                  ? 'bg-primary text-white dark:bg-secondary dark:text-navy shadow-xs scale-105'
                   : 'bg-primary/5 dark:bg-white/5 text-primary/80 dark:text-gray-300 hover:bg-primary/10'
               }`}
             >

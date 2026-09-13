@@ -237,6 +237,29 @@ export const ALL_PRODUCTS: Product[] = [
     category: 'bouquet',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
     img: '/assets/products/flower_bouquets.png',
+    badge: 'Best Seller',
+    isBestSeller: true,
+    isComingSoon: false
+  },
+  {
+    id: 'customised_birthday',
+    name: 'Special Celebration Flower Bouquet',
+    price: '₹299',
+    numericPrice: 299,
+    category: 'bouquet',
+    description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
+    img: '/assets/products/customised_birthday.png',
+    badge: 'New',
+    isComingSoon: false
+  },
+  {
+    id: 'blue_rose_bouquet',
+    name: 'Pastel Bloom Elegance Bouquet',
+    price: '₹279',
+    numericPrice: 279,
+    category: 'bouquet',
+    description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
+    img: '/assets/products/blue_rose.jpg',
     badge: 'Limited',
     isComingSoon: false
   }

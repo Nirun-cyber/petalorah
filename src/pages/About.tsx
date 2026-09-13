@@ -7,14 +7,18 @@ import { OrderGuide } from '../components/OrderGuide';
 
 interface AboutProps {
   onNavigateHome: () => void;
+  onNavigateToShop?: () => void;
   onNavigateToKeychains?: () => void;
   onNavigateToTableTops?: () => void;
+  onNavigateToBouquets?: () => void;
 }
 
 export const About: React.FC<AboutProps> = ({
   onNavigateHome,
+  onNavigateToShop,
   onNavigateToKeychains,
   onNavigateToTableTops,
+  onNavigateToBouquets,
 }) => {
   useEffect(() => {
     // Check if there's an anchor hash in URL (e.g. #delivery-info or #our-story)
@@ -111,16 +115,32 @@ export const About: React.FC<AboutProps> = ({
                 Ready to find your handmade keepsake?
               </h3>
               <p className="text-[11px] sm:text-sm text-white/90">
-                Explore our soft fluffy keychains and miniature tabletop pots crafted to stay fresh forever.
+                Explore our soft fluffy keychains, miniature tabletop pots, and vibrant flower bouquets.
               </p>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center">
-              {onNavigateToKeychains && (
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center">
+              {onNavigateToShop && (
                 <button
-                  onClick={onNavigateToKeychains}
+                  onClick={onNavigateToShop}
                   className="flex-1 sm:flex-none px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl sm:rounded-2xl bg-white text-rose-600 font-bold text-xs sm:text-sm hover:bg-white/90 shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5"
                 >
                   <ShoppingBag size={14} />
+                  <span>Shop All</span>
+                </button>
+              )}
+              {onNavigateToBouquets && (
+                <button
+                  onClick={onNavigateToBouquets}
+                  className="flex-1 sm:flex-none px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl sm:rounded-2xl bg-rose-700/80 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm border border-white/20 shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                >
+                  <span>🌸 Bouquets</span>
+                </button>
+              )}
+              {onNavigateToKeychains && (
+                <button
+                  onClick={onNavigateToKeychains}
+                  className="flex-1 sm:flex-none px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl sm:rounded-2xl bg-rose-700/60 hover:bg-rose-700/80 text-white font-bold text-xs sm:text-sm border border-white/20 shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                >
                   <span>Keychains</span>
                 </button>
               )}

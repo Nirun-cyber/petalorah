@@ -4,8 +4,8 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
 interface NavbarProps {
-  currentTab: 'home' | 'about' | 'portfolio' | 'keychains' | 'tabletops' | 'custom' | 'admin' | 'login';
-  onNavigate: (tab: 'home' | 'about' | 'portfolio' | 'keychains' | 'tabletops' | 'custom' | 'admin' | 'login') => void;
+  currentTab: 'home' | 'about' | 'shop' | 'portfolio' | 'keychains' | 'tabletops' | 'bouquets' | 'custom' | 'admin' | 'login';
+  onNavigate: (tab: 'home' | 'about' | 'shop' | 'portfolio' | 'keychains' | 'tabletops' | 'bouquets' | 'custom' | 'admin' | 'login') => void;
   onOpenTracking: () => void;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
@@ -23,9 +23,15 @@ export const Navbar: React.FC<NavbarProps> = ({
   const navLinks = [
     { id: 'home', label: 'Home' },
     { id: 'about', label: 'About' },
-    { id: 'keychains', label: 'Keychains' },
-    { id: 'tabletops', label: 'Table Tops' },
+    { id: 'shop', label: 'Shop' },
   ] as const;
+
+  const isTabActive = (linkId: string) => {
+    if (linkId === 'shop') {
+      return ['shop', 'portfolio', 'keychains', 'tabletops', 'custom'].includes(currentTab);
+    }
+    return currentTab === linkId;
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-navy/80 backdrop-blur-xl border-b border-primary/10 dark:border-white/10 transition-colors duration-300">
@@ -56,7 +62,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               key={link.id}
               onClick={() => onNavigate(link.id)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                currentTab === link.id
+                isTabActive(link.id)
                   ? 'bg-primary text-white dark:bg-secondary dark:text-navy font-semibold shadow-sm'
                   : 'text-primary/80 dark:text-gray-300 hover:text-primary dark:hover:text-white hover:bg-primary/5 dark:hover:bg-white/5'
               }`}
@@ -137,7 +143,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 setMobileMenuOpen(false);
               }}
               className={`w-full text-left px-4 py-3 rounded-xl text-base font-medium transition-colors ${
-                currentTab === link.id
+                isTabActive(link.id)
                   ? 'bg-primary text-white dark:bg-secondary dark:text-navy font-semibold'
                   : 'text-primary dark:text-gray-200 hover:bg-primary/5 dark:hover:bg-white/5'
               }`}

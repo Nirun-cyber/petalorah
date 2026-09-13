@@ -5,7 +5,7 @@ import { InstagramIcon } from './InstagramIcon';
 import { useSettings } from '../context/SettingsContext';
 
 interface FooterProps {
-  onNavigate: (tab: 'home' | 'about' | 'portfolio' | 'keychains' | 'tabletops' | 'admin' | 'login') => void;
+  onNavigate: (tab: 'home' | 'about' | 'shop' | 'portfolio' | 'keychains' | 'tabletops' | 'bouquets' | 'admin' | 'login') => void;
   onOpenTracking?: () => void;
 }
 
@@ -31,6 +31,12 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenTracking }) =>
               </li>
               <li>
                 <button onClick={() => onNavigate('about')} className="hover:underline">About &amp; Story</button>
+              </li>
+              <li>
+                <button onClick={() => onNavigate('shop')} className="hover:underline font-semibold text-rose-500 dark:text-rose-400">Shop All Crafts</button>
+              </li>
+              <li>
+                <button onClick={() => onNavigate('bouquets')} className="hover:underline">Flower Bouquets</button>
               </li>
               <li>
                 <button onClick={() => onNavigate('keychains')} className="hover:underline">Fluffy Keychains</button>
