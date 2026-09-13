@@ -58,6 +58,17 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
     }
   }, [isOpen, initialQuery]);
 
+  // Close modal on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -368,21 +379,32 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
             <div className="p-8 text-center space-y-3 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-900/40 animate-pulse">
               <Loader2 size={32} className="text-indigo-600 dark:text-indigo-400 animate-spin mx-auto" />
               <h3 className="font-serif text-base font-bold text-primary dark:text-white">
-                Checking Live Orders & Google Sheet...
+                Checking Your Order Status...
               </h3>
               <p className="text-xs text-primary/70 dark:text-gray-300 max-w-sm mx-auto">
-                Searching for your order from the connected accounts app and store records.
+                Searching our store records for your handcrafted order details.
               </p>
             </div>
           ) : hasSearched ? (
-            <div className="p-8 text-center space-y-3 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/30">
+            <div className="p-8 text-center space-y-3.5 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/30">
               <AlertCircle size={32} className="text-rose-500 mx-auto" />
               <h3 className="font-serif text-base font-bold text-primary dark:text-white">
-                No matching order found
+                No Matching Order Found
               </h3>
-              <p className="text-xs text-primary/70 dark:text-gray-300 max-w-sm mx-auto">
-                Please double check your Order ID or phone number. If you just placed your order in the accounts app, make sure it has saved to your Google Sheet.
+              <p className="text-xs text-primary/70 dark:text-gray-300 max-w-sm mx-auto leading-relaxed">
+                We couldn&apos;t find an order matching that ID or phone number. Please check the digits, or message us on WhatsApp and we will gladly track it for you!
               </p>
+              <a
+                href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+                  `Hi Petalorah! I'm trying to track my order (${searchQuery}) but couldn't find it. Could you please help me?`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-colors"
+              >
+                <WhatsAppIcon size={16} />
+                <span>Ask Us on WhatsApp</span>
+              </a>
             </div>
           ) : null}
         </div>

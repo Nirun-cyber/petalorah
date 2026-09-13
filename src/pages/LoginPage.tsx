@@ -9,7 +9,6 @@ import {
   Sparkles,
   CheckCircle2,
   Mail,
-  Phone,
   MapPin,
   LogOut,
   ShoppingBag,
@@ -456,8 +455,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                         {user.address.landmark && ` (Near ${user.address.landmark})`}
                       </p>
                     ) : (
-                      <p className="text-xs text-primary/50 dark:text-gray-400 italic">
-                        No delivery address saved yet. Save your address now to accelerate future checkout.
+                      <p className="text-xs text-primary/60 dark:text-gray-400 py-1">
+                        No delivery address saved yet. Save your address for faster, one-tap checkout on future gifts!
                       </p>
                     )}
                   </div>
@@ -501,19 +500,37 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                             className="text-xs px-3.5 py-2.5 rounded-xl border border-primary/15 dark:border-white/15 bg-white dark:bg-navy-light text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
                           />
                         </div>
-                        <input
-                          type="text"
-                          placeholder="Landmark (Optional)"
-                          value={landmark}
-                          onChange={(e) => setLandmark(e.target.value)}
-                          className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-primary/15 dark:border-white/15 bg-white dark:bg-navy-light text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-                        />
-                        <button
-                          type="submit"
-                          className="w-full py-2.5 rounded-xl bg-rose-500 text-white font-bold text-xs hover:bg-rose-600 transition-colors shadow-md shadow-rose-500/20"
-                        >
-                          Save Delivery Information
-                        </button>
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            placeholder="State"
+                            value={state}
+                            onChange={(e) => setState(e.target.value)}
+                            className="text-xs px-3.5 py-2.5 rounded-xl border border-primary/15 dark:border-white/15 bg-white dark:bg-navy-light text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Landmark (Optional)"
+                            value={landmark}
+                            onChange={(e) => setLandmark(e.target.value)}
+                            className="text-xs px-3.5 py-2.5 rounded-xl border border-primary/15 dark:border-white/15 bg-white dark:bg-navy-light text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => setShowAddressFields(false)}
+                            className="px-3 py-1.5 rounded-xl border border-primary/10 text-xs font-semibold"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            className="px-4 py-1.5 rounded-xl bg-rose-500 text-white text-xs font-bold hover:bg-rose-600"
+                          >
+                            Save Address
+                          </button>
+                        </div>
                       </motion.form>
                     )}
                   </AnimatePresence>
@@ -527,15 +544,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                           Order History ({orders.length})
                         </span>
                       </div>
-                      <span className="text-[11px] text-amber-800 dark:text-amber-300 font-semibold">
-                        Device Synchronized
+                      <span className="text-[11px] text-amber-800 dark:text-amber-300 font-medium">
+                        Recent Activity
                       </span>
                     </div>
 
                     {orders.length === 0 ? (
-                      <p className="text-xs text-primary/60 dark:text-gray-400 italic py-1">
-                        No orders recorded on this device yet. Start exploring our handmade floral keepsakes!
-                      </p>
+                      <div className="py-2.5 text-center space-y-1">
+                        <p className="text-xs font-medium text-primary/75 dark:text-gray-300">
+                          No orders placed yet 🌸
+                        </p>
+                        <p className="text-[11px] text-primary/50 dark:text-gray-400">
+                          Your handcrafted keepsake orders will appear here once placed.
+                        </p>
+                      </div>
                     ) : (
                       <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                         {orders.slice(0, 3).map((ord) => (

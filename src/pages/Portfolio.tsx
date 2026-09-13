@@ -108,15 +108,21 @@ export const Portfolio: React.FC<PortfolioProps> = () => {
 
       {/* Catalog Product Grid */}
       {filteredProducts.length === 0 ? (
-        <div className="text-center py-16 bg-white/40 dark:bg-navy-light/20 rounded-3xl border border-dashed border-primary/20">
-          <p className="text-base text-primary/70 dark:text-gray-400 font-medium">
-            No craft items match "{searchQuery}".
+        <div className="text-center py-16 px-4 bg-white/60 dark:bg-navy-light/40 rounded-3xl border border-dashed border-primary/20 dark:border-white/15 max-w-lg mx-auto space-y-3 my-8">
+          <div className="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-950/40 text-rose-500 flex items-center justify-center mx-auto text-2xl">
+            🌸
+          </div>
+          <h3 className="font-serif text-lg font-bold text-primary dark:text-white">
+            No matching crafts found
+          </h3>
+          <p className="text-xs text-primary/70 dark:text-gray-300 leading-relaxed max-w-xs mx-auto">
+            We couldn't find any handmade crafts matching "{searchQuery}". Try searching for 'rose', 'sunflower', or 'keychain'.
           </p>
           <button
             onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}
-            className="mt-3 text-xs font-bold text-pink-600 dark:text-pink-400 hover:underline"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-primary text-white dark:bg-secondary dark:text-navy text-xs font-bold shadow hover:scale-105 active:scale-95 transition-all"
           >
-            Clear Filters
+            Clear Filters & View All
           </button>
         </div>
       ) : (

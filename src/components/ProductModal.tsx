@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X, Sparkles, Star } from 'lucide-react';
 import { WhatsAppIcon } from './WhatsAppIcon';
 import { InstagramIcon } from './InstagramIcon';
@@ -20,6 +20,14 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) 
   const productReviews = getProductReviews(product.id);
   const reviewCount = productReviews.length > 0 ? productReviews.length : 14;
   const ratingScore = productReviews.length > 0 ? productReviews[0].rating : 5;
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const cleanPhone = (settings.whatsappNumber || '916380437068').replace(/[^0-9]/g, '');
   const whatsappMessage = encodeURIComponent(

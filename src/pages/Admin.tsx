@@ -17,7 +17,6 @@ import {
   TrendingUp,
   Search,
   Key,
-  MessageSquare,
   ArrowRight,
   AlertCircle,
   Clock,

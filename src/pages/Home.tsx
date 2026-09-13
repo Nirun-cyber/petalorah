@@ -22,8 +22,6 @@ interface HomeProps {
 
 export const Home: React.FC<HomeProps> = ({
   onNavigateToCollection,
-  onNavigateToKeychains,
-  onNavigateToTableTops,
   onNavigateToAbout,
 }) => {
   const { products } = useProducts();

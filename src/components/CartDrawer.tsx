@@ -13,9 +13,9 @@ import {
   AlertCircle,
   Sparkles,
   User,
-  Phone,
   Home,
   LogIn,
+  Loader2,
 } from 'lucide-react';
 import { WhatsAppIcon } from './WhatsAppIcon';
 import { InstagramIcon } from './InstagramIcon';
@@ -42,7 +42,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
 
   const { user } = useAuth();
 
-  const formRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const phoneInputRef = useRef<HTMLInputElement>(null);
   const addressInputRef = useRef<HTMLTextAreaElement>(null);
@@ -124,6 +123,16 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
   const [notes, setNotes] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeCart();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [closeCart]);
 
   // Sync state if customer logs in or updates profile
   useEffect(() => {
@@ -209,19 +218,31 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
   };
 
   const handleWhatsAppCheckout = (allowQuickCheckout = false) => {
+    if (isPlacingOrder) return;
     const customerInfo = validateAndGetCustomerInfo(allowQuickCheckout);
     if (!customerInfo) return;
 
-    const orderId = proceedToWhatsAppOrder(shipping.fee, shipping.region, customerInfo);
-    setPlacedOrderId(orderId);
+    setIsPlacingOrder(true);
+    try {
+      const orderId = proceedToWhatsAppOrder(shipping.fee, shipping.region, customerInfo);
+      setPlacedOrderId(orderId);
+    } finally {
+      setTimeout(() => setIsPlacingOrder(false), 800);
+    }
   };
 
   const handleInstagramCheckout = async (allowQuickCheckout = false) => {
+    if (isPlacingOrder) return;
     const customerInfo = validateAndGetCustomerInfo(allowQuickCheckout);
     if (!customerInfo) return;
 
-    const orderId = await proceedToInstagramOrder(shipping.fee, shipping.region, customerInfo);
-    setPlacedOrderId(orderId);
+    setIsPlacingOrder(true);
+    try {
+      const orderId = await proceedToInstagramOrder(shipping.fee, shipping.region, customerInfo);
+      setPlacedOrderId(orderId);
+    } finally {
+      setTimeout(() => setIsPlacingOrder(false), 800);
+    }
   };
 
   const handleClosePlacedModal = () => {
@@ -283,10 +304,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
 
             <div className="w-full space-y-2.5 pt-3">
               <button
-                onClick={handleWhatsAppCheckout}
+                onClick={() => handleWhatsAppCheckout(false)}
                 className="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all"
               >
-                <MessageSquareCode size={16} />
+                <WhatsAppIcon size={16} />
                 <span>Open WhatsApp Again</span>
               </button>
 
@@ -348,10 +369,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
                         }`}
                       >
                         {isFreeGiftUnlocked ? (
-                          <span>You've unlocked your <strong>FREE mini charm!</strong></span>
+                          <span>🎁 You&apos;ve unlocked your <strong>FREE mini gift!</strong></span>
                         ) : (
                           <span>
-                            Add <strong>₹{amountNeededForFreeGift}</strong> more to unlock your <strong>FREE mini charm 🎁</strong>
+                            Add <strong>₹{amountNeededForFreeGift}</strong> more to unlock your <strong>FREE mini gift 🎁</strong>
                           </span>
                         )}
                       </span>
@@ -693,21 +714,41 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
             <div className="space-y-2">
               <button
                 type="button"
+                disabled={isPlacingOrder}
                 onClick={() => handleWhatsAppCheckout(false)}
-                className="w-full flex items-center justify-center gap-2.5 py-3 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.99] cursor-pointer"
+                className="w-full flex items-center justify-center gap-2.5 py-3 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-80 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.99] cursor-pointer"
               >
-                <WhatsAppIcon size={18} />
-                <span>Order via WhatsApp</span>
-                <ArrowRight size={14} />
+                {isPlacingOrder ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Placing order...</span>
+                  </>
+                ) : (
+                  <>
+                    <WhatsAppIcon size={18} />
+                    <span>Order via WhatsApp</span>
+                    <ArrowRight size={14} />
+                  </>
+                )}
               </button>
 
               <button
                 type="button"
+                disabled={isPlacingOrder}
                 onClick={() => handleInstagramCheckout(false)}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-5 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-xs shadow-sm hover:shadow transition-all duration-200 active:scale-[0.99] cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-5 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 disabled:opacity-80 text-white font-bold text-xs shadow-sm hover:shadow transition-all duration-200 active:scale-[0.99] cursor-pointer"
               >
-                <InstagramIcon size={16} />
-                <span>Order via Instagram DM (Copied)</span>
+                {isPlacingOrder ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" />
+                    <span>Placing order...</span>
+                  </>
+                ) : (
+                  <>
+                    <InstagramIcon size={16} />
+                    <span>Order via Instagram DM (Copied)</span>
+                  </>
+                )}
               </button>
             </div>
 

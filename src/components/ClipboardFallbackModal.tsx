@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCart, INSTAGRAM_USERNAME } from '../context/CartContext';
 import { useSettings } from '../context/SettingsContext';
 import { X, Copy, Check, ExternalLink } from 'lucide-react';
@@ -9,6 +9,16 @@ export const ClipboardFallbackModal: React.FC = () => {
   const { clipboardFallbackMessage, closeClipboardFallback } = useCart();
   const { settings } = useSettings();
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeClipboardFallback();
+    };
+    if (clipboardFallbackMessage) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [clipboardFallbackMessage, closeClipboardFallback]);
 
   if (!clipboardFallbackMessage) return null;
 
