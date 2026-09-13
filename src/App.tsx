@@ -32,18 +32,17 @@ const getTabFromPath = (): 'home' | 'about' | 'shop' | 'portfolio' | 'keychains'
   return 'home';
 };
 
-const getCategoryFromPath = (): 'all' | 'keychain' | 'tabletop' | 'bouquet' | 'custom' => {
+const getCategoryFromPath = (): 'keychain' | 'tabletop' | 'bouquet' | 'custom' => {
   const path = window.location.pathname.toLowerCase();
-  if (path.includes('keychain')) return 'keychain';
   if (path.includes('tabletop')) return 'tabletop';
   if (path.includes('bouquet')) return 'bouquet';
   if (path.includes('custom')) return 'custom';
-  return 'all';
+  return 'keychain';
 };
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<'home' | 'about' | 'shop' | 'portfolio' | 'keychains' | 'tabletops' | 'bouquets' | 'admin' | 'login'>(getTabFromPath);
-  const [shopCategory, setShopCategory] = useState<'all' | 'keychain' | 'tabletop' | 'bouquet' | 'custom'>(getCategoryFromPath);
+  const [shopCategory, setShopCategory] = useState<'keychain' | 'tabletop' | 'bouquet' | 'custom'>(getCategoryFromPath);
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
 
   // Sync tab with browser URL history
@@ -106,7 +105,7 @@ export const App: React.FC = () => {
       setCurrentTab('shop');
       if (window.location.pathname !== '/shop') window.history.pushState({}, '', '/shop');
     } else if (tab === 'shop' || tab === 'portfolio') {
-      setShopCategory('all');
+      setShopCategory('keychain');
       setCurrentTab('shop');
       if (window.location.pathname !== '/shop') window.history.pushState({}, '', '/shop');
     } else {

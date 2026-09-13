@@ -7,18 +7,18 @@ import { ProductQuantityControl } from '../components/ProductQuantityControl';
 
 interface PortfolioProps {
   onNavigateHome: () => void;
-  initialCategory?: 'all' | 'keychain' | 'tabletop' | 'bouquet' | 'custom';
+  initialCategory?: 'keychain' | 'tabletop' | 'bouquet' | 'custom';
   isDarkMode?: boolean;
   toggleDarkMode?: () => void;
 }
 
 export const Portfolio: React.FC<PortfolioProps> = ({
-  initialCategory = 'all',
+  initialCategory = 'keychain',
 }) => {
   const { products } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'keychain' | 'tabletop' | 'bouquet' | 'custom'>(initialCategory);
+  const [selectedCategory, setSelectedCategory] = useState<'keychain' | 'tabletop' | 'bouquet' | 'custom'>(initialCategory);
   const [sortBy, setSortBy] = useState<'default' | 'low-high' | 'high-low' | 'bestsellers'>('default');
 
   useEffect(() => {
@@ -28,7 +28,6 @@ export const Portfolio: React.FC<PortfolioProps> = ({
   }, [initialCategory]);
 
   const categories = [
-    { id: 'all', label: 'All' },
     { id: 'keychain', label: 'Keychains' },
     { id: 'tabletop', label: 'Table Tops' },
     { id: 'bouquet', label: 'Bouquets' },
@@ -37,7 +36,7 @@ export const Portfolio: React.FC<PortfolioProps> = ({
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
-      const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+      const matchesCategory = product.category === selectedCategory;
       const matchesSearch =
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -126,10 +125,10 @@ export const Portfolio: React.FC<PortfolioProps> = ({
             We couldn't find any handmade crafts matching "{searchQuery}". Try searching for 'rose', 'sunflower', or 'keychain'.
           </p>
           <button
-            onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}
+            onClick={() => { setSearchQuery(''); setSelectedCategory('keychain'); }}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl sm:rounded-2xl bg-primary text-white dark:bg-secondary dark:text-navy text-xs font-bold shadow hover:scale-105 active:scale-95 transition-all"
           >
-            Clear Filters & View All
+            Reset Filters
           </button>
         </div>
       ) : (
