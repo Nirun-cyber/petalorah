@@ -96,25 +96,6 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
     }
   };
 
-  const selectSampleOrder = async (orderId: string) => {
-    setSearchQuery(orderId);
-    setHasSearched(true);
-    const localMatch = findOrder(orderId);
-    if (localMatch) {
-      setActiveOrder(localMatch);
-      return;
-    }
-
-    setIsSearching(true);
-    try {
-      const remoteMatch = await lookupOrder(orderId);
-      setActiveOrder(remoteMatch || null);
-    } catch (err) {
-      console.error('Sample order search error:', err);
-    } finally {
-      setIsSearching(false);
-    }
-  };
 
   // Determine active step (1 to 5)
   const getStepIndex = (status: LoggedOrder['status']): number => {
@@ -202,21 +183,6 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
               {isSearching ? <Loader2 size={16} className="animate-spin" /> : 'Track'}
             </button>
           </form>
-
-          {/* Quick Demo Sample Chips */}
-          <div className="flex items-center gap-2 flex-wrap mb-6 text-xs">
-            <span className="text-primary/50 dark:text-gray-400 font-medium">Try Sample:</span>
-            {orders.slice(0, 2).map((sample) => (
-              <button
-                key={sample.id}
-                type="button"
-                onClick={() => selectSampleOrder(sample.id)}
-                className="px-2.5 py-1 rounded-xl bg-primary/5 dark:bg-white/5 hover:bg-primary/10 text-primary dark:text-gray-300 font-semibold border border-primary/10 text-[11px] transition-colors"
-              >
-                #{sample.id.slice(0, 10)}... ({sample.status})
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Dynamic Status Display */}
