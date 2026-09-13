@@ -19,7 +19,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) 
   const reviewCount = productReviews.length > 0 ? productReviews.length : 14;
   const ratingScore = productReviews.length > 0 ? productReviews[0].rating : 5;
 
-  const cleanPhone = (settings.whatsappNumber || '916382735751').replace(/[^0-9]/g, '');
+  const cleanPhone = (settings.whatsappNumber || '916380437068').replace(/[^0-9]/g, '');
   const whatsappMessage = encodeURIComponent(
     `Hi Petalorah! I would like to order "${product.name}" (${product.price}).`
   );

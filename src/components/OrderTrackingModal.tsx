@@ -15,6 +15,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useOrders, type LoggedOrder } from '../context/OrderContext';
+import { useSettings } from '../context/SettingsContext';
 
 interface OrderTrackingModalProps {
   isOpen: boolean;
@@ -28,6 +29,8 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
   initialQuery = '',
 }) => {
   const { orders, findOrder, lookupOrder } = useOrders();
+  const { settings } = useSettings();
+  const cleanPhone = (settings.whatsappNumber || '916380437068').replace(/[^0-9]/g, '');
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [isSearching, setIsSearching] = useState(false);
   const [activeOrder, setActiveOrder] = useState<LoggedOrder | null>(() => {
@@ -389,7 +392,7 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
         {activeOrder && (
           <div className="mt-6 pt-4 border-t border-primary/10 dark:border-white/10">
             <a
-              href={`https://wa.me/916382735751?text=${encodeURIComponent(
+              href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(
                 `Hi Petalorah! I'm inquiring about my order ${activeOrder.id}. Could you please update me?`
               )}`}
               target="_blank"

@@ -11,7 +11,7 @@ export const ClipboardFallbackModal: React.FC = () => {
   if (!clipboardFallbackMessage) return null;
 
   const isInstagramMessage = clipboardFallbackMessage.includes('Instagram') || !clipboardFallbackMessage.includes('Petalorah Order');
-  const cleanPhone = (settings.whatsappNumber || '916382735751').replace(/[^0-9]/g, '');
+  const cleanPhone = (settings.whatsappNumber || '916380437068').replace(/[^0-9]/g, '');
   const encodedText = encodeURIComponent(clipboardFallbackMessage);
   const directWhatsAppAppUrl = `https://wa.me/${cleanPhone}?text=${encodedText}`;
   const directWhatsAppWebUrl = `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;

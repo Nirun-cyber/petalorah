@@ -994,12 +994,12 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
                   <input
                     type="text"
                     required
-                    placeholder="916382735751"
+                    placeholder="916380437068"
                     value={whatsappInput}
                     onChange={(e) => setWhatsappInput(e.target.value)}
                     className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white"
                   />
-                  <p className="text-[11px] text-slate-400 mt-1">E.g., 916382735751 for India (+91)</p>
+                  <p className="text-[11px] text-slate-400 mt-1">E.g., 916380437068 for India (+91)</p>
                 </div>
 
                 <div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Heart, MessageSquareCode } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 
 interface FooterProps {
   onNavigate: (tab: 'home' | 'portfolio' | 'keychains' | 'tabletops' | 'admin' | 'login') => void;
@@ -7,7 +8,9 @@ interface FooterProps {
 }
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenTracking }) => {
-  const whatsappUrl = `https://wa.me/916382735751?text=${encodeURIComponent("Hi Petalorah! I would like to place an order.")}`;
+  const { settings } = useSettings();
+  const phone = (settings.whatsappNumber || '916380437068').replace(/[^0-9]/g, '');
+  const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent("Hi Petalorah! I would like to place an order.")}`;
 
   return (
     <footer className="w-full bg-white/90 dark:bg-navy-dark border-t border-primary/10 dark:border-white/10 pt-12 pb-8 transition-colors duration-300">
@@ -77,7 +80,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenTracking }) =>
                 className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
               >
                 <MessageSquareCode size={18} />
-                WhatsApp: 6382735751
+                WhatsApp: 63804 37068
               </a>
               <a
                 href="https://instagram.com/petalorah"

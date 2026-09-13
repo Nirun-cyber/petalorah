@@ -1,7 +1,10 @@
 import React from 'react';
 import { ShoppingBag, Palette, MessageCircleHeart, ArrowRight, MessageSquareCode } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 
 export const OrderGuide: React.FC = () => {
+  const { settings } = useSettings();
+  const phone = (settings.whatsappNumber || '916380437068').replace(/[^0-9]/g, '');
   const steps = [
     {
       number: '01',
@@ -23,7 +26,7 @@ export const OrderGuide: React.FC = () => {
     },
   ];
 
-  const whatsappUrl = `https://wa.me/916382735751?text=${encodeURIComponent("Hi Petalorah! I would like to place an order for a handmade craft.")}`;
+  const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent("Hi Petalorah! I would like to place an order for a handmade craft.")}`;
 
   return (
     <section className="w-full py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -89,7 +92,7 @@ export const OrderGuide: React.FC = () => {
           className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all hover:scale-105"
         >
           <MessageSquareCode size={16} className="shrink-0" />
-          <span>Order on WhatsApp (6382735751)</span>
+          <span>Order on WhatsApp (63804 37068)</span>
           <ArrowRight size={14} className="shrink-0" />
         </a>
       </div>

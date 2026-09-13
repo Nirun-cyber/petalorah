@@ -21,7 +21,7 @@ const SETTINGS_STORAGE_KEY = 'petalorah_site_settings';
 const DEFAULT_SETTINGS: SiteSettings = {
   announcementText: '🌸 Special Offer: Free mini gift charm on all orders above ₹200! Handcrafted with love ✨',
   isAnnouncementVisible: true,
-  whatsappNumber: '916382735751',
+  whatsappNumber: '916380437068',
   instagramUsername: 'petalorah',
   adminPin: '240812',
   googleSheetWebhookUrl: (import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL as string) || '',
@@ -38,6 +38,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Force update legacy PINs to 240812
         if (parsed.adminPin === '1234' || parsed.adminPin === '240312') {
           parsed.adminPin = '240812';
+        }
+        // Force update legacy WhatsApp number to new contact number
+        if (parsed.whatsappNumber === '916382735751' || parsed.whatsappNumber === '6382735751') {
+          parsed.whatsappNumber = '916380437068';
         }
         return { ...DEFAULT_SETTINGS, ...parsed };
       }

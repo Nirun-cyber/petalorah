@@ -255,7 +255,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const message = generateWhatsAppOrderMessage(cartItems, shippingFee, shippingRegion, customerInfo, orderId);
-    const phone = settings.whatsappNumber.replace(/[^0-9]/g, '') || '916382735751';
+    const phone = settings.whatsappNumber.replace(/[^0-9]/g, '') || '916380437068';
 
     // Auto-copy order message to clipboard for guaranteed convenience
     copyToClipboardSafe(message);
