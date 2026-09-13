@@ -259,3 +259,165 @@ export async function authenticateCustomerAccount(
 
   return { success: true, user };
 }
+
+const RESET_TOKENS_STORAGE_KEY = 'petalorah_password_reset_tokens';
+
+interface ResetTokenRecord {
+  token: string;
+  email: string;
+  expiresAt: number;
+}
+
+function getStoredResetTokens(): ResetTokenRecord[] {
+  try {
+    const raw = localStorage.getItem(RESET_TOKENS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) {
+    console.error('Failed to read reset tokens:', e);
+  }
+  return [];
+}
+
+function saveStoredResetTokens(tokens: ResetTokenRecord[]) {
+  try {
+    localStorage.setItem(RESET_TOKENS_STORAGE_KEY, JSON.stringify(tokens));
+  } catch (e) {
+    console.error('Failed to save reset tokens:', e);
+  }
+}
+
+/**
+ * Requests a password reset link for the given email (Gmail/Email).
+ * Triggers Supabase password reset email if configured, and sets up
+ * local token for instant client-side reset capability.
+ */
+export async function requestPasswordReset(email: string): Promise<{
+  success: boolean;
+  error?: string;
+  resetUrl?: string;
+  token?: string;
+}> {
+  const cleanEmail = email.trim().toLowerCase();
+  if (!cleanEmail || !cleanEmail.includes('@')) {
+    return { success: false, error: 'Please provide a valid Gmail or Email address.' };
+  }
+
+  // Check if customer exists locally or in Supabase
+  const localCustomers = getStoredCustomers();
+  const existsLocally = localCustomers.some((c) => c.email.toLowerCase() === cleanEmail);
+
+  let existsInCloud = false;
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data } = await supabase
+        .from('customers')
+        .select('id, email')
+        .eq('email', cleanEmail)
+        .maybeSingle();
+      if (data) existsInCloud = true;
+    } catch (e) {
+      console.warn('Supabase email check notice:', e);
+    }
+  }
+
+  if (!existsLocally && !existsInCloud) {
+    return {
+      success: false,
+      error: 'No registered account found with this email. Please check your spelling or create a new account.',
+    };
+  }
+
+  // Generate secure 32-character random token
+  const tokenBytes = new Uint8Array(16);
+  crypto.getRandomValues(tokenBytes);
+  const token = Array.from(tokenBytes).map((b) => b.toString(16).padStart(2, '0')).join('');
+  const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes validity
+
+  // Save token
+  const activeTokens = getStoredResetTokens().filter((t) => t.expiresAt > Date.now());
+  activeTokens.push({ token, email: cleanEmail, expiresAt });
+  saveStoredResetTokens(activeTokens);
+
+  const baseUrl = window.location.origin;
+  const resetUrl = `${baseUrl}/login?reset=true&email=${encodeURIComponent(cleanEmail)}&token=${token}`;
+
+  // If Supabase is active, trigger official Supabase Auth password reset email
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase.auth.resetPasswordForEmail(cleanEmail, {
+        redirectTo: resetUrl,
+      });
+    } catch (err) {
+      console.warn('Supabase reset email notice:', err);
+    }
+  }
+
+  return {
+    success: true,
+    resetUrl,
+    token,
+  };
+}
+
+/**
+ * Validates whether a given reset token is valid and unexpired for the specified email.
+ */
+export function verifyPasswordResetToken(token: string, email: string): boolean {
+  if (!token || !email) return false;
+  const cleanEmail = email.trim().toLowerCase();
+  const tokens = getStoredResetTokens();
+  const record = tokens.find((t) => t.token === token && t.email.toLowerCase() === cleanEmail);
+  if (!record) return false;
+  return record.expiresAt > Date.now();
+}
+
+/**
+ * Updates a customer's password in both LocalStorage and Supabase.
+ */
+export async function resetCustomerPassword(
+  email: string,
+  newPassword: string,
+  token?: string
+): Promise<{ success: boolean; error?: string }> {
+  const cleanEmail = email.trim().toLowerCase();
+  if (!newPassword || newPassword.length < 6) {
+    return { success: false, error: 'New password must be at least 6 characters long.' };
+  }
+
+  const computedHash = await hashPassword(newPassword);
+
+  // 1. Update in Local Storage
+  const localCustomers = getStoredCustomers();
+  const customerIndex = localCustomers.findIndex((c) => c.email.toLowerCase() === cleanEmail);
+
+  if (customerIndex !== -1) {
+    localCustomers[customerIndex].passwordHash = computedHash;
+    saveStoredCustomers(localCustomers);
+  }
+
+  // 2. Update in Supabase Cloud DB if available
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase
+        .from('customers')
+        .update({ password_hash: computedHash, updated_at: new Date().toISOString() })
+        .eq('email', cleanEmail);
+
+      // If user session is active in Supabase Auth, also update their auth record
+      await supabase.auth.updateUser({ password: newPassword }).catch(() => {});
+    } catch (err) {
+      console.warn('Supabase password update notice:', err);
+    }
+  }
+
+  // Invalidate the used token
+  if (token) {
+    const activeTokens = getStoredResetTokens().filter((t) => t.token !== token);
+    saveStoredResetTokens(activeTokens);
+  }
+
+  return { success: true };
+}

@@ -19,6 +19,8 @@ import {
   Edit2,
   X,
   Loader2,
+  KeyRound,
+  ExternalLink,
 } from 'lucide-react';
 import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import confetti from 'canvas-confetti';
@@ -28,6 +30,8 @@ import { useCart } from '../context/CartContext';
 import {
   authenticateCustomerAccount,
   registerCustomerAccount,
+  requestPasswordReset,
+  resetCustomerPassword,
 } from '../lib/customerAuth';
 
 interface LoginPageProps {
@@ -51,8 +55,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const { orders } = useOrders();
   const { openCart } = useCart();
 
-  // Customer Mode: Sign In vs Register
-  const [authMode, setAuthMode] = useState<'signin' | 'register'>('signin');
+  // Customer Mode: Sign In vs Register vs Forgot Password vs Reset Password
+  const [authMode, setAuthMode] = useState<'signin' | 'register' | 'forgot' | 'reset'>('signin');
+
+  // Forgot Password / Reset Password state
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [resetLinkSent, setResetLinkSent] = useState(false);
+
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetToken, setResetToken] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Form Fields - Customer Sign In (Email & Password Only)
   const [signInEmail, setSignInEmail] = useState('');
@@ -102,6 +117,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       }
     }
   }, [user]);
+
+  // Detect reset link in URL (?reset=true or #access_token)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const isReset = params.get('reset') === 'true' || window.location.hash.includes('access_token');
+    const emailParam = params.get('email');
+    const tokenParam = params.get('token');
+
+    if (isReset) {
+      setAuthMode('reset');
+      if (emailParam) setResetEmail(decodeURIComponent(emailParam));
+      if (tokenParam) setResetToken(tokenParam);
+    }
+  }, []);
 
   // Confetti helper
   const triggerConfetti = () => {
@@ -246,6 +275,83 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     setIsEditingProfile(false);
     setSuccessMessage('Profile details updated!');
     setTimeout(() => setSuccessMessage(null), 3000);
+  };
+
+  // Handle Request Password Reset Link
+  const handleRequestPasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    const cleanEmail = forgotEmail.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      setErrorMessage('Please enter a valid Gmail / Email address.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await requestPasswordReset(cleanEmail);
+      if (!res.success) {
+        setErrorMessage(res.error || 'Unable to request password reset. Please check your email.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      setResetLinkSent(true);
+      if (res.token) setResetToken(res.token);
+      setResetEmail(cleanEmail);
+      setSuccessMessage(`Password reset link sent to ${cleanEmail}! Please check your Gmail.`);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to send reset link. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle Save New Password
+  const handleSaveNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+
+    if (newPassword.length < 6) {
+      setErrorMessage('New password must be at least 6 characters long.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setErrorMessage('Passwords do not match. Please re-enter both passwords.');
+      return;
+    }
+
+    const targetEmail = resetEmail.trim().toLowerCase();
+    if (!targetEmail) {
+      setErrorMessage('Missing email context. Please request a new reset link.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await resetCustomerPassword(targetEmail, newPassword, resetToken);
+      if (!res.success) {
+        setErrorMessage(res.error || 'Failed to update password. Please try again.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      triggerConfetti();
+      setSuccessMessage('Password changed successfully! Please log in with your new password.');
+      setSignInEmail(targetEmail);
+      setSignInPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setAuthMode('signin');
+      if (window.location.search.includes('reset=true')) {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Error updating password. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -608,34 +714,36 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 /* Unauthenticated Customer View */
                 <div>
                   {/* Sign In vs Register Toggle Pills */}
-                  <div className="flex border-b border-primary/10 dark:border-white/10 mb-6">
-                    <button
-                      onClick={() => {
-                        setAuthMode('signin');
-                        setErrorMessage(null);
-                      }}
-                      className={`flex-1 pb-3 text-xs sm:text-sm font-bold border-b-2 transition-all ${
-                        authMode === 'signin'
-                          ? 'border-rose-500 text-rose-500'
-                          : 'border-transparent text-primary/60 dark:text-gray-400 hover:text-primary'
-                      }`}
-                    >
-                      Sign In to Account
-                    </button>
-                    <button
-                      onClick={() => {
-                        setAuthMode('register');
-                        setErrorMessage(null);
-                      }}
-                      className={`flex-1 pb-3 text-xs sm:text-sm font-bold border-b-2 transition-all ${
-                        authMode === 'register'
-                          ? 'border-rose-500 text-rose-500'
-                          : 'border-transparent text-primary/60 dark:text-gray-400 hover:text-primary'
-                      }`}
-                    >
-                      Create New Account
-                    </button>
-                  </div>
+                  {(authMode === 'signin' || authMode === 'register') && (
+                    <div className="flex border-b border-primary/10 dark:border-white/10 mb-6">
+                      <button
+                        onClick={() => {
+                          setAuthMode('signin');
+                          setErrorMessage(null);
+                        }}
+                        className={`flex-1 pb-3 text-xs sm:text-sm font-bold border-b-2 transition-all ${
+                          authMode === 'signin'
+                            ? 'border-rose-500 text-rose-500'
+                            : 'border-transparent text-primary/60 dark:text-gray-400 hover:text-primary'
+                        }`}
+                      >
+                        Sign In to Account
+                      </button>
+                      <button
+                        onClick={() => {
+                          setAuthMode('register');
+                          setErrorMessage(null);
+                        }}
+                        className={`flex-1 pb-3 text-xs sm:text-sm font-bold border-b-2 transition-all ${
+                          authMode === 'register'
+                            ? 'border-rose-500 text-rose-500'
+                            : 'border-transparent text-primary/60 dark:text-gray-400 hover:text-primary'
+                        }`}
+                      >
+                        Create New Account
+                      </button>
+                    </div>
+                  )}
 
                   {/* ========================================= */}
                   {/* MODE A: SIGN IN */}
@@ -670,9 +778,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                             </label>
                             <button
                               type="button"
-                              onClick={() =>
-                                setSuccessMessage('Password reset instructions simulated to your registered email.')
-                              }
+                              onClick={() => {
+                                setForgotEmail(signInEmail || '');
+                                setResetLinkSent(false);
+                                setErrorMessage(null);
+                                setAuthMode('forgot');
+                              }}
                               className="text-xs font-semibold text-rose-500 hover:underline"
                             >
                               Forgot password?
@@ -929,6 +1040,248 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                         )}
                       </button>
                     </form>
+                  )}
+
+                  {/* ========================================= */}
+                  {/* MODE C: FORGOT PASSWORD */}
+                  {/* ========================================= */}
+                  {authMode === 'forgot' && (
+                    <div className="space-y-5">
+                      <div className="text-center space-y-1">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-300 text-xs font-bold uppercase tracking-wider">
+                          <KeyRound size={14} /> Password Recovery
+                        </div>
+                        <h2 className="font-serif text-xl sm:text-2xl font-bold text-primary dark:text-white">
+                          Forgot Your Password?
+                        </h2>
+                        <p className="text-xs text-primary/70 dark:text-gray-300 max-w-sm mx-auto">
+                          Enter your registered Gmail or Email address. We'll send you a secure link to reset your password.
+                        </p>
+                      </div>
+
+                      {!resetLinkSent ? (
+                        <form onSubmit={handleRequestPasswordReset} className="space-y-4">
+                          <div>
+                            <label className="block text-xs font-bold text-primary dark:text-white uppercase tracking-wider mb-1.5">
+                              Registered Gmail / Email <span className="text-rose-500">*</span>
+                            </label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-primary/40 dark:text-gray-400">
+                                <Mail size={16} />
+                              </div>
+                              <input
+                                type="email"
+                                required
+                                placeholder="your.name@gmail.com"
+                                value={forgotEmail}
+                                onChange={(e) => setForgotEmail(e.target.value)}
+                                className="w-full pl-10 pr-4 py-3 rounded-xl border border-primary/15 dark:border-white/15 bg-white dark:bg-navy-light text-primary dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all placeholder:text-gray-400"
+                              />
+                            </div>
+                          </div>
+
+                          <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-rose-500/25 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                          >
+                            {isSubmitting ? (
+                              <>
+                                <Loader2 size={16} className="animate-spin" />
+                                <span>Generating Reset Link...</span>
+                              </>
+                            ) : (
+                              <>
+                                <span>Send Reset Link to Gmail</span>
+                                <ArrowRight size={16} />
+                              </>
+                            )}
+                          </button>
+
+                          <div className="text-center pt-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAuthMode('signin');
+                                setErrorMessage(null);
+                              }}
+                              className="text-xs font-semibold text-primary/70 dark:text-gray-300 hover:text-primary hover:underline inline-flex items-center gap-1"
+                            >
+                              <ArrowLeft size={13} /> Back to Sign In
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <div className="p-4 sm:p-6 rounded-2xl bg-rose-50/60 dark:bg-navy border border-rose-200/70 dark:border-white/10 text-center space-y-4">
+                          <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center">
+                            <CheckCircle2 size={24} />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-base text-primary dark:text-white">
+                              Check Your Gmail Inbox!
+                            </h3>
+                            <p className="text-xs text-primary/75 dark:text-gray-300 mt-1 leading-relaxed">
+                              A password reset link has been dispatched to:
+                              <br />
+                              <strong className="text-primary dark:text-white">{forgotEmail}</strong>
+                            </p>
+                            <p className="text-[11px] text-primary/60 dark:text-gray-400 mt-2">
+                              Click the link inside your email to reset your password. The link will expire in 15 minutes.
+                            </p>
+                          </div>
+
+                          <div className="pt-2 flex flex-col gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setResetEmail(forgotEmail);
+                                setAuthMode('reset');
+                              }}
+                              className="w-full py-2.5 px-4 rounded-xl bg-primary text-white dark:bg-secondary dark:text-navy text-xs font-bold hover:shadow-md transition-all flex items-center justify-center gap-1.5"
+                            >
+                              <span>Open Reset Password Screen Now</span>
+                              <ExternalLink size={14} />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setResetLinkSent(false);
+                                setAuthMode('signin');
+                              }}
+                              className="text-xs font-semibold text-primary/70 dark:text-gray-300 hover:underline pt-1"
+                            >
+                              Back to Sign In
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ========================================= */}
+                  {/* MODE D: SET NEW PASSWORD */}
+                  {/* ========================================= */}
+                  {authMode === 'reset' && (
+                    <div className="space-y-5">
+                      <div className="text-center space-y-1">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-300 text-xs font-bold uppercase tracking-wider">
+                          <Lock size={14} /> Security
+                        </div>
+                        <h2 className="font-serif text-xl sm:text-2xl font-bold text-primary dark:text-white">
+                          Create New Password
+                        </h2>
+                        <p className="text-xs text-primary/70 dark:text-gray-300 max-w-sm mx-auto">
+                          Resetting password for: <strong className="text-primary dark:text-white">{resetEmail || 'Your Account'}</strong>
+                        </p>
+                      </div>
+
+                      <form onSubmit={handleSaveNewPassword} className="space-y-4">
+                        <div>
+                          <label className="block text-xs font-bold text-primary dark:text-white uppercase tracking-wider mb-1.5">
+                            New Password <span className="text-rose-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-primary/40 dark:text-gray-400">
+                              <Lock size={16} />
+                            </div>
+                            <input
+                              type={showNewPassword ? 'text' : 'password'}
+                              required
+                              placeholder="At least 6 characters"
+                              value={newPassword}
+                              onChange={(e) => setNewPassword(e.target.value)}
+                              className="w-full pl-10 pr-11 py-3 rounded-xl border border-primary/15 dark:border-white/15 bg-white dark:bg-navy-light text-primary dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all placeholder:text-gray-400"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowNewPassword(!showNewPassword)}
+                              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-primary/50 dark:text-gray-400 hover:text-primary"
+                            >
+                              {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                          </div>
+
+                          {/* Password Strength Indicator */}
+                          {newPassword && (
+                            <div className="mt-2 flex items-center gap-2">
+                              <div className="flex-1 h-1.5 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden flex gap-1">
+                                {[1, 2, 3].map((step) => (
+                                  <div
+                                    key={step}
+                                    className={`flex-1 h-full rounded-full ${
+                                      getPasswordStrength(newPassword).score >= step
+                                        ? getPasswordStrength(newPassword).color
+                                        : 'bg-gray-200 dark:bg-white/10'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-[10px] font-bold text-primary/60 dark:text-gray-400">
+                                {getPasswordStrength(newPassword).label}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-primary dark:text-white uppercase tracking-wider mb-1.5">
+                            Confirm New Password <span className="text-rose-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-primary/40 dark:text-gray-400">
+                              <Lock size={16} />
+                            </div>
+                            <input
+                              type={showConfirmPassword ? 'text' : 'password'}
+                              required
+                              placeholder="Re-type new password"
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              className="w-full pl-10 pr-11 py-3 rounded-xl border border-primary/15 dark:border-white/15 bg-white dark:bg-navy-light text-primary dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all placeholder:text-gray-400"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-primary/50 dark:text-gray-400 hover:text-primary"
+                            >
+                              {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                          </div>
+                        </div>
+
+                        <button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-rose-500/25 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                        >
+                          {isSubmitting ? (
+                            <>
+                              <Loader2 size={16} className="animate-spin" />
+                              <span>Updating Password...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>Save New Password & Sign In</span>
+                              <ArrowRight size={16} />
+                            </>
+                          )}
+                        </button>
+
+                        <div className="text-center pt-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAuthMode('signin');
+                              setErrorMessage(null);
+                            }}
+                            className="text-xs font-semibold text-primary/70 dark:text-gray-300 hover:text-primary hover:underline inline-flex items-center gap-1"
+                          >
+                            <ArrowLeft size={13} /> Cancel & Back to Sign In
+                          </button>
+                        </div>
+                      </form>
+                    </div>
                   )}
                 </div>
               )}
