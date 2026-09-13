@@ -3,6 +3,7 @@ import { useCart, INSTAGRAM_USERNAME } from '../context/CartContext';
 import { useSettings } from '../context/SettingsContext';
 import { X, Copy, Check, ExternalLink } from 'lucide-react';
 import { WhatsAppIcon } from './WhatsAppIcon';
+import { InstagramIcon } from './InstagramIcon';
 
 export const ClipboardFallbackModal: React.FC = () => {
   const { clipboardFallbackMessage, closeClipboardFallback } = useCart();
@@ -104,7 +105,9 @@ export const ClipboardFallbackModal: React.FC = () => {
               rel="noopener noreferrer"
               className="py-3 px-4 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all"
             >
-              Open Instagram DM <ExternalLink size={14} />
+              <InstagramIcon size={16} />
+              <span>Open Instagram DM</span>
+              <ExternalLink size={14} />
             </a>
           )}
         </div>

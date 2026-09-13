@@ -1,6 +1,7 @@
 import React from 'react';
 import { ShoppingBag, Palette, MessageCircleHeart, ArrowRight } from 'lucide-react';
 import { WhatsAppIcon } from './WhatsAppIcon';
+import { InstagramIcon } from './InstagramIcon';
 import { useSettings } from '../context/SettingsContext';
 
 export const OrderGuide: React.FC = () => {
@@ -78,9 +79,9 @@ export const OrderGuide: React.FC = () => {
           href="https://instagram.com/petalorah"
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-full bg-primary text-white dark:bg-secondary dark:text-navy font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all hover:scale-105"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-5 py-3 sm:px-6 sm:py-3.5 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all hover:scale-105"
         >
-          <MessageCircleHeart size={16} className="shrink-0" />
+          <InstagramIcon size={18} className="shrink-0" />
           <span>Send a DM to @petalorah</span>
           <ArrowRight size={14} className="shrink-0" />
         </a>

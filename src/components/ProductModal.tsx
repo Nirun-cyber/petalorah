@@ -1,6 +1,7 @@
 import React from 'react';
-import { X, Sparkles, MessageCircleHeart, Star } from 'lucide-react';
+import { X, Sparkles, Star } from 'lucide-react';
 import { WhatsAppIcon } from './WhatsAppIcon';
+import { InstagramIcon } from './InstagramIcon';
 import type { Product } from '../data/products';
 import { ProductQuantityControl } from './ProductQuantityControl';
 import { useReviews } from '../context/ReviewContext';
@@ -155,10 +156,10 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) 
                 href="https://instagram.com/petalorah"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-xs shadow-md transition-all truncate"
+                className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-xs shadow-md transition-all truncate"
               >
-                <MessageCircleHeart size={16} />
-                Instagram
+                <InstagramIcon size={16} />
+                <span>Instagram</span>
               </a>
             </div>
 

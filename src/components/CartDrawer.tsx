@@ -6,7 +6,6 @@ import {
   Minus,
   ShoppingBag,
   ArrowRight,
-  MessageCircleHeart,
   Truck,
   MapPin,
   UserCheck,
@@ -19,6 +18,7 @@ import {
   LogIn,
 } from 'lucide-react';
 import { WhatsAppIcon } from './WhatsAppIcon';
+import { InstagramIcon } from './InstagramIcon';
 import { useCart, calculateShippingFee, type CustomerCheckoutInfo } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -706,7 +706,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
                 onClick={() => handleInstagramCheckout(false)}
                 className="w-full flex items-center justify-center gap-2 py-2.5 px-5 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-xs shadow-sm hover:shadow transition-all duration-200 active:scale-[0.99] cursor-pointer"
               >
-                <MessageCircleHeart size={15} />
+                <InstagramIcon size={16} />
                 <span>Order via Instagram DM (Copied)</span>
               </button>
             </div>
