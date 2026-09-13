@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Lock,
   Heart,
@@ -26,6 +26,7 @@ import {
   Copy,
   Check,
   X,
+  Sparkles,
 } from 'lucide-react';
 import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import { useProducts } from '../context/ProductContext';
@@ -89,7 +90,24 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
   const [whatsappInput, setWhatsappInput] = useState(settings.whatsappNumber);
   const [instagramInput, setInstagramInput] = useState(settings.instagramUsername);
   const [googleSheetInput, setGoogleSheetInput] = useState(settings.googleSheetWebhookUrl || '');
+  const [creationOfTheWeekInput, setCreationOfTheWeekInput] = useState(
+    settings.creationOfTheWeekProductId || 'four_tulips_pot'
+  );
   const [settingsSuccessMsg, setSettingsSuccessMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (settings.creationOfTheWeekProductId) {
+      setCreationOfTheWeekInput(settings.creationOfTheWeekProductId);
+    }
+  }, [settings.creationOfTheWeekProductId]);
+
+  const handleSetCreationOfTheWeek = (productId: string) => {
+    updateSettings({ creationOfTheWeekProductId: productId });
+    setCreationOfTheWeekInput(productId);
+    const prod = products.find((p) => p.id === productId);
+    setSettingsSuccessMsg(`✨ "${prod?.name || 'Craft'}" is now featured as Creation of the Week on the homepage!`);
+    setTimeout(() => setSettingsSuccessMsg(null), 3500);
+  };
 
   // Google Sheets Integration State
   const [isTestingSheet, setIsTestingSheet] = useState(false);
@@ -130,8 +148,9 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
       whatsappNumber: whatsappInput,
       instagramUsername: instagramInput,
       googleSheetWebhookUrl: googleSheetInput.trim(),
+      creationOfTheWeekProductId: creationOfTheWeekInput,
     });
-    setSettingsSuccessMsg('Store & Google Sheets settings saved successfully!');
+    setSettingsSuccessMsg('Store & Showcase settings saved successfully!');
     setTimeout(() => setSettingsSuccessMsg(null), 3000);
   };
 
@@ -449,14 +468,14 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
 
               <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-bold uppercase text-slate-400">Banner Status</p>
-                  <h3 className="text-xl font-bold text-slate-800 dark:text-white mt-1">
-                    {settings.isAnnouncementVisible ? 'Active 🟢' : 'Hidden 🔴'}
+                  <p className="text-xs font-bold uppercase text-slate-400">Creation of the Week</p>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-800 dark:text-white mt-1 truncate max-w-[150px]">
+                    {products.find(p => p.id === (settings.creationOfTheWeekProductId || 'four_tulips_pot'))?.name || 'Featured Craft'}
                   </h3>
-                  <p className="text-xs text-slate-400 mt-1 truncate max-w-[150px]">{settings.announcementText}</p>
+                  <p className="text-xs text-rose-500 font-semibold mt-1">Homepage Hero Card</p>
                 </div>
-                <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950 text-amber-500 flex items-center justify-center">
-                  <Megaphone className="w-6 h-6" />
+                <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950 text-rose-500 flex items-center justify-center">
+                  <Sparkles className="w-6 h-6" />
                 </div>
               </div>
             </div>
@@ -641,6 +660,11 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
                         </td>
 
                         <td className="py-3.5 px-4 space-x-1.5">
+                          {(settings.creationOfTheWeekProductId || 'four_tulips_pot') === prod.id && (
+                            <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white font-extrabold text-[10px] shadow-sm inline-flex items-center gap-1">
+                              <Sparkles size={10} /> Creation of Week
+                            </span>
+                          )}
                           {prod.isBestSeller && (
                             <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-extrabold text-[10px]">
                               🔥 Best Seller
@@ -651,7 +675,7 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
                               ⏳ Coming Soon
                             </span>
                           )}
-                          {!prod.isBestSeller && !prod.isComingSoon && (
+                          {!prod.isBestSeller && !prod.isComingSoon && (settings.creationOfTheWeekProductId || 'four_tulips_pot') !== prod.id && (
                             <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 font-semibold text-[10px]">
                               {prod.badge || 'Active'}
                             </span>
@@ -660,6 +684,22 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
 
                         <td className="py-3.5 px-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => handleSetCreationOfTheWeek(prod.id)}
+                              className={`p-1.5 rounded-lg border transition-colors ${
+                                (settings.creationOfTheWeekProductId || 'four_tulips_pot') === prod.id
+                                  ? 'bg-rose-500 text-white border-rose-500 shadow-sm'
+                                  : 'border-slate-200 text-slate-400 hover:text-rose-500 hover:border-rose-200'
+                              }`}
+                              title={
+                                (settings.creationOfTheWeekProductId || 'four_tulips_pot') === prod.id
+                                  ? 'Current Creation of the Week (Homepage Hero)'
+                                  : 'Feature as Creation of the Week on Homepage'
+                              }
+                            >
+                              <Sparkles size={14} className={(settings.creationOfTheWeekProductId || 'four_tulips_pot') === prod.id ? 'fill-white' : ''} />
+                            </button>
+
                             <button
                               onClick={() => toggleBestSeller(prod.id)}
                               className={`p-1.5 rounded-lg border transition-colors ${
@@ -976,6 +1016,120 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
         {/* --- SETTINGS TAB --- */}
         {activeTab === 'settings' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in duration-200">
+            {/* Homepage Hero Showcase: Creation of the Week */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-100 dark:border-slate-800 shadow-sm space-y-6 lg:col-span-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-500 to-pink-500 text-white flex items-center justify-center shadow-md">
+                    <Sparkles size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold font-serif text-slate-800 dark:text-white flex items-center gap-2 flex-wrap">
+                      <span>Creation of the Week</span>
+                      <span className="text-xs bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-300 font-bold px-2.5 py-0.5 rounded-full">
+                        Homepage Hero Showcase
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Choose which handcrafted craft is featured prominently in the hero showcase on the Petalorah homepage
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                {/* Product Select Controls */}
+                <div className="md:col-span-7 space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+                      Select Featured Craft Product
+                    </label>
+                    <select
+                      value={creationOfTheWeekInput}
+                      onChange={(e) => {
+                        const newId = e.target.value;
+                        setCreationOfTheWeekInput(newId);
+                        handleSetCreationOfTheWeek(newId);
+                      }}
+                      className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white cursor-pointer focus:ring-2 focus:ring-rose-500/20"
+                    >
+                      {products.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} — {p.price} ({p.category})
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[11px] text-slate-400 mt-2">
+                      💡 Tip: You can also click the ✨ icon next to any craft in the <strong>Products</strong> tab to feature it instantly!
+                    </p>
+                  </div>
+
+                  {settingsSuccessMsg && (
+                    <div className="p-3 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-xl flex items-center gap-2 animate-in fade-in">
+                      <CheckCircle size={16} /> {settingsSuccessMsg}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-3 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => handleSetCreationOfTheWeek(creationOfTheWeekInput)}
+                      className="px-6 py-3 rounded-2xl font-bold text-white bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-md hover:shadow-lg transition-all text-xs flex items-center gap-2"
+                    >
+                      <Sparkles size={15} />
+                      <span>Set as Creation of the Week</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={onNavigateHome}
+                      className="px-4 py-3 rounded-2xl font-bold border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-xs flex items-center gap-1.5"
+                    >
+                      <Eye size={14} />
+                      <span>View Live on Homepage</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Live Preview Card */}
+                <div className="md:col-span-5 flex justify-center">
+                  {(() => {
+                    const previewProd =
+                      products.find((p) => p.id === creationOfTheWeekInput) || products[0];
+                    if (!previewProd) return null;
+                    return (
+                      <div className="relative w-full max-w-[240px] rounded-3xl p-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl transition-all duration-300">
+                        <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-white dark:bg-slate-900 mb-3">
+                          <img
+                            src={previewProd.img}
+                            alt={previewProd.name}
+                            className="w-full h-full object-cover"
+                          />
+                          <span className="absolute top-2.5 left-2.5 bg-rose-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1">
+                            <Sparkles size={11} /> Creation of the Week
+                          </span>
+                        </div>
+                        <h4 className="font-serif text-sm font-bold text-slate-800 dark:text-white truncate">
+                          {previewProd.name}
+                        </h4>
+                        <p className="text-[10px] text-slate-400 capitalize">
+                          {previewProd.category} craft
+                        </p>
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                          <span className="text-sm font-extrabold text-rose-500">
+                            {previewProd.price}
+                          </span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                            Active Showcase
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+
             {/* Store Contact Config */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
               <div className="flex items-center gap-3">

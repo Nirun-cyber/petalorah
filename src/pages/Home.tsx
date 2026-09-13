@@ -39,7 +39,9 @@ export const Home: React.FC<HomeProps> = ({
     (p) => p.isBestSeller || ['duck', 'single_tulip_pot', 'luffy', 'custom_jersey'].includes(p.id)
   ).slice(0, 6);
 
-  const creationOfTheWeek = products.find((p) => p.id === 'four_tulips_pot') || products[0];
+  const creationOfTheWeek =
+    products.find((p) => p.id === (settings.creationOfTheWeekProductId || 'four_tulips_pot')) ||
+    products[0];
 
   return (
     <div className="w-full flex flex-col min-h-screen">

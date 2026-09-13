@@ -7,6 +7,7 @@ interface SiteSettings {
   instagramUsername: string;
   adminPin: string;
   googleSheetWebhookUrl?: string;
+  creationOfTheWeekProductId?: string;
 }
 
 interface SettingsContextType {
@@ -25,6 +26,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   instagramUsername: 'petalorah',
   adminPin: '240812',
   googleSheetWebhookUrl: (import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL as string) || '',
+  creationOfTheWeekProductId: 'four_tulips_pot',
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
