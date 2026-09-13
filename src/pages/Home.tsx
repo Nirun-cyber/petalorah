@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, ArrowRight, CheckCircle, Gift, Star } from 'lucide-react';
+import { Sparkles, ArrowRight, CheckCircle } from 'lucide-react';
 import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import type { Product } from '../data/products';
 import { useProducts } from '../context/ProductContext';
@@ -196,66 +196,7 @@ export const Home: React.FC<HomeProps> = ({
         </div>
       </section>
 
-      {/* QUICK CATEGORY SELECTOR CARDS */}
-      <section className="w-full py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          
-          <div
-            onClick={onNavigateToKeychains}
-            className="p-6 rounded-3xl bg-gradient-to-br from-pink-500/10 via-rose-500/5 to-transparent border border-pink-500/20 hover:border-pink-500/40 cursor-pointer transition-all duration-300 group"
-          >
-            <div className="w-12 h-12 rounded-2xl bg-pink-500 text-white flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <Gift size={24} />
-            </div>
-            <h3 className="font-serif text-xl font-bold text-primary dark:text-white">
-              Fluffy Keychains
-            </h3>
-            <p className="text-xs text-primary/70 dark:text-gray-300 mt-1">
-              Roses, Tulips, Ducks, Anime Straw Hats, Custom Initials & more (17 items starting at ₹35).
-            </p>
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-pink-600 dark:text-pink-400 mt-4 group-hover:underline">
-              Explore Keychains <ArrowRight size={14} />
-            </span>
-          </div>
 
-          <div
-            onClick={onNavigateToTableTops}
-            className="p-6 rounded-3xl bg-gradient-to-br from-indigo-500/10 via-blue-500/5 to-transparent border border-indigo-500/20 hover:border-indigo-500/40 cursor-pointer transition-all duration-300 group"
-          >
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500 text-white flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <Sparkles size={24} />
-            </div>
-            <h3 className="font-serif text-xl font-bold text-primary dark:text-white">
-              Table Top Pots
-            </h3>
-            <p className="text-xs text-primary/70 dark:text-gray-300 mt-1">
-              Single & multi-tulip garden pots and sunflower desk decorations (starts at ₹169).
-            </p>
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-4 group-hover:underline">
-              Explore Table Tops <ArrowRight size={14} />
-            </span>
-          </div>
-
-          <div
-            onClick={onNavigateToCollection}
-            className="p-6 rounded-3xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/20 hover:border-amber-500/40 cursor-pointer transition-all duration-300 group"
-          >
-            <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <Star size={24} />
-            </div>
-            <h3 className="font-serif text-xl font-bold text-primary dark:text-white">
-              Custom Crafts & Bouquets
-            </h3>
-            <p className="text-xs text-primary/70 dark:text-gray-300 mt-1">
-              Custom sports jerseys, custom initial letters, and handcrafted everlasting flower bouquets.
-            </p>
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400 mt-4 group-hover:underline">
-              View Custom Crafts <ArrowRight size={14} />
-            </span>
-          </div>
-
-        </div>
-      </section>
 
       {/* CUSTOMER REVIEWS & TESTIMONIALS */}
       <CustomerReviews />
