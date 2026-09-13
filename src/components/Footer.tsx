@@ -4,7 +4,7 @@ import { WhatsAppIcon } from './WhatsAppIcon';
 import { useSettings } from '../context/SettingsContext';
 
 interface FooterProps {
-  onNavigate: (tab: 'home' | 'portfolio' | 'keychains' | 'tabletops' | 'admin' | 'login') => void;
+  onNavigate: (tab: 'home' | 'about' | 'portfolio' | 'keychains' | 'tabletops' | 'admin' | 'login') => void;
   onOpenTracking?: () => void;
 }
 
@@ -44,6 +44,9 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenTracking }) =>
                 <button onClick={() => onNavigate('home')} className="hover:underline">Home</button>
               </li>
               <li>
+                <button onClick={() => onNavigate('about')} className="hover:underline">About &amp; Story</button>
+              </li>
+              <li>
                 <button onClick={() => onNavigate('keychains')} className="hover:underline">Fluffy Keychains</button>
               </li>
               <li>
@@ -52,20 +55,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenTracking }) =>
               <li>
                 <button
                   onClick={() => {
-                    onNavigate('home');
-                    setTimeout(() => {
-                      document.getElementById('our-story')?.scrollIntoView({ behavior: 'smooth' });
-                    }, 100);
-                  }}
-                  className="hover:underline"
-                >
-                  Our Story
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => {
-                    onNavigate('home');
+                    onNavigate('about');
                     setTimeout(() => {
                       document.getElementById('delivery-info')?.scrollIntoView({ behavior: 'smooth' });
                     }, 100);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Home } from './pages/Home';
+import { About } from './pages/About';
 import { Portfolio } from './pages/Portfolio';
 import { Keychains } from './pages/Keychains';
 import { TableTops } from './pages/TableTops';
@@ -21,10 +22,11 @@ import { ClipboardFallbackModal } from './components/ClipboardFallbackModal';
 import { OrderTrackingModal } from './components/OrderTrackingModal';
 import Lenis from 'lenis';
 
-const getTabFromPath = (): 'home' | 'portfolio' | 'keychains' | 'tabletops' | 'admin' | 'login' => {
+const getTabFromPath = (): 'home' | 'about' | 'portfolio' | 'keychains' | 'tabletops' | 'admin' | 'login' => {
   const path = window.location.pathname.toLowerCase();
   if (path.includes('admin')) return 'admin';
   if (path.includes('login')) return 'login';
+  if (path.includes('about')) return 'about';
   if (path.includes('keychains')) return 'keychains';
   if (path.includes('tabletops')) return 'tabletops';
   if (path.includes('portfolio')) return 'portfolio';
@@ -32,7 +34,7 @@ const getTabFromPath = (): 'home' | 'portfolio' | 'keychains' | 'tabletops' | 'a
 };
 
 export const App: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState<'home' | 'portfolio' | 'keychains' | 'tabletops' | 'admin' | 'login'>(getTabFromPath);
+  const [currentTab, setCurrentTab] = useState<'home' | 'about' | 'portfolio' | 'keychains' | 'tabletops' | 'admin' | 'login'>(getTabFromPath);
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
 
   // Sync tab with browser URL history
@@ -76,7 +78,7 @@ export const App: React.FC = () => {
     };
   }, [currentTab]);
 
-  const handleNavigate = (tab: 'home' | 'portfolio' | 'keychains' | 'tabletops' | 'custom' | 'admin' | 'login') => {
+  const handleNavigate = (tab: 'home' | 'about' | 'portfolio' | 'keychains' | 'tabletops' | 'custom' | 'admin' | 'login') => {
     const targetTab = tab === 'custom' ? 'portfolio' : tab;
     setCurrentTab(targetTab);
     const newPath = targetTab === 'home' ? '/' : `/${targetTab}`;
@@ -113,9 +115,17 @@ export const App: React.FC = () => {
                         onNavigateToCollection={() => handleNavigate('portfolio')}
                         onNavigateToKeychains={() => handleNavigate('keychains')}
                         onNavigateToTableTops={() => handleNavigate('tabletops')}
+                        onNavigateToAbout={() => handleNavigate('about')}
                         onOpenTracking={() => setIsTrackingModalOpen(true)}
                         isDarkMode={isDarkMode}
                         toggleDarkMode={() => {}}
+                      />
+                    )}
+                    {currentTab === 'about' && (
+                      <About
+                        onNavigateHome={() => handleNavigate('home')}
+                        onNavigateToKeychains={() => handleNavigate('keychains')}
+                        onNavigateToTableTops={() => handleNavigate('tabletops')}
                       />
                     )}
                     {currentTab === 'portfolio' && (

@@ -4,19 +4,17 @@ import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import type { Product } from '../data/products';
 import { useProducts } from '../context/ProductContext';
 import { useSettings } from '../context/SettingsContext';
-import { ProductModal } from '../components/ProductModal';
-import { OrderGuide } from '../components/OrderGuide';
-import { ProductQuantityControl } from '../components/ProductQuantityControl';
 import { CustomerReviews } from '../components/CustomerReviews';
 import { RealCreationsGallery } from '../components/RealCreationsGallery';
-import { BrandStory } from '../components/BrandStory';
-import { HowItsMade } from '../components/HowItsMade';
-import { DeliveryAndPolicies } from '../components/DeliveryAndPolicies';
+
+import { ProductModal } from '../components/ProductModal';
+import { ProductQuantityControl } from '../components/ProductQuantityControl';
 
 interface HomeProps {
   onNavigateToCollection: () => void;
   onNavigateToKeychains: () => void;
   onNavigateToTableTops: () => void;
+  onNavigateToAbout?: () => void;
   onOpenTracking?: () => void;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
@@ -26,6 +24,7 @@ export const Home: React.FC<HomeProps> = ({
   onNavigateToCollection,
   onNavigateToKeychains,
   onNavigateToTableTops,
+  onNavigateToAbout,
 }) => {
   const { products } = useProducts();
   const { settings } = useSettings();
@@ -204,17 +203,31 @@ export const Home: React.FC<HomeProps> = ({
       {/* MADE FOR REAL PEOPLE / REAL CREATIONS */}
       <RealCreationsGallery />
 
-      {/* OUR STORY & WHY PETALORAH */}
-      <BrandStory />
-
-      {/* HOW IT'S MADE — 4-STEP PROCESS */}
-      <HowItsMade />
-
-      {/* DELIVERY & RETURN POLICIES */}
-      <DeliveryAndPolicies />
-
-      {/* HOW TO ORDER GUIDE */}
-      <OrderGuide />
+      {/* OUR STORY & CRAFT TEASER */}
+      {onNavigateToAbout && (
+        <section className="w-full py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="rounded-3xl bg-gradient-to-r from-rose-50/80 via-pink-50/50 to-indigo-50/50 dark:from-navy-light/60 dark:to-navy/80 border border-primary/10 dark:border-white/10 p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="space-y-1 text-center sm:text-left">
+              <span className="text-xs font-bold uppercase tracking-wider text-rose-500">
+                Crafted with Patience &amp; Love
+              </span>
+              <h3 className="font-serif text-lg sm:text-xl font-bold text-primary dark:text-white">
+                Curious how our pipe cleaner keepsakes are made?
+              </h3>
+              <p className="text-xs text-primary/70 dark:text-gray-300">
+                Discover our story, handmade process, delivery guidelines, and how to place custom orders.
+              </p>
+            </div>
+            <button
+              onClick={onNavigateToAbout}
+              className="shrink-0 px-5 py-2.5 rounded-full bg-primary text-white dark:bg-secondary dark:text-navy text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2 hover:-translate-y-0.5"
+            >
+              <span>Read About Petalorah</span>
+              <ArrowRight size={14} />
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* PRODUCT DETAILS MODAL */}
       <ProductModal

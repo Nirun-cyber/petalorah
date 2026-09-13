@@ -4,8 +4,8 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
 interface NavbarProps {
-  currentTab: 'home' | 'portfolio' | 'keychains' | 'tabletops' | 'custom' | 'admin' | 'login';
-  onNavigate: (tab: 'home' | 'portfolio' | 'keychains' | 'tabletops' | 'custom' | 'admin' | 'login') => void;
+  currentTab: 'home' | 'about' | 'portfolio' | 'keychains' | 'tabletops' | 'custom' | 'admin' | 'login';
+  onNavigate: (tab: 'home' | 'about' | 'portfolio' | 'keychains' | 'tabletops' | 'custom' | 'admin' | 'login') => void;
   onOpenTracking: () => void;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
@@ -22,6 +22,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const navLinks = [
     { id: 'home', label: 'Home' },
+    { id: 'about', label: 'About' },
     { id: 'keychains', label: 'Keychains' },
     { id: 'tabletops', label: 'Table Tops' },
   ] as const;
