@@ -188,7 +188,13 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
     } catch (e) {
-      console.error('Failed to save orders to localStorage:', e);
+      console.warn('Failed to save all orders to localStorage, attempting to save recent 25 orders:', e);
+      try {
+        const recentOrders = orders.slice(0, 25);
+        localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(recentOrders));
+      } catch (innerErr) {
+        console.error('Storage quota exceeded, unable to save orders locally:', innerErr);
+      }
     }
   }, [orders]);
 

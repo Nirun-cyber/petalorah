@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   Trash2,
@@ -41,6 +41,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
   } = useCart();
 
   const { user } = useAuth();
+
+  const formRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const phoneInputRef = useRef<HTMLInputElement>(null);
+  const addressInputRef = useRef<HTMLTextAreaElement>(null);
+  const pincodeInputRef = useRef<HTMLInputElement>(null);
 
   // Guest / Customer Checkout Form State (pre-filled from user or localStorage)
   const [name, setName] = useState<string>(() => {
@@ -150,37 +156,47 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
     }
   };
 
-  const validateAndGetCustomerInfo = (): CustomerCheckoutInfo | null => {
+  const validateAndGetCustomerInfo = (allowQuickCheckout = false): CustomerCheckoutInfo | null => {
     setErrorMessage(null);
     const cleanName = name.trim();
     const cleanPhone = phone.replace(/[^0-9+]/g, '').trim();
     const cleanAddress = address.trim();
     const cleanPincode = pincode.replace(/[^0-9]/g, '').trim();
 
-    if (!cleanName) {
-      setErrorMessage('Please enter your full name.');
-      return null;
-    }
-    if (!cleanPhone || cleanPhone.replace(/[^0-9]/g, '').length < 10) {
-      setErrorMessage('Please enter a valid 10-digit WhatsApp or mobile number.');
-      return null;
-    }
-    if (!cleanAddress) {
-      setErrorMessage('Please enter your complete delivery address (house/flat, street, area).');
-      return null;
-    }
-    if (!cleanPincode || cleanPincode.length < 6) {
-      setErrorMessage('Please enter a valid 6-digit delivery pincode.');
-      return null;
+    if (!allowQuickCheckout) {
+      if (!cleanName) {
+        setErrorMessage('Please enter your Name.');
+        nameInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        nameInputRef.current?.focus();
+        return null;
+      }
+      if (!cleanPhone || cleanPhone.replace(/[^0-9]/g, '').length < 10) {
+        setErrorMessage('Please enter a valid 10-digit WhatsApp or mobile number.');
+        phoneInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        phoneInputRef.current?.focus();
+        return null;
+      }
+      if (!cleanAddress) {
+        setErrorMessage('Please enter your Delivery Address (House/Street/Area).');
+        addressInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        addressInputRef.current?.focus();
+        return null;
+      }
+      if (!cleanPincode || cleanPincode.length < 6) {
+        setErrorMessage('Please enter a valid 6-digit Delivery Pincode.');
+        pincodeInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        pincodeInputRef.current?.focus();
+        return null;
+      }
     }
 
     const info: CustomerCheckoutInfo = {
-      name: cleanName,
-      phone: cleanPhone,
-      address: cleanAddress,
+      name: cleanName || 'Guest Customer',
+      phone: cleanPhone || '[To be provided in chat]',
+      address: cleanAddress || '[To be provided in chat]',
       city: city.trim() || 'Coimbatore',
       state: state.trim() || 'Tamil Nadu',
-      pincode: cleanPincode,
+      pincode: cleanPincode || '[Pending]',
       notes: notes.trim() || undefined,
     };
 
@@ -192,16 +208,16 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
     return info;
   };
 
-  const handleWhatsAppCheckout = () => {
-    const customerInfo = validateAndGetCustomerInfo();
+  const handleWhatsAppCheckout = (allowQuickCheckout = false) => {
+    const customerInfo = validateAndGetCustomerInfo(allowQuickCheckout);
     if (!customerInfo) return;
 
     const orderId = proceedToWhatsAppOrder(shipping.fee, shipping.region, customerInfo);
     setPlacedOrderId(orderId);
   };
 
-  const handleInstagramCheckout = async () => {
-    const customerInfo = validateAndGetCustomerInfo();
+  const handleInstagramCheckout = async (allowQuickCheckout = false) => {
+    const customerInfo = validateAndGetCustomerInfo(allowQuickCheckout);
     if (!customerInfo) return;
 
     const orderId = await proceedToInstagramOrder(shipping.fee, shipping.region, customerInfo);
@@ -487,6 +503,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
                       <div className="relative">
                         <User size={14} className="absolute left-3 top-2.5 text-primary/40 dark:text-gray-500" />
                         <input
+                          ref={nameInputRef}
                           type="text"
                           required
                           placeholder="e.g. Priya Sundaram"
@@ -495,7 +512,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
                             setName(e.target.value);
                             if (errorMessage) setErrorMessage(null);
                           }}
-                          className="w-full text-xs pl-8 pr-3 py-2 rounded-xl border border-primary/15 dark:border-white/15 bg-white dark:bg-navy text-primary dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                          className={`w-full text-xs pl-8 pr-3 py-2 rounded-xl border ${
+                            errorMessage && !name.trim()
+                              ? 'border-rose-500 ring-2 ring-rose-500/20'
+                              : 'border-primary/15 dark:border-white/15'
+                          } bg-white dark:bg-navy text-primary dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-rose-500/20`}
                         />
                       </div>
                     </div>
@@ -508,6 +529,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
                       <div className="relative">
                         <Phone size={14} className="absolute left-3 top-2.5 text-primary/40 dark:text-gray-500" />
                         <input
+                          ref={phoneInputRef}
                           type="tel"
                           required
                           placeholder="e.g. 9876543210 (10 digits)"
@@ -516,7 +538,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
                             setPhone(e.target.value.replace(/[^0-9+]/g, ''));
                             if (errorMessage) setErrorMessage(null);
                           }}
-                          className="w-full text-xs pl-8 pr-3 py-2 rounded-xl border border-primary/15 dark:border-white/15 bg-white dark:bg-navy text-primary dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                          className={`w-full text-xs pl-8 pr-3 py-2 rounded-xl border ${
+                            errorMessage && (!phone.trim() || phone.replace(/[^0-9]/g, '').length < 10)
+                              ? 'border-rose-500 ring-2 ring-rose-500/20'
+                              : 'border-primary/15 dark:border-white/15'
+                          } bg-white dark:bg-navy text-primary dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-rose-500/20`}
                         />
                       </div>
                     </div>
@@ -529,6 +555,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
                       <div className="relative">
                         <Home size={14} className="absolute left-3 top-2.5 text-primary/40 dark:text-gray-500" />
                         <textarea
+                          ref={addressInputRef}
                           rows={2}
                           required
                           placeholder="House / Flat No., Street, Landmark"
@@ -537,7 +564,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
                             setAddress(e.target.value);
                             if (errorMessage) setErrorMessage(null);
                           }}
-                          className="w-full text-xs pl-8 pr-3 py-2 rounded-xl border border-primary/15 dark:border-white/15 bg-white dark:bg-navy text-primary dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-rose-500/20 resize-none"
+                          className={`w-full text-xs pl-8 pr-3 py-2 rounded-xl border ${
+                            errorMessage && !address.trim()
+                              ? 'border-rose-500 ring-2 ring-rose-500/20'
+                              : 'border-primary/15 dark:border-white/15'
+                          } bg-white dark:bg-navy text-primary dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-rose-500/20 resize-none`}
                         />
                       </div>
                     </div>
@@ -549,6 +580,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
                           Pincode *
                         </label>
                         <input
+                          ref={pincodeInputRef}
                           type="text"
                           maxLength={6}
                           placeholder="e.g. 641001"
@@ -557,7 +589,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
                             setPincode(e.target.value.replace(/[^0-9]/g, ''));
                             if (errorMessage) setErrorMessage(null);
                           }}
-                          className="w-full text-xs px-3 py-2 rounded-xl border border-primary/15 dark:border-white/15 bg-white dark:bg-navy text-primary dark:text-white font-mono font-bold focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                          className={`w-full text-xs px-3 py-2 rounded-xl border ${
+                            errorMessage && (!pincode.trim() || pincode.replace(/[^0-9]/g, '').length < 6)
+                              ? 'border-rose-500 ring-2 ring-rose-500/20'
+                              : 'border-primary/15 dark:border-white/15'
+                          } bg-white dark:bg-navy text-primary dark:text-white font-mono font-bold focus:outline-none focus:ring-2 focus:ring-rose-500/20`}
                         />
                       </div>
 
@@ -631,11 +667,32 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
               </div>
             </div>
 
+            {/* Validation Error Banner right in footer so customer is never confused */}
+            {errorMessage && (
+              <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/70 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs flex items-start gap-2.5 shadow-sm animate-in fade-in">
+                <AlertCircle size={16} className="text-rose-600 dark:text-rose-400 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 space-y-1">
+                  <p className="font-semibold">{errorMessage}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setErrorMessage(null);
+                      handleWhatsAppCheckout(true);
+                    }}
+                    className="text-[11px] underline font-bold text-rose-800 dark:text-rose-200 hover:text-rose-950 block"
+                  >
+                    Or skip &amp; send delivery address directly in WhatsApp chat →
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="space-y-2">
               <button
-                onClick={handleWhatsAppCheckout}
-                className="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.99]"
+                type="button"
+                onClick={() => handleWhatsAppCheckout(false)}
+                className="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.99] cursor-pointer"
               >
                 <MessageSquareCode size={16} />
                 <span>Order via WhatsApp</span>
@@ -643,8 +700,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
               </button>
 
               <button
-                onClick={handleInstagramCheckout}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-5 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-xs shadow-sm hover:shadow transition-all duration-200 active:scale-[0.99]"
+                type="button"
+                onClick={() => handleInstagramCheckout(false)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-5 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-xs shadow-sm hover:shadow transition-all duration-200 active:scale-[0.99] cursor-pointer"
               >
                 <MessageCircleHeart size={15} />
                 <span>Order via Instagram DM (Copied)</span>

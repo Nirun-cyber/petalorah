@@ -12,7 +12,10 @@ export const ClipboardFallbackModal: React.FC = () => {
 
   const isInstagramMessage = clipboardFallbackMessage.includes('Instagram') || !clipboardFallbackMessage.includes('Petalorah Order');
   const cleanPhone = (settings.whatsappNumber || '916382735751').replace(/[^0-9]/g, '');
-  const directWhatsAppUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(clipboardFallbackMessage)}`;
+  const encodedText = encodeURIComponent(clipboardFallbackMessage);
+  const directWhatsAppAppUrl = `https://wa.me/${cleanPhone}?text=${encodedText}`;
+  const directWhatsAppWebUrl = `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;
+  const directInstagramDmUrl = `https://ig.me/m/${INSTAGRAM_USERNAME}`;
 
   const handleCopy = () => {
     try {
@@ -49,11 +52,11 @@ export const ClipboardFallbackModal: React.FC = () => {
           <p>
             {isInstagramMessage ? (
               <>
-                Tap <strong>Copy Order Message</strong>, then open Instagram and press <strong>Paste</strong> into your chat with <strong>@{INSTAGRAM_USERNAME}</strong>.
+                Tap <strong>Copy Order Message</strong>, then tap <strong>Open Instagram DM</strong> and press <strong>Paste</strong> to send your order to <strong>@{INSTAGRAM_USERNAME}</strong>.
               </>
             ) : (
               <>
-                If WhatsApp didn't open automatically (e.g. pop-up blocked or app closed), tap <strong>Open WhatsApp Directly</strong> below or copy your order message.
+                Your order is ready. Choose <strong>WhatsApp Web</strong> (for laptop/PC browser) or <strong>WhatsApp App</strong> (for phone or desktop app).
               </>
             )}
           </p>
@@ -63,33 +66,44 @@ export const ClipboardFallbackModal: React.FC = () => {
           {clipboardFallbackMessage}
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+        <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
           <button
             onClick={handleCopy}
-            className="flex-1 py-3 px-4 rounded-2xl bg-primary text-white dark:bg-secondary dark:text-navy font-bold text-xs shadow-md flex items-center justify-center gap-2 hover:scale-102 transition-transform"
+            className="flex-1 py-3 px-4 rounded-2xl bg-primary text-white dark:bg-secondary dark:text-navy font-bold text-xs shadow-md flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.99] transition-all"
           >
             {copied ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
             {copied ? 'Message Copied!' : 'Copy Order Message'}
           </button>
 
           {!isInstagramMessage ? (
-            <a
-              href={directWhatsAppUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-colors"
-            >
-              <MessageSquareCode size={16} />
-              Open WhatsApp Directly
-            </a>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <a
+                href={directWhatsAppWebUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-colors text-center"
+              >
+                <MessageSquareCode size={16} />
+                Open WhatsApp Web
+              </a>
+              <a
+                href={directWhatsAppAppUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-3 px-3 rounded-2xl bg-emerald-700/80 hover:bg-emerald-800 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition-colors text-center"
+              >
+                <ExternalLink size={14} />
+                WhatsApp App
+              </a>
+            </div>
           ) : (
             <a
-              href={`https://instagram.com/${INSTAGRAM_USERNAME}`}
+              href={directInstagramDmUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="py-3 px-4 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2"
+              className="py-3 px-4 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all"
             >
-              Open Instagram <ExternalLink size={14} />
+              Open Instagram DM <ExternalLink size={14} />
             </a>
           )}
         </div>

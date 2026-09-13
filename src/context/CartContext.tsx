@@ -83,6 +83,34 @@ export const calculateShippingFee = (
   return { fee: 80, region: 'Tamil Nadu Standard' };
 };
 
+export const copyToClipboardSafe = async (text: string): Promise<boolean> => {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (err) {
+    console.warn('Navigator clipboard failed, attempting fallback', err);
+  }
+
+  try {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    return successful;
+  } catch (err) {
+    console.error('Fallback clipboard copy failed', err);
+    return false;
+  }
+};
+
 export const generateWhatsAppOrderMessage = (
   items: CartItem[],
   shippingFee: number = 80,
@@ -100,7 +128,7 @@ export const generateWhatsAppOrderMessage = (
   const grandTotal = itemsSubtotal + shippingFee;
 
   const freeCharmLine = itemsSubtotal >= 200
-    ? '\n🎁 Free Mini Gift Charm: Unlocked (₹0)'
+    ? '\n\u{1F381} Free Mini Gift Charm: Unlocked (₹0)'
     : '';
 
   const customerName = customerInfo?.name || '';
@@ -108,7 +136,7 @@ export const generateWhatsAppOrderMessage = (
   const customerAddress = customerInfo ? [customerInfo.address, customerInfo.city, customerInfo.state].filter(Boolean).join(', ') : '';
   const customerPincode = customerInfo?.pincode || '';
 
-  return `🌸 Petalorah Order
+  return `\u{1F338} Petalorah Order
 
 Products:
 ${itemLines}
@@ -122,7 +150,7 @@ Phone: ${customerPhone}
 Address: ${customerAddress}
 Pincode: ${customerPincode}
 
-"Please confirm my order. Thank you! 💗"`;
+"Please confirm my order. Thank you! \u{1F497}"`;
 };
 
 export const generateInstagramOrderMessage = generateWhatsAppOrderMessage;
@@ -211,31 +239,40 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .join(', ')
       : undefined;
 
-    logOrder(cartItems, 'WhatsApp', {
-      orderId,
-      name: customerInfo?.name || 'Guest Customer',
-      phone: customerInfo?.phone || '',
-      deliveryAddress: fullAddress,
-      pincode: customerInfo?.pincode,
-      city: customerInfo?.city,
-      state: customerInfo?.state,
-      totalAmount: finalTotal,
-    });
+    try {
+      logOrder(cartItems, 'WhatsApp', {
+        orderId,
+        name: customerInfo?.name || 'Guest Customer',
+        phone: customerInfo?.phone || '',
+        deliveryAddress: fullAddress,
+        pincode: customerInfo?.pincode,
+        city: customerInfo?.city,
+        state: customerInfo?.state,
+        totalAmount: finalTotal,
+      });
+    } catch (err) {
+      console.warn('logOrder error ignored:', err);
+    }
 
     const message = generateWhatsAppOrderMessage(cartItems, shippingFee, shippingRegion, customerInfo, orderId);
     const phone = settings.whatsappNumber.replace(/[^0-9]/g, '') || '916382735751';
-    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(message).catch(() => {});
-      }
-    } catch {}
+    // Auto-copy order message to clipboard for guaranteed convenience
+    copyToClipboardSafe(message);
+
+    // Desktop vs Mobile routing:
+    // On desktop browsers, wa.me asks to download the Windows desktop app.
+    // web.whatsapp.com bypasses this and opens WhatsApp Web directly.
+    const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const encodedText = encodeURIComponent(message);
+    const whatsappUrl = isMobile
+      ? `https://wa.me/${phone}?text=${encodedText}`
+      : `https://web.whatsapp.com/send?phone=${phone}&text=${encodedText}`;
 
     try {
       const win = window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
       if (!win || win.closed || typeof win.closed === 'undefined') {
-        // Pop-up was blocked or failed to launch directly
+        // Pop-up was blocked by browser or failed to launch
         setClipboardFallbackMessage(message);
       }
     } catch (err) {
@@ -266,31 +303,33 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .join(', ')
       : undefined;
 
-    logOrder(cartItems, 'Instagram', {
-      orderId,
-      name: customerInfo?.name || 'Guest Customer',
-      phone: customerInfo?.phone || '',
-      deliveryAddress: fullAddress,
-      pincode: customerInfo?.pincode,
-      city: customerInfo?.city,
-      state: customerInfo?.state,
-      totalAmount: finalTotal,
-    });
+    try {
+      logOrder(cartItems, 'Instagram', {
+        orderId,
+        name: customerInfo?.name || 'Guest Customer',
+        phone: customerInfo?.phone || '',
+        deliveryAddress: fullAddress,
+        pincode: customerInfo?.pincode,
+        city: customerInfo?.city,
+        state: customerInfo?.state,
+        totalAmount: finalTotal,
+      });
+    } catch (err) {
+      console.warn('logOrder error ignored:', err);
+    }
 
     const message = generateInstagramOrderMessage(cartItems, shippingFee, shippingRegion, customerInfo, orderId);
     const instagramHandle = settings.instagramUsername || 'petalorah';
-    const instagramUrl = `https://instagram.com/${instagramHandle}`;
+    const instagramDmUrl = `https://ig.me/m/${instagramHandle}`;
+
+    await copyToClipboardSafe(message);
+    setClipboardFallbackMessage(message);
 
     try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(message);
-      }
+      window.open(instagramDmUrl, '_blank', 'noopener,noreferrer');
     } catch (err) {
-      console.warn('Clipboard write failed:', err);
+      console.warn('Instagram window open failed:', err);
     }
-
-    setClipboardFallbackMessage(message);
-    window.open(instagramUrl, '_blank', 'noopener,noreferrer');
 
     return orderId;
   };
