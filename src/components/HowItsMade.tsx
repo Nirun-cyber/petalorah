@@ -34,14 +34,14 @@ export const HowItsMade: React.FC = () => {
   ];
 
   return (
-    <section className="w-full py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <section className="w-full py-6 sm:py-12 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 dark:bg-secondary/20 text-primary dark:text-secondary-light text-xs font-semibold tracking-wide">
-          <Sparkles size={13} className="text-amber-500" />
+      <div className="text-center max-w-2xl mx-auto mb-4 sm:mb-10 space-y-1 sm:space-y-2">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-primary/10 dark:bg-secondary/20 text-primary dark:text-secondary-light text-[10px] sm:text-xs font-semibold tracking-wide">
+          <Sparkles size={12} className="text-amber-500" />
           <span>Handmade Craftsmanship</span>
         </div>
-        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-primary dark:text-white tracking-tight">
+        <h2 className="font-serif text-xl sm:text-3xl font-bold text-primary dark:text-white tracking-tight">
           How It's Made — Handcrafted, Not Mass-Produced
         </h2>
         <p className="text-xs sm:text-sm text-primary/70 dark:text-gray-300">
@@ -49,34 +49,34 @@ export const HowItsMade: React.FC = () => {
         </p>
       </div>
 
-      {/* 4-Step Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      {/* 4-Step Grid (2-col on mobile, 4-col on lg) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6">
         {steps.map((s) => {
           const IconComponent = s.icon;
           return (
             <div
               key={s.step}
-              className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between"
+              className="p-3 sm:p-6 rounded-2xl sm:rounded-3xl bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between"
             >
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`w-10 h-10 rounded-2xl ${s.color} flex items-center justify-center shrink-0`}>
-                    <IconComponent size={20} />
+                <div className="flex items-center justify-between mb-2 sm:mb-4">
+                  <div className={`w-7 h-7 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl ${s.color} flex items-center justify-center shrink-0`}>
+                    <IconComponent size={15} />
                   </div>
-                  <span className="font-serif text-2xl font-black text-primary/15 dark:text-white/15">
+                  <span className="font-serif text-lg sm:text-2xl font-black text-primary/15 dark:text-white/15">
                     {s.step}
                   </span>
                 </div>
 
-                <h3 className="font-serif text-base sm:text-lg font-bold text-primary dark:text-white mb-1.5">
+                <h3 className="font-serif text-xs sm:text-lg font-bold text-primary dark:text-white mb-1 sm:mb-1.5">
                   {s.title}
                 </h3>
-                <p className="text-xs text-primary/70 dark:text-gray-300 leading-relaxed">
+                <p className="text-[11px] sm:text-xs text-primary/70 dark:text-gray-300 leading-relaxed">
                   {s.description}
                 </p>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-primary/5 dark:border-white/5 flex items-center gap-1 text-[11px] font-semibold text-primary/60 dark:text-gray-400">
+              <div className="mt-2 sm:mt-4 pt-2 sm:pt-3 border-t border-primary/5 dark:border-white/5 flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-primary/60 dark:text-gray-400">
                 <span>Handmade with care</span>
               </div>
             </div>

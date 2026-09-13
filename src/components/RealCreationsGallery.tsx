@@ -7,15 +7,15 @@ import { useGallery } from '../context/GalleryContext';
 export const RealCreationsGallery: React.FC = () => {
   const { galleryItems } = useGallery();
   return (
-    <section className="w-full py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <section className="w-full py-6 sm:py-12 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="text-center max-w-2xl mx-auto mb-8 space-y-2">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-300 text-xs font-semibold tracking-wide border border-pink-200/50 dark:border-pink-900/40">
-          <Camera size={13} className="text-pink-500" />
+      <div className="text-center max-w-2xl mx-auto mb-4 sm:mb-8 space-y-1 sm:space-y-2">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-300 text-[10px] sm:text-xs font-semibold tracking-wide border border-pink-200/50 dark:border-pink-900/40">
+          <Camera size={12} className="text-pink-500" />
           <span>Petalorah in Your Hands</span>
         </div>
-        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-primary dark:text-white tracking-tight">
-          Made for Real People <Heart size={20} className="inline text-rose-500 fill-rose-500 mb-1" />
+        <h2 className="font-serif text-xl sm:text-3xl font-bold text-primary dark:text-white tracking-tight">
+          Made for Real People <Heart size={18} className="inline text-rose-500 fill-rose-500 mb-0.5" />
         </h2>
         <p className="text-xs sm:text-sm text-primary/70 dark:text-gray-300">
           Real handmade creations shaped with patience and care, photographed before dispatch and in customer spaces.
@@ -23,11 +23,11 @@ export const RealCreationsGallery: React.FC = () => {
       </div>
 
       {/* Responsive Gallery Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4">
         {galleryItems.map((item) => (
           <div
             key={item.id}
-            className="group relative rounded-2xl overflow-hidden bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between"
+            className="group relative rounded-xl sm:rounded-2xl overflow-hidden bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between"
           >
             {/* Image Aspect Box */}
             <div className="relative aspect-square w-full overflow-hidden bg-gray-50 dark:bg-navy">
@@ -37,17 +37,17 @@ export const RealCreationsGallery: React.FC = () => {
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 loading="lazy"
               />
-              <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[10px] font-medium text-white">
+              <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[9px] sm:text-[10px] font-medium text-white">
                 {item.tag}
               </span>
             </div>
 
             {/* Description & Caption */}
-            <div className="p-2.5 sm:p-3 space-y-1">
-              <h4 className="font-serif text-xs font-bold text-primary dark:text-white truncate">
+            <div className="p-2 sm:p-3 space-y-0.5 sm:space-y-1">
+              <h4 className="font-serif text-[11px] sm:text-xs font-bold text-primary dark:text-white truncate">
                 {item.title}
               </h4>
-              <p className="text-[11px] text-primary/70 dark:text-gray-300 line-clamp-2 leading-relaxed">
+              <p className="text-[10px] sm:text-[11px] text-primary/70 dark:text-gray-300 line-clamp-2 leading-relaxed">
                 {item.caption}
               </p>
             </div>
@@ -56,14 +56,14 @@ export const RealCreationsGallery: React.FC = () => {
       </div>
 
       {/* Subtle Community Note */}
-      <div className="mt-6 text-center">
+      <div className="mt-4 sm:mt-6 text-center">
         <a
           href={`https://instagram.com/${INSTAGRAM_USERNAME}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-pink-600 dark:text-pink-400 hover:underline"
+          className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-pink-600 dark:text-pink-400 hover:underline"
         >
-          <InstagramIcon size={16} />
+          <InstagramIcon size={14} />
           <span>Tag @{INSTAGRAM_USERNAME} on Instagram to feature your creation</span>
         </a>
       </div>

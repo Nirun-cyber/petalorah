@@ -249,18 +249,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   };
 
   return (
-    <div className="min-h-[92vh] relative flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-rose-50/40 via-white to-pink-50/30 dark:from-slate-950 dark:via-navy dark:to-slate-900 overflow-hidden">
+    <div className="min-h-[92vh] relative flex flex-col justify-center items-center py-6 sm:py-12 px-3 sm:px-6 lg:px-8 bg-gradient-to-b from-rose-50/40 via-white to-pink-50/30 dark:from-slate-950 dark:via-navy dark:to-slate-900 overflow-hidden">
       {/* Decorative Floral Blur Orbs */}
       <div className="absolute top-12 left-1/4 w-96 h-96 bg-rose-200/40 dark:bg-rose-900/15 rounded-full blur-3xl pointer-events-none -z-10 animate-pulse" />
       <div className="absolute bottom-12 right-1/4 w-96 h-96 bg-pink-200/35 dark:bg-pink-950/20 rounded-full blur-3xl pointer-events-none -z-10" />
 
       {/* Top Header Actions */}
-      <div className="w-full max-w-xl mx-auto mb-6 flex items-center justify-start z-10">
+      <div className="w-full max-w-xl mx-auto mb-3 sm:mb-6 flex items-center justify-start z-10">
         <button
           onClick={onNavigateHome}
-          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-primary/70 dark:text-gray-400 hover:text-primary dark:hover:text-white transition-colors bg-white/70 dark:bg-white/5 px-3.5 py-1.5 rounded-full border border-primary/10 shadow-sm backdrop-blur-md"
+          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-primary/70 dark:text-gray-400 hover:text-primary dark:hover:text-white transition-colors bg-white/70 dark:bg-white/5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full border border-primary/10 shadow-xs backdrop-blur-md"
         >
-          <ArrowLeft size={15} />
+          <ArrowLeft size={14} />
           Back to Store
         </button>
       </div>
@@ -270,26 +270,26 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: 'easeOut' }}
-        className="w-full max-w-xl bg-white/90 dark:bg-navy-light/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-rose-100/90 dark:border-white/10 overflow-hidden z-10"
+        className="w-full max-w-xl bg-white/90 dark:bg-navy-light/95 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-2xl border border-rose-100/90 dark:border-white/10 overflow-hidden z-10"
       >
         {/* Card Header */}
-        <div className="pt-8 pb-5 px-6 sm:px-10 text-center border-b border-primary/5 dark:border-white/5">
-          <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-gradient-to-tr from-rose-500 to-pink-500 p-0.5 shadow-lg shadow-rose-500/20">
-            <div className="w-full h-full bg-white dark:bg-navy rounded-[14px] flex items-center justify-center">
-              <Heart className="w-7 h-7 text-rose-500 fill-rose-500/20" />
+        <div className="pt-5 pb-3 sm:pt-8 sm:pb-5 px-4 sm:px-10 text-center border-b border-primary/5 dark:border-white/5">
+          <div className="w-11 h-11 sm:w-14 sm:h-14 mx-auto mb-2 sm:mb-3 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-rose-500 to-pink-500 p-0.5 shadow-md shadow-rose-500/20">
+            <div className="w-full h-full bg-white dark:bg-navy rounded-[10px] sm:rounded-[14px] flex items-center justify-center">
+              <Heart className="w-5 h-5 sm:w-7 sm:h-7 text-rose-500 fill-rose-500/20" />
             </div>
           </div>
-          <h1 className="font-serif text-2xl sm:text-3xl font-bold text-primary dark:text-white tracking-wide">
+          <h1 className="font-serif text-xl sm:text-3xl font-bold text-primary dark:text-white tracking-wide">
             Welcome to Petalorah
           </h1>
-          <p className="text-xs sm:text-sm text-primary/60 dark:text-gray-400 mt-1 max-w-sm mx-auto">
+          <p className="text-xs sm:text-sm text-primary/60 dark:text-gray-400 mt-0.5 sm:mt-1 max-w-sm mx-auto">
             Your home for handcrafted pipe cleaner blooms, keychains, and custom resin art.
           </p>
 
         </div>
 
         {/* Dynamic Card Content */}
-        <div className="p-6 sm:p-10">
+        <div className="p-4 sm:p-10">
           {/* Notifications */}
           <AnimatePresence>
             {successMessage && (

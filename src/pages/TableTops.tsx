@@ -20,48 +20,48 @@ export const TableTops: React.FC<TableTopsProps> = () => {
   }, [products]);
 
   return (
-    <div className="w-full flex flex-col min-h-screen py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div className="w-full flex flex-col min-h-screen py-4 sm:py-8 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       
       {/* Header Headline */}
-      <div className="text-center max-w-3xl mx-auto mb-10 space-y-2">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider">
-          <Sparkles size={14} /> Desk & Home Decor
+      <div className="text-center max-w-3xl mx-auto mb-4 sm:mb-10 space-y-1 sm:space-y-2">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider">
+          <Sparkles size={12} /> Desk & Home Decor
         </div>
-        <h1 className="font-serif text-3xl sm:text-5xl font-extrabold text-primary dark:text-white">
+        <h1 className="font-serif text-2xl sm:text-5xl font-extrabold text-primary dark:text-white">
           Table Top Flower Pots
         </h1>
-        <p className="text-sm sm:text-base text-primary/70 dark:text-gray-300">
+        <p className="text-xs sm:text-base text-primary/70 dark:text-gray-300">
           Everlasting miniature flower pots handcrafted with soft pipe cleaners to bring warmth to your desk or home workspace.
         </p>
       </div>
 
-      {/* Table Top Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 max-w-5xl mx-auto w-full">
+      {/* Table Top Grid - 2-col on mobile, 3-col on md+ */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-8 max-w-5xl mx-auto w-full">
         {tabletops.map((product) => (
           <div
             key={product.id}
             onClick={() => setSelectedProduct(product)}
-            className="p-4 sm:p-6 rounded-3xl bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer flex flex-col justify-between group"
+            className="p-2.5 sm:p-6 rounded-xl sm:rounded-3xl bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-xs hover:shadow-2xl transition-all duration-300 cursor-pointer flex flex-col justify-between group min-w-0"
           >
-            <div>
-              <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-50 dark:bg-navy mb-5">
+            <div className="min-w-0">
+              <div className="relative aspect-square rounded-lg sm:rounded-2xl overflow-hidden bg-gray-50 dark:bg-navy mb-2 sm:mb-5">
                 <img
                   src={product.img}
                   alt={product.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 {product.badge && (
-                  <span className="absolute top-3 left-3 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+                  <span className="absolute top-1.5 left-1.5 sm:top-3 sm:left-3 bg-indigo-600 text-white text-[8px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-xs">
                     {product.badge}
                   </span>
                 )}
               </div>
 
-              <h3 className="font-serif text-xl font-bold text-primary dark:text-white mb-2">
+              <h3 className="font-serif text-xs sm:text-xl font-bold text-primary dark:text-white mb-1 sm:mb-2 line-clamp-1 sm:line-clamp-none">
                 {product.name}
               </h3>
 
-              <ul className="space-y-1.5 text-xs text-primary/80 dark:text-gray-300 mb-4">
+              <ul className="hidden sm:block space-y-1.5 text-xs text-primary/80 dark:text-gray-300 mb-4">
                 <li className="flex items-center gap-2">
                   <CheckCircle size={14} className="text-emerald-500" /> Never fades or needs watering
                 </li>
@@ -71,19 +71,19 @@ export const TableTops: React.FC<TableTopsProps> = () => {
               </ul>
             </div>
 
-            <div className="pt-4 border-t border-primary/10 dark:border-white/10 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-3">
+            <div className="pt-2 sm:pt-4 border-t border-primary/10 dark:border-white/10 flex items-center justify-between gap-1 sm:gap-3">
               <div>
-                <span className="text-xl sm:text-2xl font-extrabold text-primary dark:text-secondary-light">
+                <span className="text-sm sm:text-2xl font-extrabold text-primary dark:text-secondary-light">
                   {product.price}
                 </span>
                 {product.originalPrice && (
-                  <span className="text-xs line-through text-gray-400 ml-2">
+                  <span className="text-[10px] sm:text-xs line-through text-gray-400 ml-1 sm:ml-2">
                     {product.originalPrice}
                   </span>
                 )}
               </div>
 
-              <div className="flex items-center gap-2 w-full xs:w-auto justify-between xs:justify-end">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <ProductQuantityControl product={product} size="sm" />
                 <button
                   onClick={(e) => {

@@ -29,14 +29,14 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-navy/80 backdrop-blur-xl border-b border-primary/10 dark:border-white/10 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-20 flex items-center justify-between">
         
         {/* Brand Logo & Title */}
         <div
           onClick={() => onNavigate('home')}
           className="flex items-center gap-1.5 sm:gap-3 cursor-pointer group select-none flex-shrink-0"
         >
-          <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-full border-2 border-primary/20 dark:border-secondary/30 overflow-hidden shadow-md group-hover:scale-105 transition-transform duration-300">
+          <div className="w-7 h-7 sm:w-11 sm:h-11 rounded-full border-2 border-primary/20 dark:border-secondary/30 overflow-hidden shadow-sm group-hover:scale-105 transition-transform duration-300">
             <img src="/assets/logo.jpg" alt="Petalorah Logo" className="w-full h-full object-cover" />
           </div>
           <div className="flex flex-col">
