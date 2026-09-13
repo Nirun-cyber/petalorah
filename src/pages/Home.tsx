@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Sparkles, ArrowRight, MessageSquareCode, CheckCircle, Gift, Star } from 'lucide-react';
+import { Sparkles, ArrowRight, CheckCircle, Gift, Star } from 'lucide-react';
+import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import type { Product } from '../data/products';
 import { useProducts } from '../context/ProductContext';
 import { useSettings } from '../context/SettingsContext';
@@ -76,10 +77,10 @@ export const Home: React.FC<HomeProps> = ({
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 font-bold text-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 font-bold text-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all flex items-center justify-center gap-2.5 shadow-sm hover:shadow-md"
               >
-                <MessageSquareCode size={18} className="text-emerald-600 dark:text-emerald-400" />
-                Order on WhatsApp
+                <WhatsAppIcon size={20} />
+                <span>Order on WhatsApp</span>
               </a>
             </div>
 

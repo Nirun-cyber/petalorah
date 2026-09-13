@@ -1,5 +1,6 @@
 import React from 'react';
-import { ShoppingBag, Palette, MessageCircleHeart, ArrowRight, MessageSquareCode } from 'lucide-react';
+import { ShoppingBag, Palette, MessageCircleHeart, ArrowRight } from 'lucide-react';
+import { WhatsAppIcon } from './WhatsAppIcon';
 import { useSettings } from '../context/SettingsContext';
 
 export const OrderGuide: React.FC = () => {
@@ -89,9 +90,9 @@ export const OrderGuide: React.FC = () => {
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all hover:scale-105"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-5 py-3 sm:px-6 sm:py-3.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all hover:scale-105"
         >
-          <MessageSquareCode size={16} className="shrink-0" />
+          <WhatsAppIcon size={18} className="shrink-0" />
           <span>Order on WhatsApp (63804 37068)</span>
           <ArrowRight size={14} className="shrink-0" />
         </a>

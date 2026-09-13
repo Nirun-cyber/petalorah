@@ -21,6 +21,7 @@ import {
   X,
   Loader2,
 } from 'lucide-react';
+import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import confetti from 'canvas-confetti';
 import { useAuth, type DeliveryAddress } from '../context/AuthContext';
 import { useOrders } from '../context/OrderContext';
@@ -759,8 +760,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                             WhatsApp / Mobile <span className="text-rose-500">*</span>
                           </label>
                           <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-primary/40 dark:text-gray-400">
-                              <Phone size={16} />
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <WhatsAppIcon size={16} />
                             </div>
                             <input
                               type="tel"

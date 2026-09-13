@@ -9,11 +9,11 @@ import {
   Package,
   Gift,
   ExternalLink,
-  MessageSquareCode,
   MapPin,
   AlertCircle,
   Loader2,
 } from 'lucide-react';
+import { WhatsAppIcon } from './WhatsAppIcon';
 import { useOrders, type LoggedOrder } from '../context/OrderContext';
 import { useSettings } from '../context/SettingsContext';
 
@@ -397,10 +397,10 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
               )}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all duration-200"
+              className="w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all duration-200"
             >
-              <MessageSquareCode size={16} />
-              Need Help with this Order? Inquire on WhatsApp
+              <WhatsAppIcon size={18} />
+              <span>Need Help with this Order? Inquire on WhatsApp</span>
             </a>
           </div>
         )}

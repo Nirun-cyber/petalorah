@@ -1,5 +1,6 @@
 import React from 'react';
-import { Heart, MessageSquareCode } from 'lucide-react';
+import { Heart } from 'lucide-react';
+import { WhatsAppIcon } from './WhatsAppIcon';
 import { useSettings } from '../context/SettingsContext';
 
 interface FooterProps {
@@ -105,8 +106,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenTracking }) =>
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
               >
-                <MessageSquareCode size={18} />
-                WhatsApp: 63804 37068
+                <WhatsAppIcon size={18} />
+                <span>WhatsApp: 63804 37068</span>
               </a>
               <a
                 href="https://instagram.com/petalorah"

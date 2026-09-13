@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useCart, INSTAGRAM_USERNAME } from '../context/CartContext';
 import { useSettings } from '../context/SettingsContext';
-import { X, Copy, Check, ExternalLink, MessageSquareCode } from 'lucide-react';
+import { X, Copy, Check, ExternalLink } from 'lucide-react';
+import { WhatsAppIcon } from './WhatsAppIcon';
 
 export const ClipboardFallbackModal: React.FC = () => {
   const { clipboardFallbackMessage, closeClipboardFallback } = useCart();
@@ -83,8 +84,8 @@ export const ClipboardFallbackModal: React.FC = () => {
                 rel="noopener noreferrer"
                 className="py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-colors text-center"
               >
-                <MessageSquareCode size={16} />
-                Open WhatsApp Web
+                <WhatsAppIcon size={16} />
+                <span>Open WhatsApp Web</span>
               </a>
               <a
                 href={directWhatsAppAppUrl}
@@ -92,8 +93,8 @@ export const ClipboardFallbackModal: React.FC = () => {
                 rel="noopener noreferrer"
                 className="py-3 px-3 rounded-2xl bg-emerald-700/80 hover:bg-emerald-800 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition-colors text-center"
               >
-                <ExternalLink size={14} />
-                WhatsApp App
+                <WhatsAppIcon size={14} />
+                <span>WhatsApp App</span>
               </a>
             </div>
           ) : (

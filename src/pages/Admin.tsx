@@ -27,6 +27,7 @@ import {
   Check,
   X,
 } from 'lucide-react';
+import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import { useProducts } from '../context/ProductContext';
 import { useOrders, type LoggedOrder } from '../context/OrderContext';
 import { useSettings } from '../context/SettingsContext';
@@ -784,10 +785,11 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
                       <div className="flex items-center gap-3 flex-wrap">
                         <span className="font-mono font-bold text-rose-500 text-sm">{ord.id}</span>
                         <span
-                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
                             ord.channel === 'WhatsApp' ? 'bg-emerald-100 text-emerald-700' : 'bg-pink-100 text-pink-700'
                           }`}
                         >
+                          {ord.channel === 'WhatsApp' && <WhatsAppIcon size={12} />}
                           Via {ord.channel}
                         </span>
                         {ord.customerName && (
@@ -989,7 +991,7 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
               <form onSubmit={handleSaveSettings} className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1.5">
-                    <MessageSquare size={14} className="text-emerald-500" /> WhatsApp Number (With Country Code)
+                    <WhatsAppIcon size={16} /> WhatsApp Number (With Country Code)
                   </label>
                   <input
                     type="text"

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Truck, RotateCcw, Clock, ShieldCheck, MapPin, MessageSquare, Gift } from 'lucide-react';
+import { WhatsAppIcon } from './WhatsAppIcon';
 import { useSettings } from '../context/SettingsContext';
 
 export const DeliveryAndPolicies: React.FC = () => {
@@ -151,9 +152,10 @@ export const DeliveryAndPolicies: React.FC = () => {
                 href={`https://wa.me/${phone.replace(/[^0-9]/g, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
+                className="font-bold text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1.5"
               >
-                Chat on WhatsApp →
+                <WhatsAppIcon size={14} />
+                <span>Chat on WhatsApp →</span>
               </a>
             </div>
           </div>

@@ -7,7 +7,6 @@ import {
   ShoppingBag,
   ArrowRight,
   MessageCircleHeart,
-  MessageSquareCode,
   Truck,
   MapPin,
   UserCheck,
@@ -19,6 +18,7 @@ import {
   Home,
   LogIn,
 } from 'lucide-react';
+import { WhatsAppIcon } from './WhatsAppIcon';
 import { useCart, calculateShippingFee, type CustomerCheckoutInfo } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -527,7 +527,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
                         WhatsApp / Mobile Number *
                       </label>
                       <div className="relative">
-                        <Phone size={14} className="absolute left-3 top-2.5 text-primary/40 dark:text-gray-500" />
+                        <div className="absolute left-3 top-2.5 flex items-center pointer-events-none">
+                          <WhatsAppIcon size={14} />
+                        </div>
                         <input
                           ref={phoneInputRef}
                           type="tel"
@@ -692,9 +694,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
               <button
                 type="button"
                 onClick={() => handleWhatsAppCheckout(false)}
-                className="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.99] cursor-pointer"
+                className="w-full flex items-center justify-center gap-2.5 py-3 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.99] cursor-pointer"
               >
-                <MessageSquareCode size={16} />
+                <WhatsAppIcon size={18} />
                 <span>Order via WhatsApp</span>
                 <ArrowRight size={14} />
               </button>

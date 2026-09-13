@@ -1,5 +1,6 @@
 import React from 'react';
-import { X, Sparkles, MessageCircleHeart, MessageSquareCode, Star } from 'lucide-react';
+import { X, Sparkles, MessageCircleHeart, Star } from 'lucide-react';
+import { WhatsAppIcon } from './WhatsAppIcon';
 import type { Product } from '../data/products';
 import { ProductQuantityControl } from './ProductQuantityControl';
 import { useReviews } from '../context/ReviewContext';
@@ -144,10 +145,10 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) 
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all truncate"
+                className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all truncate"
               >
-                <MessageSquareCode size={16} />
-                WhatsApp
+                <WhatsAppIcon size={16} />
+                <span>WhatsApp</span>
               </a>
 
               <a
