@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ArrowLeft, Sparkles, Heart, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Sparkles, ShoppingBag } from 'lucide-react';
 import { BrandStory } from '../components/BrandStory';
 import { HowItsMade } from '../components/HowItsMade';
 import { DeliveryAndPolicies } from '../components/DeliveryAndPolicies';
@@ -42,11 +42,6 @@ export const About: React.FC<AboutProps> = ({
               <ArrowLeft size={14} />
               <span>Back to Home</span>
             </button>
-
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-primary/10 dark:bg-secondary/20 text-primary dark:text-secondary-light text-[11px] sm:text-xs font-semibold">
-              <Heart size={12} className="text-rose-500 fill-current" />
-              <span>Meet Petalorah</span>
-            </span>
           </div>
 
           <div className="max-w-3xl">

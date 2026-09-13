@@ -11,10 +11,6 @@ export const DeliveryAndPolicies: React.FC = () => {
     <section id="delivery-info" className="w-full py-6 sm:py-12 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto scroll-mt-20">
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto mb-4 sm:mb-10 space-y-1 sm:space-y-2">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-primary/10 dark:bg-secondary/20 text-primary dark:text-secondary-light text-[10px] sm:text-xs font-semibold tracking-wide">
-          <Truck size={12} className="text-rose-500" />
-          <span>Transparent Ordering</span>
-        </div>
         <h2 className="font-serif text-xl sm:text-3xl font-bold text-primary dark:text-white tracking-tight">
           Delivery, Shipping & Return Policies
         </h2>

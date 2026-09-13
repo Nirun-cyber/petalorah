@@ -15,27 +15,12 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenTracking }) =>
   const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent("Hi Petalorah! I would like to place an order.")}`;
 
   return (
-    <footer className="w-full bg-white/90 dark:bg-navy-dark border-t border-primary/10 dark:border-white/10 pt-6 pb-6 sm:pt-12 sm:pb-8 transition-colors duration-300">
+    <footer className="w-full bg-white/90 dark:bg-navy-dark border-t border-primary/10 dark:border-white/10 pt-6 pb-6 sm:pt-10 sm:pb-8 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-5 sm:gap-8 pb-6 sm:pb-10 border-b border-primary/10 dark:border-white/10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 max-w-3xl mx-auto gap-6 sm:gap-12 pb-6 sm:pb-8 border-b border-primary/10 dark:border-white/10">
           
-          {/* Col 1: Brand */}
-          <div className="md:col-span-2 space-y-2 sm:space-y-4">
-            <div className="flex items-center gap-2.5 sm:gap-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-primary/20 overflow-hidden">
-                <img src="/assets/logo.jpg" alt="Petalorah Logo" className="w-full h-full object-cover" />
-              </div>
-              <span className="font-serif text-xl sm:text-2xl font-bold text-primary dark:text-secondary-light">
-                PETALORAH
-              </span>
-            </div>
-            <p className="text-xs sm:text-sm text-primary/70 dark:text-gray-300 max-w-md leading-relaxed">
-              Handcrafted pipe cleaner flowers, keychains, miniature flowerpots, and custom gift keepsakes carefully twisted with patience and love. Designed to bring warm smiles that stay fresh forever.
-            </p>
-          </div>
-
-          {/* Col 2: Quick Links */}
+          {/* Quick Links */}
           <div className="space-y-2 sm:space-y-3">
             <h4 className="font-serif text-xs sm:text-base font-bold text-primary dark:text-white uppercase tracking-wider">
               Quick Links

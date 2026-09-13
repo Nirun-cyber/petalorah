@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Sparkles } from 'lucide-react';
+import { Search } from 'lucide-react';
 import type { Product } from '../data/products';
 import { useProducts } from '../context/ProductContext';
 import { ProductModal } from '../components/ProductModal';
@@ -36,9 +36,6 @@ export const Keychains: React.FC<KeychainsProps> = () => {
       
       {/* Header Headline */}
       <div className="text-center max-w-3xl mx-auto mb-4 sm:mb-8 space-y-1 sm:space-y-2">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-pink-500/10 text-pink-600 dark:text-pink-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider">
-          <Sparkles size={12} /> Fluffy & Cute
-        </div>
         <h1 className="font-serif text-2xl sm:text-5xl font-extrabold text-primary dark:text-white">
           Handmade Keychains ({keychains.length})
         </h1>
