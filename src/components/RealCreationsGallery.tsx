@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, Heart } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import { InstagramIcon } from './InstagramIcon';
 import { INSTAGRAM_USERNAME } from '../context/CartContext';
 import { useGallery } from '../context/GalleryContext';
@@ -10,10 +10,6 @@ export const RealCreationsGallery: React.FC = () => {
     <section className="w-full py-6 sm:py-12 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto mb-4 sm:mb-8 space-y-1 sm:space-y-2">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-300 text-[10px] sm:text-xs font-semibold tracking-wide border border-pink-200/50 dark:border-pink-900/40">
-          <Camera size={12} className="text-pink-500" />
-          <span>Petalorah in Your Hands</span>
-        </div>
         <h2 className="font-serif text-xl sm:text-3xl font-bold text-primary dark:text-white tracking-tight">
           Made for Real People <Heart size={18} className="inline text-rose-500 fill-rose-500 mb-0.5" />
         </h2>

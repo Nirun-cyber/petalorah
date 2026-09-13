@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   Star,
-  Sparkles,
   PenLine,
 } from 'lucide-react';
 import { useReviews } from '../context/ReviewContext';
@@ -19,10 +18,6 @@ export const CustomerReviews: React.FC = () => {
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 sm:gap-6 mb-4 sm:mb-8">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-300 text-[10px] sm:text-xs font-semibold tracking-wide border border-rose-200/50 dark:border-rose-900/40">
-            <Sparkles size={12} className="text-amber-500" />
-            Customer Stories
-          </div>
           <h2 className="font-serif text-xl sm:text-3xl font-bold text-primary dark:text-white tracking-tight">
             Loved By Craft Enthusiasts
           </h2>

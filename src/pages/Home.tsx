@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, ArrowRight, CheckCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle } from 'lucide-react';
 import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import type { Product } from '../data/products';
 import { useProducts } from '../context/ProductContext';
@@ -49,11 +49,6 @@ export const Home: React.FC<HomeProps> = ({
           
           {/* Left Column Text */}
           <div className="lg:col-span-7 space-y-3.5 sm:space-y-6 text-left">
-            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-primary/10 dark:bg-secondary/20 text-primary dark:text-secondary-light text-[11px] sm:text-xs font-semibold uppercase tracking-wider">
-              <Sparkles size={13} className="text-amber-500" />
-              100% Handcrafted Pipe Cleaner Art
-            </div>
-
             <h1 className="font-serif text-2xl sm:text-5xl lg:text-6xl font-extrabold text-primary dark:text-white leading-[1.15] sm:leading-[1.1] tracking-tight break-words">
               Handmade Keepsakes Twisted With Love
             </h1>
