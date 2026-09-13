@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Sparkles, ArrowRight, MessageCircleHeart, CheckCircle, Gift, Star } from 'lucide-react';
+import { Sparkles, ArrowRight, MessageSquareCode, CheckCircle, Gift, Star } from 'lucide-react';
 import type { Product } from '../data/products';
 import { useProducts } from '../context/ProductContext';
+import { useSettings } from '../context/SettingsContext';
 import { ProductModal } from '../components/ProductModal';
 import { OrderGuide } from '../components/OrderGuide';
 import { ProductQuantityControl } from '../components/ProductQuantityControl';
@@ -26,7 +27,11 @@ export const Home: React.FC<HomeProps> = ({
   onNavigateToTableTops,
 }) => {
   const { products } = useProducts();
+  const { settings } = useSettings();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  const cleanPhone = (settings.whatsappNumber || '916380437068').replace(/[^0-9]/g, '');
+  const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent("Hi Petalorah! I would like to place an order.")}`;
 
   // Featured 6 highlight products
   const featuredProducts = products.filter(
@@ -63,18 +68,18 @@ export const Home: React.FC<HomeProps> = ({
                 onClick={onNavigateToCollection}
                 className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-primary text-white dark:bg-secondary dark:text-navy font-bold text-sm shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5 flex items-center justify-center gap-2"
               >
-                Browse All Crafts ({products.length})
+                Shop Now
                 <ArrowRight size={18} />
               </button>
 
               <a
-                href="https://instagram.com/petalorah"
+                href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-pink-50 dark:bg-pink-950/40 text-pink-700 dark:text-pink-300 border border-pink-200 dark:border-pink-800/50 font-bold text-sm hover:bg-pink-100 dark:hover:bg-pink-900/50 transition-all flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 font-bold text-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all flex items-center justify-center gap-2"
               >
-                <MessageCircleHeart size={18} className="text-pink-500" />
-                Custom Order on IG
+                <MessageSquareCode size={18} className="text-emerald-600 dark:text-emerald-400" />
+                Order on WhatsApp
               </a>
             </div>
 
