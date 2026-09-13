@@ -2,61 +2,10 @@ import React from 'react';
 import { Camera, Heart } from 'lucide-react';
 import { InstagramIcon } from './InstagramIcon';
 import { INSTAGRAM_USERNAME } from '../context/CartContext';
-
-interface CreationItem {
-  id: string;
-  img: string;
-  title: string;
-  caption: string;
-  tag: string;
-}
-
-const REAL_CREATIONS: CreationItem[] = [
-  {
-    id: 'c1',
-    img: '/assets/products/custom_jersey.png',
-    title: 'Custom Jersey Charm',
-    caption: 'Handcrafted personalized jersey charm with custom player number.',
-    tag: 'Custom Order',
-  },
-  {
-    id: 'c2',
-    img: '/assets/products/four_tulips_pot.png',
-    title: 'Four Tulips Desk Garden',
-    caption: 'Pastel handmade tulips in miniature pot, brightens up any workspace.',
-    tag: 'Desk Keepsake',
-  },
-  {
-    id: 'c3',
-    img: '/assets/products/custom_letter.jpg',
-    title: 'Personalized Initial Charm',
-    caption: 'Custom letter charm crafted with soft lavender pipe cleaners.',
-    tag: 'Gift Order',
-  },
-  {
-    id: 'c4',
-    img: '/assets/products/duck.png',
-    title: 'Yellow Duck with Blue Bow',
-    caption: 'Cute squishy little duck charm finished with handmade satin bow.',
-    tag: 'Handmade Charm',
-  },
-  {
-    id: 'c5',
-    img: '/assets/products/flower_bouquets.jpg',
-    title: 'Everlasting Pipe Cleaner Bouquet',
-    caption: 'Hand-twisted floral arrangement designed to stay vibrant forever.',
-    tag: 'Custom Bouquet',
-  },
-  {
-    id: 'c6',
-    img: '/assets/products/blue_rose.jpg',
-    title: 'Royal Blue Rose Charm',
-    caption: 'Intricately coiled petals with matching green leaf accents.',
-    tag: 'Handmade Floral',
-  },
-];
+import { useGallery } from '../context/GalleryContext';
 
 export const RealCreationsGallery: React.FC = () => {
+  const { galleryItems } = useGallery();
   return (
     <section className="w-full py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Header */}
@@ -75,7 +24,7 @@ export const RealCreationsGallery: React.FC = () => {
 
       {/* Responsive Gallery Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-        {REAL_CREATIONS.map((item) => (
+        {galleryItems.map((item) => (
           <div
             key={item.id}
             className="group relative rounded-2xl overflow-hidden bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between"

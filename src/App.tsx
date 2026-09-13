@@ -15,6 +15,7 @@ import { OrderProvider } from './context/OrderContext';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { ReviewProvider } from './context/ReviewContext';
+import { GalleryProvider } from './context/GalleryContext';
 import { CartDrawer } from './components/CartDrawer';
 import { MobileStickyCart } from './components/MobileStickyCart';
 import { CartToast } from './components/CartToast';
@@ -95,7 +96,8 @@ export const App: React.FC = () => {
           <CartProvider>
             <AuthProvider>
               <ReviewProvider>
-                <div className="relative w-full min-h-screen flex flex-col justify-between text-primary dark:text-gray-100 bg-white dark:bg-navy font-sans antialiased selection:bg-pink-500/20">
+                <GalleryProvider>
+                  <div className="relative w-full min-h-screen flex flex-col justify-between text-primary dark:text-gray-100 bg-white dark:bg-navy font-sans antialiased selection:bg-pink-500/20">
                   {/* Announcement Banner Ticker */}
                   <AnnouncementBar />
 
@@ -177,6 +179,7 @@ export const App: React.FC = () => {
                     onClose={() => setIsTrackingModalOpen(false)}
                   />
                 </div>
+                </GalleryProvider>
               </ReviewProvider>
             </AuthProvider>
           </CartProvider>

@@ -4,6 +4,9 @@ import { INITIAL_REVIEWS, type Review } from '../data/reviews';
 interface ReviewContextType {
   reviews: Review[];
   addReview: (newReview: Omit<Review, 'id' | 'date' | 'helpfulCount' | 'verifiedBuyer'>) => void;
+  updateReview: (reviewId: string, updatedFields: Partial<Review>) => void;
+  deleteReview: (reviewId: string) => void;
+  resetReviewsToDefault: () => void;
   markHelpful: (reviewId: string) => void;
   averageRating: number;
   totalReviews: number;
@@ -20,10 +23,10 @@ export const ReviewProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const saved = localStorage.getItem(REVIEWS_STORAGE_KEY);
       if (saved) {
         const parsed: Review[] = JSON.parse(saved);
-        // Merge with initial reviews to preserve presets
-        const initialIds = new Set(INITIAL_REVIEWS.map((r) => r.id));
-        const userAdded = parsed.filter((r) => !initialIds.has(r.id));
-        return [...userAdded, ...INITIAL_REVIEWS];
+        // If user already saved modifications, use them
+        if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
       }
     } catch (e) {
       console.error('Failed to load reviews from localStorage:', e);
@@ -50,6 +53,25 @@ export const ReviewProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setReviews((prev) => [newEntry, ...prev]);
   };
 
+  const updateReview = (reviewId: string, updatedFields: Partial<Review>) => {
+    setReviews((prev) =>
+      prev.map((r) => (r.id === reviewId ? { ...r, ...updatedFields } : r))
+    );
+  };
+
+  const deleteReview = (reviewId: string) => {
+    setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+  };
+
+  const resetReviewsToDefault = () => {
+    setReviews(INITIAL_REVIEWS);
+    try {
+      localStorage.removeItem(REVIEWS_STORAGE_KEY);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const markHelpful = (reviewId: string) => {
     setReviews((prev) =>
       prev.map((r) => (r.id === reviewId ? { ...r, helpfulCount: r.helpfulCount + 1 } : r))
@@ -71,6 +93,9 @@ export const ReviewProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       value={{
         reviews,
         addReview,
+        updateReview,
+        deleteReview,
+        resetReviewsToDefault,
         markHelpful,
         averageRating,
         totalReviews,

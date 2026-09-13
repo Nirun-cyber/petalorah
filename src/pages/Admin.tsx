@@ -26,14 +26,19 @@ import {
   Check,
   X,
   Sparkles,
+  Camera,
+  CheckCircle2,
 } from 'lucide-react';
 import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import { InstagramIcon } from '../components/InstagramIcon';
 import { useProducts } from '../context/ProductContext';
 import { useOrders, type LoggedOrder } from '../context/OrderContext';
 import { useSettings } from '../context/SettingsContext';
+import { useReviews } from '../context/ReviewContext';
+import { useGallery, type CreationItem } from '../context/GalleryContext';
 import { ProductFormModal } from '../components/admin/ProductFormModal';
 import type { Product } from '../data/products';
+import type { Review } from '../data/reviews';
 import {
   syncOrderToGoogleSheets,
   syncBatchOrdersToGoogleSheets,
@@ -67,7 +72,180 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
   }, []);
 
   // Active Admin Tab
-  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'banner' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<
+    'overview' | 'products' | 'orders' | 'reviews' | 'gallery' | 'banner' | 'settings'
+  >('overview');
+
+  // Reviews Context & State
+  const {
+    reviews,
+    addReview,
+    updateReview,
+    deleteReview,
+    resetReviewsToDefault,
+    averageRating,
+  } = useReviews();
+
+  const [reviewSearch, setReviewSearch] = useState('');
+  const [reviewRatingFilter, setReviewRatingFilter] = useState<string>('all');
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
+  const [reviewFormName, setReviewFormName] = useState('');
+  const [reviewFormCity, setReviewFormCity] = useState('');
+  const [reviewFormRating, setReviewFormRating] = useState(5);
+  const [reviewFormProductId, setReviewFormProductId] = useState('');
+  const [reviewFormComment, setReviewFormComment] = useState('');
+  const [reviewFormPhoto, setReviewFormPhoto] = useState('');
+  const [reviewFormVerified, setReviewFormVerified] = useState(true);
+  const [reviewStatusMsg, setReviewStatusMsg] = useState<string | null>(null);
+
+  // Gallery Context & State
+  const {
+    galleryItems,
+    addGalleryItem,
+    updateGalleryItem,
+    deleteGalleryItem,
+    resetGalleryToDefault,
+  } = useGallery();
+
+  const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
+  const [editingGalleryItem, setEditingGalleryItem] = useState<CreationItem | null>(null);
+  const [galleryFormTitle, setGalleryFormTitle] = useState('');
+  const [galleryFormCaption, setGalleryFormCaption] = useState('');
+  const [galleryFormTag, setGalleryFormTag] = useState('Custom Order');
+  const [galleryFormImg, setGalleryFormImg] = useState('');
+  const [galleryStatusMsg, setGalleryStatusMsg] = useState<string | null>(null);
+
+  // Open Review Add/Edit Modals
+  const handleOpenAddReview = () => {
+    setEditingReview(null);
+    setReviewFormName('');
+    setReviewFormCity('');
+    setReviewFormRating(5);
+    setReviewFormProductId(products[0]?.id || '');
+    setReviewFormComment('');
+    setReviewFormPhoto('');
+    setReviewFormVerified(true);
+    setIsReviewModalOpen(true);
+  };
+
+  const handleOpenEditReview = (rev: Review) => {
+    setEditingReview(rev);
+    setReviewFormName(rev.customerName);
+    setReviewFormCity(rev.city);
+    setReviewFormRating(rev.rating);
+    setReviewFormProductId(rev.productId || '');
+    setReviewFormComment(rev.comment);
+    setReviewFormPhoto(rev.photo || '');
+    setReviewFormVerified(rev.verifiedBuyer);
+    setIsReviewModalOpen(true);
+  };
+
+  const handleSaveReview = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewFormName.trim() || !reviewFormComment.trim()) {
+      alert('Please fill in customer name and review comment.');
+      return;
+    }
+
+    const matchedProduct = products.find((p) => p.id === reviewFormProductId);
+    const prodName = matchedProduct?.name || 'Petalorah Handmade Craft';
+    const prodCategory = (matchedProduct?.category || 'keychain') as Review['category'];
+
+    if (editingReview) {
+      updateReview(editingReview.id, {
+        customerName: reviewFormName.trim(),
+        city: reviewFormCity.trim() || 'India',
+        rating: reviewFormRating,
+        productId: reviewFormProductId,
+        productName: prodName,
+        category: prodCategory,
+        comment: reviewFormComment.trim(),
+        photo: reviewFormPhoto.trim() || undefined,
+        verifiedBuyer: reviewFormVerified,
+      });
+      setReviewStatusMsg(`✅ Updated review from "${reviewFormName.trim()}"`);
+    } else {
+      addReview({
+        customerName: reviewFormName.trim(),
+        city: reviewFormCity.trim() || 'India',
+        rating: reviewFormRating,
+        productId: reviewFormProductId,
+        productName: prodName,
+        category: prodCategory,
+        comment: reviewFormComment.trim(),
+        photo: reviewFormPhoto.trim() || undefined,
+      });
+      setReviewStatusMsg(`✨ Added new review from "${reviewFormName.trim()}"`);
+    }
+
+    setIsReviewModalOpen(false);
+    setTimeout(() => setReviewStatusMsg(null), 3500);
+  };
+
+  const handleDeleteReview = (id: string, name: string) => {
+    if (window.confirm(`Are you sure you want to delete the review by "${name}"?`)) {
+      deleteReview(id);
+      setReviewStatusMsg(`🗑️ Deleted review by "${name}"`);
+      setTimeout(() => setReviewStatusMsg(null), 3000);
+    }
+  };
+
+  // Open Gallery Add/Edit Modals
+  const handleOpenAddGallery = () => {
+    setEditingGalleryItem(null);
+    setGalleryFormTitle('');
+    setGalleryFormCaption('');
+    setGalleryFormTag('Custom Order');
+    setGalleryFormImg('');
+    setIsGalleryModalOpen(true);
+  };
+
+  const handleOpenEditGallery = (item: CreationItem) => {
+    setEditingGalleryItem(item);
+    setGalleryFormTitle(item.title);
+    setGalleryFormCaption(item.caption);
+    setGalleryFormTag(item.tag);
+    setGalleryFormImg(item.img);
+    setIsGalleryModalOpen(true);
+  };
+
+  const handleSaveGalleryItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!galleryFormTitle.trim() || !galleryFormImg.trim()) {
+      alert('Please provide a creation title and image path/URL.');
+      return;
+    }
+
+    if (editingGalleryItem) {
+      updateGalleryItem(editingGalleryItem.id, {
+        title: galleryFormTitle.trim(),
+        caption: galleryFormCaption.trim(),
+        tag: galleryFormTag.trim() || 'Custom Order',
+        img: galleryFormImg.trim(),
+      });
+      setGalleryStatusMsg(`✅ Updated showcase item "${galleryFormTitle.trim()}"`);
+    } else {
+      addGalleryItem({
+        title: galleryFormTitle.trim(),
+        caption: galleryFormCaption.trim(),
+        tag: galleryFormTag.trim() || 'Custom Order',
+        img: galleryFormImg.trim(),
+      });
+      setGalleryStatusMsg(`✨ Added new showcase item "${galleryFormTitle.trim()}"`);
+    }
+
+    setIsGalleryModalOpen(false);
+    setTimeout(() => setGalleryStatusMsg(null), 3500);
+  };
+
+  const handleDeleteGalleryItem = (id: string, title: string) => {
+    if (window.confirm(`Are you sure you want to delete "${title}" from the About gallery?`)) {
+      deleteGalleryItem(id);
+      setGalleryStatusMsg(`🗑️ Deleted "${title}" from gallery`);
+      setTimeout(() => setGalleryStatusMsg(null), 3000);
+    }
+  };
 
   // Product Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -397,6 +575,8 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
             { id: 'overview', label: 'Overview & Stats', icon: TrendingUp },
             { id: 'products', label: `Products (${totalProducts})`, icon: Package },
             { id: 'orders', label: `Order Logs (${totalOrdersCount})`, icon: ShoppingCart },
+            { id: 'reviews', label: `Reviews (${reviews.length})`, icon: Star },
+            { id: 'gallery', label: `Gallery (${galleryItems.length})`, icon: Camera },
             { id: 'banner', label: 'Announcement Bar', icon: Megaphone },
             { id: 'settings', label: 'Store Settings', icon: Settings },
           ].map((tab) => {
@@ -492,6 +672,26 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
                   >
                     <span className="flex items-center gap-2">
                       <Plus className="w-5 h-5" /> Add New Craft Product
+                    </span>
+                    <ArrowRight size={18} />
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('reviews')}
+                    className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-rose-50 text-slate-700 dark:text-slate-200 font-bold text-sm border border-slate-200 dark:border-slate-700 transition-all flex items-center justify-between"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Star className="w-5 h-5 text-amber-500 fill-amber-500" /> Manage Customer Reviews
+                    </span>
+                    <ArrowRight size={18} />
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('gallery')}
+                    className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-rose-50 text-slate-700 dark:text-slate-200 font-bold text-sm border border-slate-200 dark:border-slate-700 transition-all flex items-center justify-between"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Camera className="w-5 h-5 text-pink-500" /> Manage Showcase Gallery
                     </span>
                     <ArrowRight size={18} />
                   </button>
@@ -949,6 +1149,310 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
           </div>
         )}
 
+        {/* --- REVIEWS TAB (CRUD) --- */}
+        {activeTab === 'reviews' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Header Controls */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-grow max-w-xl">
+                <div className="relative w-full">
+                  <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search reviews by reviewer, product, or comment..."
+                    value={reviewSearch}
+                    onChange={(e) => setReviewSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs font-medium border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                  />
+                </div>
+
+                <select
+                  value={reviewRatingFilter}
+                  onChange={(e) => setReviewRatingFilter(e.target.value)}
+                  className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none"
+                >
+                  <option value="all">All Ratings (⭐)</option>
+                  <option value="5">5 Stars Only</option>
+                  <option value="4">4 Stars</option>
+                  <option value="3">3 Stars</option>
+                  <option value="2">2 Stars</option>
+                  <option value="1">1 Star</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleOpenAddReview}
+                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-1.5"
+                >
+                  <Plus size={15} />
+                  <span>Add Review</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm('Reset all customer reviews to default initial reviews?')) {
+                      resetReviewsToDefault();
+                      setReviewStatusMsg('✨ Reset reviews to default initial reviews.');
+                      setTimeout(() => setReviewStatusMsg(null), 3000);
+                    }
+                  }}
+                  className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold"
+                  title="Reset to default reviews"
+                >
+                  Reset Defaults
+                </button>
+              </div>
+            </div>
+
+            {/* Metrics Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm text-center">
+                <span className="text-[11px] font-bold text-slate-400 uppercase">Total Reviews</span>
+                <p className="text-xl font-bold font-serif text-slate-800 dark:text-white mt-0.5">{reviews.length}</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm text-center">
+                <span className="text-[11px] font-bold text-slate-400 uppercase">Average Rating</span>
+                <p className="text-xl font-bold font-serif text-amber-500 mt-0.5 flex items-center justify-center gap-1">
+                  <span>{averageRating}</span>
+                  <Star size={16} className="fill-amber-500 text-amber-500" />
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm text-center">
+                <span className="text-[11px] font-bold text-slate-400 uppercase">5-Star Reviews</span>
+                <p className="text-xl font-bold font-serif text-emerald-600 dark:text-emerald-400 mt-0.5">
+                  {reviews.filter((r) => r.rating === 5).length}
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm text-center">
+                <span className="text-[11px] font-bold text-slate-400 uppercase">Verified Buyers</span>
+                <p className="text-xl font-bold font-serif text-rose-500 mt-0.5">
+                  {reviews.filter((r) => r.verifiedBuyer).length}
+                </p>
+              </div>
+            </div>
+
+            {reviewStatusMsg && (
+              <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-2xl flex items-center gap-2 animate-in fade-in">
+                <Check size={16} /> {reviewStatusMsg}
+              </div>
+            )}
+
+            {/* Reviews List */}
+            {(() => {
+              const filteredReviews = reviews.filter((r) => {
+                const query = reviewSearch.toLowerCase();
+                const matchesSearch =
+                  r.customerName.toLowerCase().includes(query) ||
+                  r.comment.toLowerCase().includes(query) ||
+                  r.productName.toLowerCase().includes(query) ||
+                  (r.city && r.city.toLowerCase().includes(query));
+                const matchesRating =
+                  reviewRatingFilter === 'all' || r.rating === Number(reviewRatingFilter);
+                return matchesSearch && matchesRating;
+              });
+
+              if (filteredReviews.length === 0) {
+                return (
+                  <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center border border-slate-100 dark:border-slate-800">
+                    <Star className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                    <h4 className="text-base font-bold text-slate-700 dark:text-slate-200">No Reviews Found</h4>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Try clearing your search query or rating filter, or click &quot;Add Review&quot; to create one.
+                    </p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredReviews.map((rev) => (
+                    <div
+                      key={rev.id}
+                      className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow"
+                    >
+                      <div className="space-y-3">
+                        {/* Header: Name, Location, Verified, Rating & Actions */}
+                        <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="font-bold text-sm text-slate-800 dark:text-white">
+                                {rev.customerName}
+                              </h4>
+                              {rev.city && (
+                                <span className="text-xs text-slate-400">· {rev.city}</span>
+                              )}
+                              {rev.verifiedBuyer && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/40">
+                                  <CheckCircle2 size={11} /> Verified Buyer
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[11px] text-slate-400">{rev.date}</span>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleOpenEditReview(rev)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                              title="Edit Review"
+                            >
+                              <Edit size={15} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteReview(rev.id, rev.customerName)}
+                              className="p-1.5 rounded-lg text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                              title="Delete Review"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Rating Stars & Product Tag */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center text-amber-400">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                size={14}
+                                className={i < rev.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200 dark:text-slate-700'}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-[11px] font-semibold text-rose-500 bg-rose-50 dark:bg-rose-950/30 px-2.5 py-0.5 rounded-full truncate max-w-[180px]">
+                            {rev.productName}
+                          </span>
+                        </div>
+
+                        {/* Review Comment */}
+                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed italic">
+                          &quot;{rev.comment}&quot;
+                        </p>
+                      </div>
+
+                      {/* Photo Thumbnail if any */}
+                      {rev.photo && (
+                        <div className="flex items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                          <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex-shrink-0">
+                            <img src={rev.photo} alt={rev.productName} className="w-full h-full object-cover" />
+                          </div>
+                          <span className="text-[11px] text-slate-400">Customer photo attached</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* --- GALLERY TAB (CRUD) --- */}
+        {activeTab === 'gallery' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Header Controls */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+              <div>
+                <h3 className="text-lg font-bold font-serif text-slate-800 dark:text-white flex items-center gap-2">
+                  <Camera className="w-5 h-5 text-pink-500" /> Real Creations Showcase Gallery ({galleryItems.length})
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Handcrafted pieces showcased on the <strong>About</strong> page under &quot;Petalorah in Your Hands&quot;
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleOpenAddGallery}
+                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-1.5"
+                >
+                  <Plus size={15} />
+                  <span>Add Showcase Photo</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm('Reset gallery showcase items to default photos?')) {
+                      resetGalleryToDefault();
+                      setGalleryStatusMsg('✨ Reset showcase gallery to default photos.');
+                      setTimeout(() => setGalleryStatusMsg(null), 3000);
+                    }
+                  }}
+                  className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold"
+                  title="Reset to default photos"
+                >
+                  Reset Defaults
+                </button>
+              </div>
+            </div>
+
+            {galleryStatusMsg && (
+              <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-2xl flex items-center gap-2 animate-in fade-in">
+                <Check size={16} /> {galleryStatusMsg}
+              </div>
+            )}
+
+            {/* Showcase Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {galleryItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow group"
+                >
+                  <div>
+                    {/* Thumbnail with Tag */}
+                    <div className="relative aspect-video sm:aspect-square w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      <img
+                        src={item.img}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <span className="absolute top-3 left-3 bg-black/70 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow">
+                        {item.tag}
+                      </span>
+                    </div>
+
+                    <div className="p-4 sm:p-5 space-y-1.5">
+                      <h4 className="font-serif font-bold text-sm sm:text-base text-slate-800 dark:text-white">
+                        {item.title}
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
+                        {item.caption}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="p-4 sm:p-5 pt-0 border-t border-slate-100 dark:border-slate-800/60 mt-3 flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-mono text-slate-400">ID: {item.id}</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleOpenEditGallery(item)}
+                        className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold flex items-center gap-1 transition-colors"
+                      >
+                        <Edit size={13} />
+                        <span>Edit</span>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteGalleryItem(item.id, item.title)}
+                        className="p-1.5 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                        title="Delete showcase item"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* --- ANNOUNCEMENT BANNER TAB --- */}
         {activeTab === 'banner' && (
           <div className="max-w-2xl mx-auto bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm space-y-6 animate-in fade-in duration-200">
@@ -1374,6 +1878,309 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveProduct}
       />
+
+      {/* REVIEW ADD / EDIT MODAL */}
+      {isReviewModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="fixed inset-0" onClick={() => setIsReviewModalOpen(false)} />
+          <div
+            data-lenis-prevent
+            className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-200 dark:border-slate-800 z-10 max-h-[90vh] overflow-y-auto overscroll-contain space-y-4"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="font-serif text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                <Star className="text-amber-500 fill-amber-500" size={18} />
+                <span>{editingReview ? 'Edit Customer Review' : 'Add Customer Review'}</span>
+              </h3>
+              <button
+                onClick={() => setIsReviewModalOpen(false)}
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveReview} className="space-y-3.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                    Customer Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Ananya S."
+                    value={reviewFormName}
+                    onChange={(e) => setReviewFormName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                    City / Location
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Chennai"
+                    value={reviewFormCity}
+                    onChange={(e) => setReviewFormCity(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                    Rating (Stars)
+                  </label>
+                  <select
+                    value={reviewFormRating}
+                    onChange={(e) => setReviewFormRating(Number(e.target.value))}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none"
+                  >
+                    <option value={5}>⭐⭐⭐⭐⭐ (5 Stars)</option>
+                    <option value={4}>⭐⭐⭐⭐ (4 Stars)</option>
+                    <option value={3}>⭐⭐⭐ (3 Stars)</option>
+                    <option value={2}>⭐⭐ (2 Stars)</option>
+                    <option value={1}>⭐ (1 Star)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                    Associated Craft
+                  </label>
+                  <select
+                    value={reviewFormProductId}
+                    onChange={(e) => setReviewFormProductId(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none"
+                  >
+                    {products.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} ({p.category})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                  Customer Review Comment *
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  placeholder="What did the customer say about this handmade craft?..."
+                  value={reviewFormComment}
+                  onChange={(e) => setReviewFormComment(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 leading-relaxed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                  Photo (Image URL or Path)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="/assets/products/rose.jpg or https://..."
+                    value={reviewFormPhoto}
+                    onChange={(e) => setReviewFormPhoto(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-800 dark:text-white focus:outline-none font-mono"
+                  />
+                  <label className="px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1 flex-shrink-0 border border-slate-200 dark:border-slate-700">
+                    <Camera size={14} />
+                    <span>Upload</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => setReviewFormPhoto(reader.result as string);
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+                {reviewFormPhoto && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                      <img src={reviewFormPhoto} alt="Review Preview" className="w-full h-full object-cover" />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setReviewFormPhoto('')}
+                      className="text-[11px] text-rose-500 hover:underline"
+                    >
+                      Remove photo
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="verifiedReviewCheckbox"
+                  checked={reviewFormVerified}
+                  onChange={(e) => setReviewFormVerified(e.target.checked)}
+                  className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-slate-300"
+                />
+                <label htmlFor="verifiedReviewCheckbox" className="text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                  Display &quot;Verified Buyer&quot; badge
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsReviewModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 text-white font-bold text-xs shadow"
+                >
+                  {editingReview ? 'Save Changes' : 'Publish Review'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* GALLERY SHOWCASE ADD / EDIT MODAL */}
+      {isGalleryModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="fixed inset-0" onClick={() => setIsGalleryModalOpen(false)} />
+          <div
+            data-lenis-prevent
+            className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-200 dark:border-slate-800 z-10 max-h-[90vh] overflow-y-auto overscroll-contain space-y-4"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="font-serif text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                <Camera className="text-pink-500" size={18} />
+                <span>{editingGalleryItem ? 'Edit Showcase Photo' : 'Add Showcase Photo'}</span>
+              </h3>
+              <button
+                onClick={() => setIsGalleryModalOpen(false)}
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveGalleryItem} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                  Creation Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Custom Jersey Charm"
+                  value={galleryFormTitle}
+                  onChange={(e) => setGalleryFormTitle(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                  Tag Badge
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Custom Order, Desk Keepsake, Gift Order, Handmade Charm"
+                  value={galleryFormTag}
+                  onChange={(e) => setGalleryFormTag(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                  Caption / Customer Story *
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  placeholder="e.g. Handcrafted personalized jersey charm with custom player number."
+                  value={galleryFormCaption}
+                  onChange={(e) => setGalleryFormCaption(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 leading-relaxed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                  Photo Path or URL *
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    required
+                    placeholder="/assets/products/... or image URL"
+                    value={galleryFormImg}
+                    onChange={(e) => setGalleryFormImg(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-800 dark:text-white focus:outline-none font-mono"
+                  />
+                  <label className="px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1 flex-shrink-0 border border-slate-200 dark:border-slate-700">
+                    <Camera size={14} />
+                    <span>Upload</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => setGalleryFormImg(reader.result as string);
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+                {galleryFormImg && (
+                  <div className="mt-2.5">
+                    <div className="relative aspect-video w-36 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                      <img src={galleryFormImg} alt="Gallery Preview" className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsGalleryModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 text-white font-bold text-xs shadow"
+                >
+                  {editingGalleryItem ? 'Save Changes' : 'Add to Gallery'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
 
 
