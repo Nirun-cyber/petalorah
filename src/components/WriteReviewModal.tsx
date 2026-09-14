@@ -4,6 +4,7 @@ import confetti from 'canvas-confetti';
 import { useReviews } from '../context/ReviewContext';
 import { useProducts } from '../context/ProductContext';
 import type { Review } from '../data/reviews';
+import { compressImageFile } from '../lib/imageCompressor';
 
 interface WriteReviewModalProps {
   isOpen: boolean;
@@ -30,18 +31,19 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Please choose an image under 5MB.');
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Please choose an image under 10MB.');
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhoto(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await compressImageFile(file, 600, 0.7);
+        setPhoto(compressed);
+      } catch (err) {
+        console.error('Failed to compress review photo:', err);
+      }
     }
   };
 

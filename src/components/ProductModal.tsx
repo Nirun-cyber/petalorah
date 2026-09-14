@@ -15,19 +15,21 @@ interface ProductModalProps {
 export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) => {
   const { getProductReviews } = useReviews();
   const { settings } = useSettings();
-  if (!product) return null;
-
-  const productReviews = getProductReviews(product.id);
-  const reviewCount = productReviews.length > 0 ? productReviews.length : 14;
-  const ratingScore = productReviews.length > 0 ? productReviews[0].rating : 5;
 
   useEffect(() => {
+    if (!product) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, [product, onClose]);
+
+  if (!product) return null;
+
+  const productReviews = getProductReviews(product.id);
+  const reviewCount = productReviews.length > 0 ? productReviews.length : 14;
+  const ratingScore = productReviews.length > 0 ? productReviews[0].rating : 5;
 
   const cleanPhone = (settings.whatsappNumber || '916380437068').replace(/[^0-9]/g, '');
   const whatsappMessage = encodeURIComponent(

@@ -28,6 +28,13 @@ import {
   Sparkles,
   Camera,
   CheckCircle2,
+  Tag,
+  Users,
+  Percent,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
 } from 'lucide-react';
 import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import { InstagramIcon } from '../components/InstagramIcon';
@@ -36,6 +43,9 @@ import { useOrders, type LoggedOrder } from '../context/OrderContext';
 import { useSettings } from '../context/SettingsContext';
 import { useReviews } from '../context/ReviewContext';
 import { useGallery, type CreationItem } from '../context/GalleryContext';
+import { useCoupon, type Coupon } from '../context/CouponContext';
+import { getStoredCustomers, type RegisteredCustomer } from '../lib/customerAuth';
+import { compressImageFile } from '../lib/imageCompressor';
 import { ProductFormModal } from '../components/admin/ProductFormModal';
 import type { Product } from '../data/products';
 import type { Review } from '../data/reviews';
@@ -73,7 +83,7 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
 
   // Active Admin Tab
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'products' | 'orders' | 'reviews' | 'gallery' | 'banner' | 'settings'
+    'overview' | 'products' | 'orders' | 'coupons' | 'customers' | 'reviews' | 'gallery' | 'banner' | 'settings'
   >('overview');
 
   // Reviews Context & State
@@ -115,6 +125,147 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
   const [galleryFormTag, setGalleryFormTag] = useState('Custom Order');
   const [galleryFormImg, setGalleryFormImg] = useState('');
   const [galleryStatusMsg, setGalleryStatusMsg] = useState<string | null>(null);
+
+  // Coupons Context & State
+  const {
+    coupons,
+    addCoupon,
+    updateCoupon,
+    deleteCoupon,
+    toggleCouponActive,
+    resetCouponsToDefault,
+  } = useCoupon();
+
+  const [couponSearch, setCouponSearch] = useState('');
+  const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
+  const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
+  const [couponFormCode, setCouponFormCode] = useState('');
+  const [couponFormType, setCouponFormType] = useState<'percentage' | 'flat'>('percentage');
+  const [couponFormValue, setCouponFormValue] = useState<number>(10);
+  const [couponFormMinOrder, setCouponFormMinOrder] = useState<number>(199);
+  const [couponFormDesc, setCouponFormDesc] = useState('');
+  const [couponFormActive, setCouponFormActive] = useState(true);
+  const [couponStatusMsg, setCouponStatusMsg] = useState<string | null>(null);
+  const [copiedCouponCode, setCopiedCouponCode] = useState<string | null>(null);
+
+  const handleOpenAddCoupon = () => {
+    setEditingCoupon(null);
+    setCouponFormCode('');
+    setCouponFormType('percentage');
+    setCouponFormValue(10);
+    setCouponFormMinOrder(199);
+    setCouponFormDesc('');
+    setCouponFormActive(true);
+    setIsCouponModalOpen(true);
+  };
+
+  const handleOpenEditCoupon = (coupon: Coupon) => {
+    setEditingCoupon(coupon);
+    setCouponFormCode(coupon.code);
+    setCouponFormType(coupon.discountType);
+    setCouponFormValue(coupon.discountValue);
+    setCouponFormMinOrder(coupon.minOrderValue);
+    setCouponFormDesc(coupon.description || '');
+    setCouponFormActive(coupon.isActive);
+    setIsCouponModalOpen(true);
+  };
+
+  const handleSaveCoupon = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanCode = couponFormCode.trim().toUpperCase();
+    if (!cleanCode) {
+      alert('Please enter a coupon code.');
+      return;
+    }
+
+    if (editingCoupon) {
+      updateCoupon(editingCoupon.id, {
+        code: cleanCode,
+        discountType: couponFormType,
+        discountValue: Number(couponFormValue),
+        minOrderValue: Number(couponFormMinOrder),
+        description: couponFormDesc.trim() || undefined,
+        isActive: couponFormActive,
+      });
+      setCouponStatusMsg(`✅ Updated coupon "${cleanCode}"`);
+    } else {
+      addCoupon({
+        code: cleanCode,
+        discountType: couponFormType,
+        discountValue: Number(couponFormValue),
+        minOrderValue: Number(couponFormMinOrder),
+        description: couponFormDesc.trim() || undefined,
+        isActive: couponFormActive,
+      });
+      setCouponStatusMsg(`✨ Created new coupon "${cleanCode}"`);
+    }
+
+    setIsCouponModalOpen(false);
+    setTimeout(() => setCouponStatusMsg(null), 3500);
+  };
+
+  const handleDeleteCoupon = (id: string, code: string) => {
+    if (window.confirm(`Are you sure you want to delete coupon "${code}"?`)) {
+      deleteCoupon(id);
+      setCouponStatusMsg(`🗑️ Deleted coupon "${code}"`);
+      setTimeout(() => setCouponStatusMsg(null), 3000);
+    }
+  };
+
+  const handleCopyCouponCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCouponCode(code);
+    setTimeout(() => setCopiedCouponCode(null), 2500);
+  };
+
+  // Customers CRM State
+  const [customers, setCustomers] = useState<RegisteredCustomer[]>(getStoredCustomers);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [selectedCustomerForOrders, setSelectedCustomerForOrders] = useState<RegisteredCustomer | null>(null);
+
+  useEffect(() => {
+    setCustomers(getStoredCustomers());
+  }, [isAuthenticated, activeTab]);
+
+  const getCustomerOrders = (customer: RegisteredCustomer) => {
+    const custPhone = customer.phone.replace(/[^0-9]/g, '').slice(-10);
+    const custName = customer.name.toLowerCase().trim();
+
+    return orders.filter((o) => {
+      const oPhone = (o.customerPhone || '').replace(/[^0-9]/g, '').slice(-10);
+      const oName = (o.customerName || '').toLowerCase().trim();
+      return (custPhone && oPhone && oPhone === custPhone) || (custName && oName && oName === custName);
+    });
+  };
+
+  // Shipping Rates Settings Form State
+  const [shippingCbeInput, setShippingCbeInput] = useState<number>(settings.shippingFeeCoimbatore ?? 60);
+  const [shippingTnInput, setShippingTnInput] = useState<number>(settings.shippingFeeTamilNadu ?? 80);
+  const [shippingOtherInput, setShippingOtherInput] = useState<number>(settings.shippingFeeOtherStates ?? 100);
+  const [freeShippingThresholdInput, setFreeShippingThresholdInput] = useState<number>(settings.freeShippingThreshold ?? 799);
+  const [freeShippingEnabledInput, setFreeShippingEnabledInput] = useState<boolean>(settings.isFreeShippingEnabled ?? true);
+  const [shippingStatusMsg, setShippingStatusMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    setShippingCbeInput(settings.shippingFeeCoimbatore ?? 60);
+    setShippingTnInput(settings.shippingFeeTamilNadu ?? 80);
+    setShippingOtherInput(settings.shippingFeeOtherStates ?? 100);
+    setFreeShippingThresholdInput(settings.freeShippingThreshold ?? 799);
+    setFreeShippingEnabledInput(settings.isFreeShippingEnabled ?? true);
+  }, [settings]);
+
+  const handleSaveShippingSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateSettings({
+      shippingFeeCoimbatore: Number(shippingCbeInput),
+      shippingFeeTamilNadu: Number(shippingTnInput),
+      shippingFeeOtherStates: Number(shippingOtherInput),
+      freeShippingThreshold: Number(freeShippingThresholdInput),
+      isFreeShippingEnabled: freeShippingEnabledInput,
+    });
+    setShippingStatusMsg('✅ Delivery charges & Free Shipping settings updated successfully!');
+    setTimeout(() => setShippingStatusMsg(null), 3500);
+  };
 
   // Open Review Add/Edit Modals
   const handleOpenAddReview = () => {
@@ -575,6 +726,8 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
             { id: 'overview', label: 'Overview & Stats', icon: TrendingUp },
             { id: 'products', label: `Products (${totalProducts})`, icon: Package },
             { id: 'orders', label: `Order Logs (${totalOrdersCount})`, icon: ShoppingCart },
+            { id: 'coupons', label: `Coupons (${coupons.length})`, icon: Tag },
+            { id: 'customers', label: `Customers CRM (${customers.length})`, icon: Users },
             { id: 'reviews', label: `Reviews (${reviews.length})`, icon: Star },
             { id: 'gallery', label: `Gallery (${galleryItems.length})`, icon: Camera },
             { id: 'banner', label: 'Announcement Bar', icon: Megaphone },
@@ -1149,6 +1302,432 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
           </div>
         )}
 
+        {/* --- COUPONS TAB --- */}
+        {activeTab === 'coupons' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Header Controls */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+              <div>
+                <h3 className="text-lg font-bold font-serif text-slate-800 dark:text-white flex items-center gap-2">
+                  <Tag className="text-rose-500" size={20} />
+                  Promo Coupons &amp; Discounts
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Create percentage discounts or flat ₹ deductions for cart checkouts
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleOpenAddCoupon}
+                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-1.5"
+                >
+                  <Plus size={15} />
+                  <span>Create Coupon</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm('Reset all coupons to Petalorah default promo codes?')) {
+                      resetCouponsToDefault();
+                      setCouponStatusMsg('✨ Reset coupons to default codes (PETAL10, FLOWER50, FREESHIP).');
+                      setTimeout(() => setCouponStatusMsg(null), 3000);
+                    }
+                  }}
+                  className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold"
+                  title="Reset to default initial coupons"
+                >
+                  Reset Defaults
+                </button>
+              </div>
+            </div>
+
+            {/* Status Alert */}
+            {couponStatusMsg && (
+              <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-2xl flex items-center gap-2 animate-in fade-in">
+                <Check size={16} /> {couponStatusMsg}
+              </div>
+            )}
+
+            {/* Metrics Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm text-center">
+                <span className="text-[11px] font-bold text-slate-400 uppercase">Total Coupons</span>
+                <p className="text-xl font-bold font-serif text-slate-800 dark:text-white mt-0.5">{coupons.length}</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm text-center">
+                <span className="text-[11px] font-bold text-slate-400 uppercase">Active Codes</span>
+                <p className="text-xl font-bold font-serif text-emerald-600 dark:text-emerald-400 mt-0.5">
+                  {coupons.filter((c) => c.isActive).length}
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm text-center">
+                <span className="text-[11px] font-bold text-slate-400 uppercase">Total Redemptions</span>
+                <p className="text-xl font-bold font-serif text-rose-500 mt-0.5">
+                  {coupons.reduce((sum, c) => sum + c.usageCount, 0)}
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm text-center">
+                <span className="text-[11px] font-bold text-slate-400 uppercase">Most Popular Code</span>
+                <p className="text-base font-bold font-mono text-indigo-600 dark:text-indigo-400 mt-1">
+                  {coupons.slice().sort((a, b) => b.usageCount - a.usageCount)[0]?.code || 'None'}
+                </p>
+              </div>
+            </div>
+
+            {/* Search Filter */}
+            <div className="relative max-w-md">
+              <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search coupons by code or description..."
+                value={couponSearch}
+                onChange={(e) => setCouponSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-900 rounded-2xl text-xs font-medium border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 shadow-sm"
+              />
+            </div>
+
+            {/* Coupons List */}
+            {(() => {
+              const filteredCoupons = coupons.filter(
+                (c) =>
+                  c.code.toLowerCase().includes(couponSearch.toLowerCase()) ||
+                  (c.description && c.description.toLowerCase().includes(couponSearch.toLowerCase()))
+              );
+
+              if (filteredCoupons.length === 0) {
+                return (
+                  <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center border border-slate-100 dark:border-slate-800">
+                    <Tag className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                    <h4 className="text-base font-bold text-slate-700 dark:text-slate-200">No Coupons Found</h4>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Click &quot;Create Coupon&quot; to add a new discount promo code.
+                    </p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredCoupons.map((coupon) => (
+                    <div
+                      key={coupon.id}
+                      className={`bg-white dark:bg-slate-900 rounded-3xl p-5 border shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-all ${
+                        coupon.isActive
+                          ? 'border-slate-200 dark:border-slate-800'
+                          : 'border-slate-200/50 dark:border-slate-800/40 opacity-70'
+                      }`}
+                    >
+                      <div className="space-y-3">
+                        {/* Header: Code Banner & Active Toggle */}
+                        <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-extrabold text-sm px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white tracking-wide border border-slate-200 dark:border-slate-700">
+                              {coupon.code}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyCouponCode(coupon.code)}
+                              className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors"
+                              title="Copy Code"
+                            >
+                              {copiedCouponCode === coupon.code ? (
+                                <Check size={14} className="text-emerald-500" />
+                              ) : (
+                                <Copy size={14} />
+                              )}
+                            </button>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => toggleCouponActive(coupon.id)}
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-colors ${
+                              coupon.isActive
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                            }`}
+                          >
+                            {coupon.isActive ? 'Active' : 'Disabled'}
+                          </button>
+                        </div>
+
+                        {/* Discount Value Pill */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold px-2.5 py-1 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200/50 flex items-center gap-1">
+                            <Percent size={12} />
+                            {coupon.discountType === 'percentage'
+                              ? `${coupon.discountValue}% OFF Entire Order`
+                              : `Flat ₹${coupon.discountValue} OFF Cart`}
+                          </span>
+                        </div>
+
+                        {/* Description */}
+                        {coupon.description && (
+                          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                            {coupon.description}
+                          </p>
+                        )}
+
+                        {/* Conditions */}
+                        <div className="text-[11px] text-slate-400 space-y-1">
+                          <div className="flex justify-between">
+                            <span>Min Order Value:</span>
+                            <span className="font-semibold text-slate-700 dark:text-slate-300">
+                              {coupon.minOrderValue > 0 ? `₹${coupon.minOrderValue}` : 'No minimum'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Total Redemptions:</span>
+                            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                              {coupon.usageCount} times
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditCoupon(coupon)}
+                          className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-slate-800 text-xs font-bold transition-colors flex items-center gap-1"
+                        >
+                          <Edit size={13} />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCoupon(coupon.id, coupon.code)}
+                          className="p-1.5 rounded-xl border border-rose-100 dark:border-rose-900/40 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                          title="Delete Coupon"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* --- CUSTOMERS CRM TAB --- */}
+        {activeTab === 'customers' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Header Controls */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+              <div>
+                <h3 className="text-lg font-bold font-serif text-slate-800 dark:text-white flex items-center gap-2">
+                  <Users className="text-indigo-600" size={20} />
+                  Registered Customers &amp; WhatsApp CRM
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Customer directory, order histories, and 1-click WhatsApp messaging
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setCustomers(getStoredCustomers())}
+                  className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold flex items-center gap-1.5"
+                >
+                  <RefreshCw size={13} />
+                  <span>Refresh List</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Metrics Bar */}
+            {(() => {
+              const repeatBuyers = customers.filter((c) => getCustomerOrders(c).length > 1).length;
+              const allCustOrders = customers.flatMap((c) => getCustomerOrders(c));
+              const totalCustRevenue = allCustOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm text-center">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase">Registered Customers</span>
+                    <p className="text-2xl font-bold font-serif text-slate-800 dark:text-white mt-0.5">{customers.length}</p>
+                    <span className="text-[10px] text-slate-400">With Petalorah accounts</span>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm text-center">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase">Repeat Buyers</span>
+                    <p className="text-2xl font-bold font-serif text-indigo-600 dark:text-indigo-400 mt-0.5">
+                      {repeatBuyers}
+                    </p>
+                    <span className="text-[10px] text-slate-400">Placed 2+ orders</span>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm text-center">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase">Registered Customer Spend</span>
+                    <p className="text-2xl font-bold font-serif text-emerald-600 dark:text-emerald-400 mt-0.5">
+                      ₹{totalCustRevenue}
+                    </p>
+                    <span className="text-[10px] text-slate-400">Across {allCustOrders.length} orders</span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Search Filter */}
+            <div className="relative max-w-md">
+              <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by name, phone, email, or city..."
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-900 rounded-2xl text-xs font-medium border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-sm"
+              />
+            </div>
+
+            {/* Customers List */}
+            {(() => {
+              const filteredCustomers = customers.filter((c) => {
+                const query = customerSearch.toLowerCase();
+                return (
+                  c.name.toLowerCase().includes(query) ||
+                  c.email.toLowerCase().includes(query) ||
+                  c.phone.includes(query) ||
+                  (c.address?.city && c.address.city.toLowerCase().includes(query))
+                );
+              });
+
+              if (filteredCustomers.length === 0) {
+                return (
+                  <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center border border-slate-100 dark:border-slate-800">
+                    <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                    <h4 className="text-base font-bold text-slate-700 dark:text-slate-200">No Customers Found</h4>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Customers who register accounts during login or checkout will appear here.
+                    </p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredCustomers.map((customer) => {
+                    const custOrders = getCustomerOrders(customer);
+                    const totalSpent = custOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+                    const cleanPhone = customer.phone.replace(/[^0-9]/g, '');
+                    const initials = customer.name
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .toUpperCase()
+                      .slice(0, 2);
+
+                    const whatsappGreeting = `Hello ${customer.name}! 🌸 Thank you for being a wonderful customer of Petalorah. How can we assist you today?`;
+                    const validPhone = cleanPhone.length >= 10 ? cleanPhone.slice(-10) : '';
+                    const whatsappUrl = validPhone
+                      ? `https://wa.me/91${validPhone}?text=${encodeURIComponent(whatsappGreeting)}`
+                      : null;
+
+                    return (
+                      <div
+                        key={customer.id}
+                        className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow"
+                      >
+                        <div className="space-y-3">
+                          {/* Top: Avatar, Name, Joined */}
+                          <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-rose-500 to-indigo-600 text-white font-serif font-extrabold flex items-center justify-center text-sm shadow-sm flex-shrink-0">
+                                {initials || 'P'}
+                              </div>
+                              <div>
+                                <h4 className="font-bold text-sm text-slate-800 dark:text-white">
+                                  {customer.name}
+                                </h4>
+                                <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                  <Calendar size={11} />
+                                  <span>Joined {new Date(customer.createdAt).toLocaleDateString()}</span>
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Order Count Badge */}
+                            <span
+                              className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+                                custOrders.length > 0
+                                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                                  : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                              }`}
+                            >
+                              {custOrders.length} {custOrders.length === 1 ? 'Order' : 'Orders'} (₹{totalSpent})
+                            </span>
+                          </div>
+
+                          {/* Contact Info */}
+                          <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+                            <div className="flex items-center gap-2">
+                              <Mail size={13} className="text-slate-400 flex-shrink-0" />
+                              <span className="truncate">{customer.email}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Phone size={13} className="text-slate-400 flex-shrink-0" />
+                              <span className="font-mono">{customer.phone}</span>
+                            </div>
+                          </div>
+
+                          {/* Address */}
+                          {customer.address && (
+                            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-[11px] text-slate-600 dark:text-slate-300 flex items-start gap-2">
+                              <MapPin size={13} className="text-rose-500 flex-shrink-0 mt-0.5" />
+                              <span className="line-clamp-2">
+                                {[
+                                  customer.address.street,
+                                  customer.address.city,
+                                  customer.address.state,
+                                  customer.address.pincode,
+                                ]
+                                  .filter(Boolean)
+                                  .join(', ')}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Actions: WhatsApp & View Orders */}
+                        <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCustomerForOrders(customer)}
+                            className="text-xs font-bold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white flex items-center gap-1 hover:underline"
+                          >
+                            <span>View Orders ({custOrders.length})</span>
+                          </button>
+
+                          {whatsappUrl ? (
+                            <a
+                              href={whatsappUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+                            >
+                              <WhatsAppIcon size={14} />
+                              <span>Chat on WhatsApp</span>
+                            </a>
+                          ) : (
+                            <span className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 text-xs font-medium">
+                              No Phone
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
         {/* --- REVIEWS TAB (CRUD) --- */}
         {activeTab === 'reviews' && (
           <div className="space-y-6 animate-in fade-in duration-200">
@@ -1691,6 +2270,118 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
               </form>
             </div>
 
+            {/* Courier & Shipping Rates Manager */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                  <Truck size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold font-serif text-slate-800 dark:text-white flex items-center gap-2">
+                    Shipping Charges &amp; Free Delivery Threshold
+                    <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold">
+                      Live Store Sync
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400">Configure courier charges for different regions and automatic free shipping thresholds</p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveShippingSettings} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                      Coimbatore Local (₹)
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min={0}
+                      value={shippingCbeInput}
+                      onChange={(e) => setShippingCbeInput(Number(e.target.value))}
+                      className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">Pincodes 641xxx / Local delivery</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                      Tamil Nadu Standard (₹)
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min={0}
+                      value={shippingTnInput}
+                      onChange={(e) => setShippingTnInput(Number(e.target.value))}
+                      className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">Pincodes 60xxxx - 64xxxx</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                      Other Indian States (₹)
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min={0}
+                      value={shippingOtherInput}
+                      onChange={(e) => setShippingOtherInput(Number(e.target.value))}
+                      className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">All other states across India</p>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                      Free Delivery Threshold (₹)
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min={0}
+                      value={freeShippingThresholdInput}
+                      onChange={(e) => setFreeShippingThresholdInput(Number(e.target.value))}
+                      className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">Orders at or above this amount automatically receive ₹0 shipping</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                      Free Delivery Offer Status
+                    </label>
+                    <select
+                      value={freeShippingEnabledInput ? 'true' : 'false'}
+                      onChange={(e) => setFreeShippingEnabledInput(e.target.value === 'true')}
+                      className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-800 dark:text-white focus:outline-none"
+                    >
+                      <option value="true">✅ Enabled (Shows progress bar in Cart &amp; About page)</option>
+                      <option value="false">❌ Disabled</option>
+                    </select>
+                    <p className="text-[10px] text-slate-400 mt-1">Controls cart progress tracker &amp; website badges</p>
+                  </div>
+                </div>
+
+                {shippingStatusMsg && (
+                  <div className="p-3 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-xl flex items-center gap-2">
+                    <CheckCircle size={16} /> {shippingStatusMsg}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="w-full py-3.5 rounded-2xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg transition-all"
+                >
+                  Save Shipping Rates &amp; Free Delivery Policy
+                </button>
+              </form>
+            </div>
+
             {/* Admin PIN Passcode Changer */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
               <div className="flex items-center gap-3">
@@ -1999,12 +2690,15 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                          const reader = new FileReader();
-                          reader.onloadend = () => setReviewFormPhoto(reader.result as string);
-                          reader.readAsDataURL(file);
+                          try {
+                            const compressed = await compressImageFile(file, 600, 0.75);
+                            setReviewFormPhoto(compressed);
+                          } catch (err) {
+                            console.error('Failed to compress review photo:', err);
+                          }
                         }
                       }}
                     />
@@ -2142,12 +2836,15 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                          const reader = new FileReader();
-                          reader.onloadend = () => setGalleryFormImg(reader.result as string);
-                          reader.readAsDataURL(file);
+                          try {
+                            const compressed = await compressImageFile(file, 800, 0.75);
+                            setGalleryFormImg(compressed);
+                          } catch (err) {
+                            console.error('Failed to compress gallery image:', err);
+                          }
                         }
                       }}
                     />
@@ -2245,6 +2942,270 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
               <button
                 onClick={() => setIsScriptModalOpen(false)}
                 className="px-5 py-2.5 rounded-xl bg-slate-800 text-white hover:bg-slate-900 font-bold text-xs"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* COUPON ADD / EDIT MODAL */}
+      {isCouponModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="fixed inset-0" onClick={() => setIsCouponModalOpen(false)} />
+          <div
+            data-lenis-prevent
+            className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-200 dark:border-slate-800 z-10 max-h-[90vh] overflow-y-auto overscroll-contain space-y-4"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="font-serif text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                <Tag className="text-rose-500" size={18} />
+                <span>{editingCoupon ? 'Edit Promo Coupon' : 'Create New Promo Coupon'}</span>
+              </h3>
+              <button
+                onClick={() => setIsCouponModalOpen(false)}
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCoupon} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                  Coupon Code *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. PETAL10, FESTIVE50"
+                  value={couponFormCode}
+                  onChange={(e) => setCouponFormCode(e.target.value.toUpperCase())}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono font-bold tracking-wider uppercase text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                    Discount Type
+                  </label>
+                  <select
+                    value={couponFormType}
+                    onChange={(e) => setCouponFormType(e.target.value as 'percentage' | 'flat')}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-white focus:outline-none"
+                  >
+                    <option value="percentage">% Percentage</option>
+                    <option value="flat">₹ Flat Amount</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                    Discount Value *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    value={couponFormValue}
+                    onChange={(e) => setCouponFormValue(Number(e.target.value))}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                  Minimum Order Subtotal (₹)
+                </label>
+                <input
+                  type="number"
+                  required
+                  min={0}
+                  value={couponFormMinOrder}
+                  onChange={(e) => setCouponFormMinOrder(Number(e.target.value))}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">Set 0 for no minimum cart requirement</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                  Description / Note
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 10% off for first-time craft orders"
+                  value={couponFormDesc}
+                  onChange={(e) => setCouponFormDesc(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="couponActiveCheckbox"
+                  checked={couponFormActive}
+                  onChange={(e) => setCouponFormActive(e.target.checked)}
+                  className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-slate-300"
+                />
+                <label htmlFor="couponActiveCheckbox" className="text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                  Activate this coupon immediately for storefront checkout
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsCouponModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 text-white font-bold text-xs shadow"
+                >
+                  {editingCoupon ? 'Save Changes' : 'Create Coupon'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOMER ORDER HISTORY CRM MODAL */}
+      {selectedCustomerForOrders && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="fixed inset-0" onClick={() => setSelectedCustomerForOrders(null)} />
+          <div
+            data-lenis-prevent
+            className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-200 dark:border-slate-800 z-10 max-h-[90vh] overflow-y-auto overscroll-contain space-y-5"
+          >
+            {/* Header: Customer info & WhatsApp */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div>
+                <h3 className="font-serif text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                  <Users className="text-indigo-600" size={20} />
+                  <span>{selectedCustomerForOrders.name}</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {selectedCustomerForOrders.email} • {selectedCustomerForOrders.phone}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {(() => {
+                  const cleanP = (selectedCustomerForOrders.phone || '').replace(/[^0-9]/g, '');
+                  const validP = cleanP.length >= 10 ? cleanP.slice(-10) : '';
+                  if (!validP) return null;
+                  return (
+                    <a
+                      href={`https://wa.me/91${validP}?text=${encodeURIComponent(
+                        `Hello ${selectedCustomerForOrders.name}! 🌸 Following up regarding your orders at Petalorah.`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+                    >
+                      <WhatsAppIcon size={14} />
+                      <span>Chat on WhatsApp</span>
+                    </a>
+                  );
+                })()}
+
+                <button
+                  onClick={() => setSelectedCustomerForOrders(null)}
+                  className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Orders list */}
+            {(() => {
+              const custOrders = getCustomerOrders(selectedCustomerForOrders);
+
+              if (custOrders.length === 0) {
+                return (
+                  <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <ShoppingCart className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200">No Orders Found</p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      This customer has not completed an order via WhatsApp or Instagram yet.
+                    </p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <span>Order History ({custOrders.length})</span>
+                    <span>Total Spend: ₹{custOrders.reduce((sum, o) => sum + o.totalAmount, 0)}</span>
+                  </div>
+
+                  {custOrders.map((ord) => (
+                    <div
+                      key={ord.id}
+                      className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3"
+                    >
+                      <div className="flex items-center justify-between gap-2 border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
+                        <div>
+                          <span className="font-mono text-xs font-bold text-slate-800 dark:text-white">
+                            {ord.id}
+                          </span>
+                          <span className="text-[10px] text-slate-400 block">
+                            {new Date(ord.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                            Via {ord.channel}
+                          </span>
+                          <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400">
+                            {ord.status}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Items */}
+                      <div className="space-y-1.5">
+                        {ord.items.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-xs">
+                            <span className="text-slate-700 dark:text-slate-200 truncate pr-2">
+                              {item.productName} × {item.quantity}
+                            </span>
+                            <span className="font-semibold text-slate-800 dark:text-white flex-shrink-0">
+                              ₹{item.price * item.quantity}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-slate-700/60 text-xs">
+                        <span className="text-slate-500">
+                          {ord.trackingNumber ? `Tracking: ${ord.trackingNumber}` : 'Tracking pending dispatch'}
+                        </span>
+                        <span className="font-extrabold text-sm text-rose-600 dark:text-rose-400">
+                          Total: ₹{ord.totalAmount}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setSelectedCustomerForOrders(null)}
+                className="px-5 py-2 rounded-xl bg-slate-800 text-white font-bold text-xs hover:bg-slate-900"
               >
                 Close
               </button>

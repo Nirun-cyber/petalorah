@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-interface SiteSettings {
+export interface SiteSettings {
   announcementText: string;
   isAnnouncementVisible: boolean;
   whatsappNumber: string;
@@ -8,6 +8,11 @@ interface SiteSettings {
   adminPin: string;
   googleSheetWebhookUrl?: string;
   creationOfTheWeekProductId?: string;
+  shippingFeeCoimbatore: number;
+  shippingFeeTamilNadu: number;
+  shippingFeeOtherStates: number;
+  freeShippingThreshold: number;
+  isFreeShippingEnabled: boolean;
 }
 
 interface SettingsContextType {
@@ -27,6 +32,11 @@ const DEFAULT_SETTINGS: SiteSettings = {
   adminPin: '240812',
   googleSheetWebhookUrl: (import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL as string) || '',
   creationOfTheWeekProductId: 'four_tulips_pot',
+  shippingFeeCoimbatore: 60,
+  shippingFeeTamilNadu: 80,
+  shippingFeeOtherStates: 100,
+  freeShippingThreshold: 799,
+  isFreeShippingEnabled: true,
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

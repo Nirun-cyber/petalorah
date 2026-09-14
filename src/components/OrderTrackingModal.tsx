@@ -56,7 +56,7 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
         setHasSearched(false);
       }
     }
-  }, [isOpen, initialQuery]);
+  }, [isOpen, initialQuery, findOrder]);
 
   // Close modal on Escape key press
   useEffect(() => {

@@ -16,11 +16,15 @@ import {
   Home,
   LogIn,
   Loader2,
+  Tag,
+  Check,
 } from 'lucide-react';
 import { WhatsAppIcon } from './WhatsAppIcon';
 import { InstagramIcon } from './InstagramIcon';
 import { useCart, calculateShippingFee, type CustomerCheckoutInfo } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useCoupon } from '../context/CouponContext';
+import { useSettings } from '../context/SettingsContext';
 
 interface CartDrawerProps {
   onNavigateToLogin?: () => void;
@@ -41,6 +45,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
   } = useCart();
 
   const { user } = useAuth();
+  const { settings } = useSettings();
+  const { appliedCoupon, applyCoupon, removeCoupon, calculateDiscount } = useCoupon();
+
+  const [couponInput, setCouponInput] = useState('');
+  const [couponMsg, setCouponMsg] = useState<{ text: string; isError: boolean } | null>(null);
 
   const nameInputRef = useRef<HTMLInputElement>(null);
   const phoneInputRef = useRef<HTMLInputElement>(null);
@@ -137,12 +146,19 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
   // Sync state if customer logs in or updates profile
   useEffect(() => {
     if (user) {
-      if (user.name && !name) setName(user.name);
-      if (user.phone && !phone) setPhone(user.phone);
-      if (user.address?.street && !address) setAddress(user.address.street);
-      if (user.address?.city && !city) setCity(user.address.city);
-      if (user.address?.state && !state) setState(user.address.state);
-      if (user.address?.pincode && !pincode) setPincode(user.address.pincode);
+      const userName = user.name;
+      const userPhone = user.phone;
+      const userStreet = user.address?.street;
+      const userCity = user.address?.city;
+      const userState = user.address?.state;
+      const userPincode = user.address?.pincode;
+
+      if (userName) setName((prev) => prev || userName);
+      if (userPhone) setPhone((prev) => prev || userPhone);
+      if (userStreet) setAddress((prev) => prev || userStreet);
+      if (userCity) setCity((prev) => prev || userCity);
+      if (userState) setState((prev) => prev || userState);
+      if (userPincode) setPincode((prev) => prev || userPincode);
     }
   }, [user]);
 
@@ -154,9 +170,27 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
   const amountNeededForFreeGift = Math.max(0, FREE_GIFT_THRESHOLD - totalPrice);
   const freeGiftProgressPercent = Math.min(100, Math.round((totalPrice / FREE_GIFT_THRESHOLD) * 100));
 
-  // Dynamic Shipping Calculation based on entered Pincode & City
-  const shipping = calculateShippingFee(pincode, city, state);
-  const grandTotal = totalPrice + shipping.fee;
+  // Dynamic Shipping Calculation based on entered Pincode, City, and Site Settings
+  const shipping = calculateShippingFee(pincode, city, state, settings, totalPrice);
+  const freeShippingThreshold = settings.freeShippingThreshold ?? 799;
+  const isFreeShippingQualified = shipping.isFreeDelivery;
+  const amountNeededForFreeShipping = Math.max(0, freeShippingThreshold - totalPrice);
+  const freeShippingProgressPercent = Math.min(100, Math.round((totalPrice / freeShippingThreshold) * 100));
+
+  // Coupon Discount
+  const couponDiscount = calculateDiscount(appliedCoupon, totalPrice);
+  const grandTotal = Math.max(0, totalPrice - couponDiscount) + shipping.fee;
+
+  const handleApplyCoupon = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!couponInput.trim()) return;
+    const res = applyCoupon(couponInput, totalPrice);
+    setCouponMsg({ text: res.message, isError: !res.success });
+    if (res.success) {
+      setCouponInput('');
+    }
+    setTimeout(() => setCouponMsg(null), 5000);
+  };
 
   const handleProceedToLogin = () => {
     closeCart();
@@ -224,7 +258,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
 
     setIsPlacingOrder(true);
     try {
-      const orderId = proceedToWhatsAppOrder(shipping.fee, shipping.region, customerInfo);
+      const couponPayload = appliedCoupon ? { code: appliedCoupon.code, discount: couponDiscount } : undefined;
+      const orderId = proceedToWhatsAppOrder(shipping.fee, shipping.region, customerInfo, couponPayload);
       setPlacedOrderId(orderId);
     } finally {
       setTimeout(() => setIsPlacingOrder(false), 800);
@@ -238,7 +273,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
 
     setIsPlacingOrder(true);
     try {
-      const orderId = await proceedToInstagramOrder(shipping.fee, shipping.region, customerInfo);
+      const couponPayload = appliedCoupon ? { code: appliedCoupon.code, discount: couponDiscount } : undefined;
+      const orderId = await proceedToInstagramOrder(shipping.fee, shipping.region, customerInfo, couponPayload);
       setPlacedOrderId(orderId);
     } finally {
       setTimeout(() => setIsPlacingOrder(false), 800);
@@ -408,6 +444,35 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
                   )}
                 </div>
 
+                {/* Free Shipping Tracker Bar */}
+                {settings.isFreeShippingEnabled && (
+                  <div className="p-3 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800/40 space-y-1.5 shadow-xs">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="flex items-center gap-1.5 font-bold text-indigo-950 dark:text-indigo-200">
+                        <Truck size={14} className="text-indigo-600 dark:text-indigo-400" />
+                        {isFreeShippingQualified ? (
+                          <span>🎉 You&apos;ve unlocked <strong>FREE Delivery!</strong></span>
+                        ) : (
+                          <span>
+                            Add <strong>₹{amountNeededForFreeShipping}</strong> more for <strong>FREE Delivery 🚚</strong>
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
+                        {isFreeShippingQualified ? 'Free Shipping ✨' : `₹${totalPrice} / ₹${freeShippingThreshold}`}
+                      </span>
+                    </div>
+                    <div className="w-full bg-white/80 dark:bg-slate-800/80 h-1.5 rounded-full overflow-hidden p-0.5 border border-black/5">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          isFreeShippingQualified ? 'bg-indigo-600' : 'bg-indigo-400'
+                        }`}
+                        style={{ width: `${freeShippingProgressPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {/* 1. Item list */}
                 <div className="space-y-3">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-primary/60 dark:text-gray-400">
@@ -477,6 +542,67 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
                       </div>
                     </div>
                   ))}
+                </div>
+
+                {/* Promo Code & Coupon Box */}
+                <div className="p-3.5 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-primary dark:text-white flex items-center gap-1.5">
+                      <Tag size={13} className="text-rose-500" /> Have a Coupon Code?
+                    </span>
+                    {appliedCoupon && (
+                      <button
+                        type="button"
+                        onClick={removeCoupon}
+                        className="text-[10px] text-rose-600 dark:text-rose-400 hover:underline font-bold"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <Check size={14} className="text-emerald-600" />
+                        <span className="font-mono font-extrabold text-emerald-800 dark:text-emerald-300">
+                          {appliedCoupon.code}
+                        </span>
+                        <span className="text-[10px] text-emerald-700 dark:text-emerald-400">
+                          ({appliedCoupon.discountType === 'percentage' ? `${appliedCoupon.discountValue}% off` : `₹${appliedCoupon.discountValue} off`})
+                        </span>
+                      </div>
+                      <span className="font-extrabold text-emerald-700 dark:text-emerald-300">
+                        -₹{couponDiscount}
+                      </span>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleApplyCoupon} className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="e.g. PETAL10"
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                        className="flex-1 uppercase font-mono text-xs px-3 py-2 rounded-xl border border-primary/15 dark:border-white/15 bg-white dark:bg-navy text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                      />
+                      <button
+                        type="submit"
+                        className="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl shadow-xs transition-all"
+                      >
+                        Apply
+                      </button>
+                    </form>
+                  )}
+
+                  {couponMsg && (
+                    <p
+                      className={`text-[11px] font-semibold ${
+                        couponMsg.isError ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'
+                      }`}
+                    >
+                      {couponMsg.text}
+                    </p>
+                  )}
                 </div>
 
                 {/* 2. GUEST DELIVERY DETAILS FORM */}
@@ -661,13 +787,23 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
                 <span className="font-bold text-primary dark:text-white">₹{totalPrice}</span>
               </div>
 
+              {couponDiscount > 0 && (
+                <div className="flex justify-between items-center text-emerald-600 dark:text-emerald-400 font-bold">
+                  <span className="flex items-center gap-1">
+                    <Tag size={12} />
+                    <span>Coupon ({appliedCoupon?.code}):</span>
+                  </span>
+                  <span>-₹{couponDiscount}</span>
+                </div>
+              )}
+
               <div className="flex justify-between items-center">
                 <span className="flex items-center gap-1">
                   <Truck size={12} className="text-rose-500" />
                   Delivery ({shipping.region}):
                 </span>
-                <span className="font-bold text-rose-600 dark:text-rose-400">
-                  ₹{shipping.fee}
+                <span className={`font-bold ${shipping.fee === 0 ? 'text-emerald-600 dark:text-emerald-400 font-extrabold uppercase text-[11px] bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded' : 'text-rose-600 dark:text-rose-400'}`}>
+                  {shipping.fee === 0 ? 'FREE' : `₹${shipping.fee}`}
                 </span>
               </div>
 
@@ -684,9 +820,16 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
 
               <div className="flex justify-between text-sm font-extrabold text-primary dark:text-white pt-1.5 border-t border-primary/10 dark:border-white/10">
                 <span>Total Amount:</span>
-                <span className="text-base text-rose-600 dark:text-rose-400 font-black">
-                  ₹{grandTotal}
-                </span>
+                <div className="text-right">
+                  <span className="text-base text-rose-600 dark:text-rose-400 font-black">
+                    ₹{grandTotal}
+                  </span>
+                  {couponDiscount > 0 && (
+                    <span className="block text-[10px] text-emerald-600 font-bold">
+                      You saved ₹{couponDiscount}!
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 

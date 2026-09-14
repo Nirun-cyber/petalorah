@@ -119,7 +119,16 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
     } catch (e) {
-      console.error('Failed to save products to localStorage:', e);
+      console.warn('Failed to save products to localStorage, attempting compact save:', e);
+      try {
+        const compact = products.map((p) => ({
+          ...p,
+          img: p.img?.startsWith('data:') && p.img.length > 5000 ? '/assets/products/rose.jpg' : p.img,
+        }));
+        localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(compact));
+      } catch (innerErr) {
+        console.warn('LocalStorage quota limit reached, products preserved in memory:', innerErr);
+      }
     }
   }, [products]);
 

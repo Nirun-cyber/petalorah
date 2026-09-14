@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Upload, Sparkles, CheckCircle, Trash2, Wand2, FileText } from 'lucide-react';
 import { type Product, DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE } from '../../data/products';
+import { compressImageFile } from '../../lib/imageCompressor';
 
 interface ProductFormModalProps {
   product?: Product | null;
@@ -56,25 +57,24 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Handle local image file upload -> convert to Base64 data URL
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle local image file upload -> compress to web-optimized JPEG data URL
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File size is too large. Please select an image under 5MB.');
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size is too large. Please select an image under 10MB.');
         return;
       }
       setIsUploading(true);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImg(reader.result as string);
+      try {
+        const compressed = await compressImageFile(file, 800, 0.75);
+        setImg(compressed);
+      } catch (err) {
+        console.error('Failed to compress image:', err);
+        alert('Failed to read and process image file.');
+      } finally {
         setIsUploading(false);
-      };
-      reader.onerror = () => {
-        alert('Failed to read image file.');
-        setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
+      }
     }
   };
 

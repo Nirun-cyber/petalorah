@@ -188,12 +188,18 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
     } catch (e) {
-      console.warn('Failed to save all orders to localStorage, attempting to save recent 25 orders:', e);
+      console.warn('Failed to save all orders to localStorage, attempting to save compact recent orders:', e);
       try {
-        const recentOrders = orders.slice(0, 25);
-        localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(recentOrders));
+        const compactOrders = orders.slice(0, 25).map((ord) => ({
+          ...ord,
+          items: ord.items.map((it) => ({
+            ...it,
+            img: it.img && it.img.startsWith('data:') && it.img.length > 500 ? '' : it.img,
+          })),
+        }));
+        localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(compactOrders));
       } catch (innerErr) {
-        console.error('Storage quota exceeded, unable to save orders locally:', innerErr);
+        console.warn('Storage quota limit reached, orders preserved in memory:', innerErr);
       }
     }
   }, [orders]);

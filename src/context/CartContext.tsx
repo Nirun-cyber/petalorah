@@ -20,6 +20,11 @@ export interface CustomerCheckoutInfo {
   notes?: string;
 }
 
+export interface OrderCouponInfo {
+  code: string;
+  discount: number;
+}
+
 interface CartContextType {
   cartItems: CartItem[];
   isCartOpen: boolean;
@@ -34,35 +39,54 @@ interface CartContextType {
   closeClipboardFallback: () => void;
   totalItems: number;
   totalPrice: number;
-  proceedToOrder: (shippingFee?: number, shippingRegion?: string, customerInfo?: CustomerCheckoutInfo) => void;
-  proceedToInstagramOrder: (shippingFee?: number, shippingRegion?: string, customerInfo?: CustomerCheckoutInfo) => Promise<string>;
-  proceedToWhatsAppOrder: (shippingFee?: number, shippingRegion?: string, customerInfo?: CustomerCheckoutInfo) => string;
+  proceedToOrder: (shippingFee?: number, shippingRegion?: string, customerInfo?: CustomerCheckoutInfo, couponInfo?: OrderCouponInfo) => void;
+  proceedToInstagramOrder: (shippingFee?: number, shippingRegion?: string, customerInfo?: CustomerCheckoutInfo, couponInfo?: OrderCouponInfo) => Promise<string>;
+  proceedToWhatsAppOrder: (shippingFee?: number, shippingRegion?: string, customerInfo?: CustomerCheckoutInfo, couponInfo?: OrderCouponInfo) => string;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+export interface ShippingRatesConfig {
+  coimbatore?: number;
+  tamilNadu?: number;
+  otherStates?: number;
+  freeShippingThreshold?: number;
+  isFreeShippingEnabled?: boolean;
+}
+
 /**
- * Calculates delivery shipping charges based on destination pincode:
- * - Coimbatore pincodes (641xxx) or city 'Coimbatore': ₹60
- * - Other Tamil Nadu pincodes (60xxxx - 64xxxx) or state 'Tamil Nadu': ₹80
- * - Other Indian pincodes: ₹100
+ * Calculates delivery shipping charges based on destination pincode and site settings:
+ * - Coimbatore local: Default ₹60
+ * - Tamil Nadu standard: Default ₹80
+ * - Other Indian states: Default ₹100
+ * - Free Shipping qualified if enabled and subtotal >= freeShippingThreshold
  */
 export const calculateShippingFee = (
   pincode: string = '',
   city?: string,
-  state?: string
-): { fee: number; region: string } => {
+  state?: string,
+  rates?: ShippingRatesConfig,
+  subtotal: number = 0
+): { fee: number; region: string; isFreeDelivery: boolean } => {
   const cleanPin = (pincode || '').replace(/[^0-9]/g, '').trim();
   const cleanCity = (city || '').toLowerCase().trim();
   const cleanState = (state || '').toLowerCase().trim();
 
+  const coimbatoreFee = rates?.coimbatore ?? 60;
+  const tamilNaduFee = rates?.tamilNadu ?? 80;
+  const otherStatesFee = rates?.otherStates ?? 100;
+  const freeThreshold = rates?.freeShippingThreshold ?? 799;
+  const freeEnabled = rates?.isFreeShippingEnabled ?? true;
+
+  let baseFee = tamilNaduFee;
+  let region = 'Tamil Nadu Standard';
+
   // 1. Coimbatore Local (641xxx)
   if (cleanPin.startsWith('641') || cleanCity.includes('coimbatore') || cleanCity === 'cbe') {
-    return { fee: 60, region: 'Coimbatore Local' };
-  }
-
-  // 2. Tamil Nadu Standard (60xxxx - 64xxxx)
-  if (
+    baseFee = coimbatoreFee;
+    region = 'Coimbatore Local';
+  } else if (
+    // 2. Tamil Nadu Standard (60xxxx - 64xxxx)
     cleanPin.startsWith('60') ||
     cleanPin.startsWith('61') ||
     cleanPin.startsWith('62') ||
@@ -71,16 +95,24 @@ export const calculateShippingFee = (
     cleanState.includes('tamil nadu') ||
     cleanState === 'tn'
   ) {
-    return { fee: 80, region: 'Tamil Nadu Standard' };
+    baseFee = tamilNaduFee;
+    region = 'Tamil Nadu Standard';
+  } else if (cleanPin.length === 6) {
+    // 3. Other Indian regions
+    baseFee = otherStatesFee;
+    region = 'Interstate Standard';
   }
 
-  // 3. Other Indian regions
-  if (cleanPin.length === 6) {
-    return { fee: 100, region: 'Interstate Standard' };
+  // Free delivery check
+  if (freeEnabled && subtotal >= freeThreshold && subtotal > 0) {
+    return {
+      fee: 0,
+      region: `${region} (Free Shipping Applied 🎉)`,
+      isFreeDelivery: true,
+    };
   }
 
-  // Default standard Tamil Nadu rate if empty
-  return { fee: 80, region: 'Tamil Nadu Standard' };
+  return { fee: baseFee, region, isFreeDelivery: false };
 };
 
 export const copyToClipboardSafe = async (text: string): Promise<boolean> => {
@@ -116,7 +148,8 @@ export const generateWhatsAppOrderMessage = (
   shippingFee: number = 80,
   _shippingRegion: string = 'Tamil Nadu Standard',
   customerInfo?: CustomerCheckoutInfo,
-  _orderId?: string
+  _orderId?: string,
+  couponInfo?: OrderCouponInfo
 ): string => {
   if (!items || items.length === 0) return '';
 
@@ -125,10 +158,15 @@ export const generateWhatsAppOrderMessage = (
     .join('\n');
 
   const itemsSubtotal = items.reduce((sum, item) => sum + item.product.numericPrice * item.quantity, 0);
-  const grandTotal = itemsSubtotal + shippingFee;
+  const discount = couponInfo?.discount || 0;
+  const grandTotal = Math.max(0, itemsSubtotal - discount) + shippingFee;
+
+  const couponLine = discount > 0
+    ? `\n🎁 Promo Discount (${couponInfo?.code}): -₹${discount}`
+    : '';
 
   const freeCharmLine = itemsSubtotal >= 200
-    ? '\n\u{1F381} Free Mini Gift Charm: Unlocked (₹0)'
+    ? '\n✨ Free Mini Gift Charm: Unlocked (₹0)'
     : '';
 
   const customerName = customerInfo?.name || '';
@@ -136,12 +174,12 @@ export const generateWhatsAppOrderMessage = (
   const customerAddress = customerInfo ? [customerInfo.address, customerInfo.city, customerInfo.state].filter(Boolean).join(', ') : '';
   const customerPincode = customerInfo?.pincode || '';
 
-  return `\u{1F338} Petalorah Order
+  return `🌸 Petalorah Order
 
 Products:
 ${itemLines}
 
-Subtotal: ₹${itemsSubtotal}
+Subtotal: ₹${itemsSubtotal}${couponLine}
 Shipping: ₹${shippingFee}${freeCharmLine}
 Total: ₹${grandTotal}
 
@@ -150,7 +188,7 @@ Phone: ${customerPhone}
 Address: ${customerAddress}
 Pincode: ${customerPincode}
 
-"Please confirm my order. Thank you! \u{1F497}"`;
+"Please confirm my order. Thank you! 💖"`;
 };
 
 export const generateInstagramOrderMessage = generateWhatsAppOrderMessage;
@@ -222,10 +260,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const proceedToWhatsAppOrder = (
     shippingFee: number = 80,
     shippingRegion: string = 'Tamil Nadu Standard',
-    customerInfo?: CustomerCheckoutInfo
+    customerInfo?: CustomerCheckoutInfo,
+    couponInfo?: OrderCouponInfo
   ): string => {
     if (cartItems.length === 0) return '';
-    const finalTotal = totalPrice + shippingFee;
+    const discount = couponInfo?.discount || 0;
+    const finalTotal = Math.max(0, totalPrice - discount) + shippingFee;
     const orderId = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
 
     const fullAddress = customerInfo
@@ -254,7 +294,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.warn('logOrder error ignored:', err);
     }
 
-    const message = generateWhatsAppOrderMessage(cartItems, shippingFee, shippingRegion, customerInfo, orderId);
+    const message = generateWhatsAppOrderMessage(cartItems, shippingFee, shippingRegion, customerInfo, orderId, couponInfo);
     const phone = settings.whatsappNumber.replace(/[^0-9]/g, '') || '916380437068';
 
     // Auto-copy order message to clipboard for guaranteed convenience
@@ -263,7 +303,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Desktop vs Mobile routing:
     // On desktop browsers, wa.me asks to download the Windows desktop app.
     // web.whatsapp.com bypasses this and opens WhatsApp Web directly.
-    const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const encodedText = encodeURIComponent(message);
     const whatsappUrl = isMobile
       ? `https://wa.me/${phone}?text=${encodedText}`
@@ -286,10 +326,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const proceedToInstagramOrder = async (
     shippingFee: number = 80,
     shippingRegion: string = 'Tamil Nadu Standard',
-    customerInfo?: CustomerCheckoutInfo
+    customerInfo?: CustomerCheckoutInfo,
+    couponInfo?: OrderCouponInfo
   ): Promise<string> => {
     if (cartItems.length === 0) return '';
-    const finalTotal = totalPrice + shippingFee;
+    const discount = couponInfo?.discount || 0;
+    const finalTotal = Math.max(0, totalPrice - discount) + shippingFee;
     const orderId = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
 
     const fullAddress = customerInfo
@@ -318,7 +360,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.warn('logOrder error ignored:', err);
     }
 
-    const message = generateInstagramOrderMessage(cartItems, shippingFee, shippingRegion, customerInfo, orderId);
+    const message = generateInstagramOrderMessage(cartItems, shippingFee, shippingRegion, customerInfo, orderId, couponInfo);
     const instagramHandle = settings.instagramUsername || 'petalorah';
     const instagramDmUrl = `https://ig.me/m/${instagramHandle}`;
 

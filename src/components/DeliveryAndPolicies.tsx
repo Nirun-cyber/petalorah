@@ -46,18 +46,24 @@ export const DeliveryAndPolicies: React.FC = () => {
               <div className="grid grid-cols-3 gap-1.5 sm:gap-2 pt-1">
                 <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-white dark:bg-navy-light border border-primary/5 text-center">
                   <span className="block text-[10px] sm:text-[11px] font-semibold text-primary/70 dark:text-gray-300 truncate">Coimbatore</span>
-                  <span className="text-xs sm:text-sm font-extrabold text-rose-600 dark:text-rose-400">₹60</span>
+                  <span className="text-xs sm:text-sm font-extrabold text-rose-600 dark:text-rose-400">₹{settings.shippingFeeCoimbatore ?? 60}</span>
                 </div>
                 <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-white dark:bg-navy-light border border-primary/5 text-center">
                   <span className="block text-[10px] sm:text-[11px] font-semibold text-primary/70 dark:text-gray-300 truncate">Tamil Nadu</span>
-                  <span className="text-xs sm:text-sm font-extrabold text-rose-600 dark:text-rose-400">₹80</span>
+                  <span className="text-xs sm:text-sm font-extrabold text-rose-600 dark:text-rose-400">₹{settings.shippingFeeTamilNadu ?? 80}</span>
                 </div>
                 <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-white dark:bg-navy-light border border-primary/5 text-center">
                   <span className="block text-[10px] sm:text-[11px] font-semibold text-primary/70 dark:text-gray-300 truncate">Other States</span>
-                  <span className="text-xs sm:text-sm font-extrabold text-rose-600 dark:text-rose-400">₹100</span>
+                  <span className="text-xs sm:text-sm font-extrabold text-rose-600 dark:text-rose-400">₹{settings.shippingFeeOtherStates ?? 100}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold pt-0.5 sm:pt-1">
+              {settings.isFreeShippingEnabled && (
+                <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold pt-0.5 sm:pt-1">
+                  <Truck size={12} />
+                  <span>Free Delivery on orders above ₹{settings.freeShippingThreshold ?? 799}! 🚚</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-rose-600 dark:text-rose-400 font-semibold pt-0.5">
                 <Gift size={12} />
                 <span>Orders above ₹200 get a FREE mini charm! 🎁</span>
               </div>
