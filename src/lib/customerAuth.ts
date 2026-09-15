@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from './supabase';
 import type { DeliveryAddress, CustomerUser } from '../context/AuthContext';
+import { getCloudItem, saveCloudItem, CLOUD_KEYS } from './cloudStore';
 
 export interface RegisteredCustomer {
   id: string;
@@ -42,7 +43,7 @@ export function getStoredCustomers(): RegisteredCustomer[] {
 }
 
 /**
- * Saves registered customer list to local storage cache.
+ * Saves registered customer list to local storage cache and cloud store.
  */
 export function saveStoredCustomers(customers: RegisteredCustomer[]) {
   try {
@@ -50,14 +51,39 @@ export function saveStoredCustomers(customers: RegisteredCustomer[]) {
   } catch (e) {
     console.error('Failed to save registered customers to localStorage:', e);
   }
+  saveCloudItem(CLOUD_KEYS.CUSTOMERS, customers);
+}
+
+/**
+ * Syncs customers from cloud store into local cache.
+ */
+export async function syncCustomersFromCloud(): Promise<RegisteredCustomer[]> {
+  try {
+    const local = getStoredCustomers();
+    const cloud = await getCloudItem<RegisteredCustomer[]>(CLOUD_KEYS.CUSTOMERS, local);
+    if (cloud && Array.isArray(cloud) && cloud.length > 0) {
+      // Merge unique customers by email
+      const map = new Map<string, RegisteredCustomer>();
+      local.forEach((c) => map.set(c.email.toLowerCase(), c));
+      cloud.forEach((c) => map.set(c.email.toLowerCase(), c));
+      const merged = Array.from(map.values());
+      try {
+        localStorage.setItem(REGISTERED_CUSTOMERS_KEY, JSON.stringify(merged));
+      } catch {}
+      return merged;
+    }
+  } catch (e) {
+    console.warn('Customer cloud sync notice:', e);
+  }
+  return getStoredCustomers();
 }
 
 /**
  * Initialize default demo customer if database is empty
  */
 export async function ensureDefaultCustomerSeed() {
-  const existing = getStoredCustomers();
-  if (existing.length === 0) {
+  const cloudList = await syncCustomersFromCloud();
+  if (cloudList.length === 0) {
     const demoHash = await hashPassword('petalorah123');
     const demoCustomer: RegisteredCustomer = {
       id: 'cust-demo-1',
@@ -104,8 +130,8 @@ export async function registerCustomerAccount(data: {
     return { success: false, error: 'Password must be at least 6 characters.' };
   }
 
-  // Check for existing user in local storage
-  const localCustomers = getStoredCustomers();
+  // Refresh latest customers from cloud
+  const localCustomers = await syncCustomersFromCloud();
   const existsLocally = localCustomers.some((c) => c.email.toLowerCase() === cleanEmail);
   if (existsLocally) {
     return {
@@ -147,10 +173,10 @@ export async function registerCustomerAccount(data: {
     address: data.address,
   };
 
-  // Save to local storage
+  // Save to local storage and universal cloud store
   saveStoredCustomers([...localCustomers, newRecord]);
 
-  // Save to Supabase Cloud Database if configured
+  // Save to Supabase dedicated table if configured
   if (isSupabaseConfigured && supabase) {
     try {
       await supabase.from('customers').insert({
@@ -198,7 +224,7 @@ export async function authenticateCustomerAccount(
 
   const computedHash = await hashPassword(password);
 
-  // 1. Check Supabase cloud database first if configured
+  // 1. Check Supabase dedicated table first if configured
   if (isSupabaseConfigured && supabase) {
     try {
       const { data, error } = await supabase
@@ -230,8 +256,8 @@ export async function authenticateCustomerAccount(
     }
   }
 
-  // 2. Fallback to Local Storage database
-  const localCustomers = getStoredCustomers();
+  // 2. Check universal cloud store / local customers
+  const localCustomers = await syncCustomersFromCloud();
   const matchedCustomer = localCustomers.find((c) => c.email.toLowerCase() === cleanEmail);
 
   if (!matchedCustomer) {
@@ -306,7 +332,7 @@ export async function requestPasswordReset(email: string): Promise<{
   }
 
   // Check if customer exists locally or in Supabase
-  const localCustomers = getStoredCustomers();
+  const localCustomers = await syncCustomersFromCloud();
   const existsLocally = localCustomers.some((c) => c.email.toLowerCase() === cleanEmail);
 
   let existsInCloud = false;
@@ -375,7 +401,7 @@ export function verifyPasswordResetToken(token: string, email: string): boolean 
 }
 
 /**
- * Updates a customer's password in both LocalStorage and Supabase.
+ * Updates a customer's password in both LocalStorage, Cloud Store, and Supabase.
  */
 export async function resetCustomerPassword(
   email: string,
@@ -389,8 +415,8 @@ export async function resetCustomerPassword(
 
   const computedHash = await hashPassword(newPassword);
 
-  // 1. Update in Local Storage
-  const localCustomers = getStoredCustomers();
+  // 1. Update in Local Storage and Cloud Store
+  const localCustomers = await syncCustomersFromCloud();
   const customerIndex = localCustomers.findIndex((c) => c.email.toLowerCase() === cleanEmail);
 
   if (customerIndex !== -1) {

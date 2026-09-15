@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { getCloudItem, saveCloudItem, onCloudChange, CLOUD_KEYS } from '../lib/cloudStore';
 
 export interface Coupon {
   id: string;
@@ -23,6 +24,7 @@ interface CouponContextType {
   deleteCoupon: (id: string) => void;
   toggleCouponActive: (id: string) => void;
   resetCouponsToDefault: () => void;
+  refreshCouponsFromCloud: () => Promise<void>;
 }
 
 const COUPONS_STORAGE_KEY = 'petalorah_coupons';
@@ -78,6 +80,46 @@ export const CouponProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
 
+  const refreshCouponsFromCloud = useCallback(async () => {
+    try {
+      const cloudCoupons = await getCloudItem<Coupon[]>(CLOUD_KEYS.COUPONS, DEFAULT_COUPONS);
+      if (cloudCoupons && Array.isArray(cloudCoupons) && cloudCoupons.length > 0) {
+        setCoupons(cloudCoupons);
+      }
+    } catch (e) {
+      console.warn('Failed to refresh coupons from cloud:', e);
+    }
+  }, []);
+
+  // Initial cloud fetch & realtime sync
+  useEffect(() => {
+    refreshCouponsFromCloud();
+
+    const unsubscribe = onCloudChange<Coupon[]>(CLOUD_KEYS.COUPONS, (latestCoupons) => {
+      if (Array.isArray(latestCoupons)) {
+        setCoupons(latestCoupons);
+      }
+    });
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshCouponsFromCloud();
+      }
+    };
+    const onFocus = () => {
+      refreshCouponsFromCloud();
+    };
+
+    window.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [refreshCouponsFromCloud]);
+
   // Sync to localStorage
   useEffect(() => {
     try {
@@ -129,10 +171,10 @@ export const CouponProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const discount = calculateDiscount(found, subtotal);
     setAppliedCoupon(found);
 
-    // Increment usage count
-    setCoupons((prev) =>
-      prev.map((c) => (c.id === found.id ? { ...c, usageCount: c.usageCount + 1 } : c))
-    );
+    // Increment usage count and sync
+    const updated = coupons.map((c) => (c.id === found.id ? { ...c, usageCount: c.usageCount + 1 } : c));
+    setCoupons(updated);
+    saveCloudItem(CLOUD_KEYS.COUPONS, updated);
 
     return {
       success: true,
@@ -152,49 +194,54 @@ export const CouponProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       code: couponData.code.trim().toUpperCase(),
       usageCount: 0,
     };
-    setCoupons((prev) => [newCoupon, ...prev]);
+    const updated = [newCoupon, ...coupons];
+    setCoupons(updated);
+    saveCloudItem(CLOUD_KEYS.COUPONS, updated);
   };
 
   const updateCoupon = (id: string, updates: Partial<Coupon>) => {
-    setCoupons((prev) =>
-      prev.map((c) => {
-        if (c.id === id) {
-          const updated = { ...c, ...updates };
-          if (updates.code) {
-            updated.code = updates.code.trim().toUpperCase();
-          }
-          return updated;
+    const updated = coupons.map((c) => {
+      if (c.id === id) {
+        const item = { ...c, ...updates };
+        if (updates.code) {
+          item.code = updates.code.trim().toUpperCase();
         }
-        return c;
-      })
-    );
+        return item;
+      }
+      return c;
+    });
+    setCoupons(updated);
+    saveCloudItem(CLOUD_KEYS.COUPONS, updated);
   };
 
   const deleteCoupon = (id: string) => {
-    setCoupons((prev) => prev.filter((c) => c.id !== id));
+    const updated = coupons.filter((c) => c.id !== id);
+    setCoupons(updated);
     if (appliedCoupon?.id === id) {
       setAppliedCoupon(null);
     }
+    saveCloudItem(CLOUD_KEYS.COUPONS, updated);
   };
 
   const toggleCouponActive = (id: string) => {
-    setCoupons((prev) =>
-      prev.map((c) => {
-        if (c.id === id) {
-          const toggled = !c.isActive;
-          if (appliedCoupon?.id === id && !toggled) {
-            setAppliedCoupon(null);
-          }
-          return { ...c, isActive: toggled };
+    const updated = coupons.map((c) => {
+      if (c.id === id) {
+        const toggled = !c.isActive;
+        if (appliedCoupon?.id === id && !toggled) {
+          setAppliedCoupon(null);
         }
-        return c;
-      })
-    );
+        return { ...c, isActive: toggled };
+      }
+      return c;
+    });
+    setCoupons(updated);
+    saveCloudItem(CLOUD_KEYS.COUPONS, updated);
   };
 
   const resetCouponsToDefault = () => {
     setCoupons(DEFAULT_COUPONS);
     setAppliedCoupon(null);
+    saveCloudItem(CLOUD_KEYS.COUPONS, DEFAULT_COUPONS);
   };
 
   return (
@@ -210,6 +257,7 @@ export const CouponProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         deleteCoupon,
         toggleCouponActive,
         resetCouponsToDefault,
+        refreshCouponsFromCloud,
       }}
     >
       {children}

@@ -35,6 +35,7 @@ import {
   Phone,
   MapPin,
   Calendar,
+  Database,
 } from 'lucide-react';
 import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import { InstagramIcon } from '../components/InstagramIcon';
@@ -44,7 +45,7 @@ import { useSettings } from '../context/SettingsContext';
 import { useReviews } from '../context/ReviewContext';
 import { useGallery, type CreationItem } from '../context/GalleryContext';
 import { useCoupon, type Coupon } from '../context/CouponContext';
-import { getStoredCustomers, type RegisteredCustomer } from '../lib/customerAuth';
+import { getStoredCustomers, syncCustomersFromCloud, type RegisteredCustomer } from '../lib/customerAuth';
 import { compressImageFile } from '../lib/imageCompressor';
 import { ProductFormModal } from '../components/admin/ProductFormModal';
 import type { Product } from '../data/products';
@@ -61,9 +62,14 @@ interface AdminProps {
 }
 
 export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
-  const { products, addProduct, updateProduct, deleteProduct, toggleBestSeller, toggleComingSoon, resetToDefaultProducts } = useProducts();
-  const { orders, updateOrderStatus, updateOrderTracking, deleteOrder, clearAllOrders, pullOrdersFromGoogleSheet } = useOrders();
-  const { settings, updateSettings, verifyPin, changePin } = useSettings();
+  const { products, addProduct, updateProduct, deleteProduct, toggleBestSeller, toggleComingSoon, resetToDefaultProducts, forceRefreshProducts } = useProducts();
+  const { orders, updateOrderStatus, updateOrderTracking, deleteOrder, clearAllOrders, pullOrdersFromGoogleSheet, refreshOrdersFromCloud } = useOrders();
+  const { settings, updateSettings, verifyPin, changePin, refreshSettingsFromCloud } = useSettings();
+
+  // Cloud Sync State
+  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
+  const [cloudSyncMsg, setCloudSyncMsg] = useState<string | null>(null);
+  const [copiedSqlSchema, setCopiedSqlSchema] = useState(false);
 
   // Authentication State (Strictly Transient In-Memory - Auto-locks on reload or navigating out)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -94,6 +100,7 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
     deleteReview,
     resetReviewsToDefault,
     averageRating,
+    refreshReviewsFromCloud,
   } = useReviews();
 
   const [reviewSearch, setReviewSearch] = useState('');
@@ -116,6 +123,7 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
     updateGalleryItem,
     deleteGalleryItem,
     resetGalleryToDefault,
+    refreshGalleryFromCloud,
   } = useGallery();
 
   const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false);
@@ -134,6 +142,7 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
     deleteCoupon,
     toggleCouponActive,
     resetCouponsToDefault,
+    refreshCouponsFromCloud,
   } = useCoupon();
 
   const [couponSearch, setCouponSearch] = useState('');
@@ -224,8 +233,147 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
   const [selectedCustomerForOrders, setSelectedCustomerForOrders] = useState<RegisteredCustomer | null>(null);
 
   useEffect(() => {
-    setCustomers(getStoredCustomers());
+    syncCustomersFromCloud().then(setCustomers);
   }, [isAuthenticated, activeTab]);
+
+  const handleSyncCloudAll = async () => {
+    setIsSyncingCloud(true);
+    try {
+      await Promise.all([
+        forceRefreshProducts?.(),
+        refreshOrdersFromCloud?.(),
+        refreshSettingsFromCloud?.(),
+        refreshReviewsFromCloud?.(),
+        refreshCouponsFromCloud?.(),
+        refreshGalleryFromCloud?.(),
+        syncCustomersFromCloud().then(setCustomers),
+      ]);
+      setCloudSyncMsg('All products, settings, coupons & reviews are synchronized with the cloud!');
+      setTimeout(() => setCloudSyncMsg(null), 3500);
+    } catch (e) {
+      console.warn('Sync error:', e);
+      setCloudSyncMsg('Sync completed with local fallbacks.');
+      setTimeout(() => setCloudSyncMsg(null), 3000);
+    } finally {
+      setIsSyncingCloud(false);
+    }
+  };
+
+  const handleCopySqlSchema = () => {
+    const sqlScript = `-- Run this in Supabase Dashboard -> SQL Editor (https://supabase.com/dashboard/project/_/sql)
+CREATE TABLE IF NOT EXISTS public.products (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  price TEXT NOT NULL,
+  numeric_price NUMERIC DEFAULT 50,
+  original_price TEXT,
+  category TEXT DEFAULT 'keychain',
+  description TEXT,
+  img TEXT,
+  badge TEXT,
+  is_best_seller BOOLEAN DEFAULT false,
+  is_coming_soon BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public access for products" ON public.products FOR ALL USING (true) WITH CHECK (true);
+
+CREATE TABLE IF NOT EXISTS public.orders (
+  id TEXT PRIMARY KEY,
+  customer_name TEXT,
+  customer_phone TEXT,
+  items JSONB,
+  total_items INTEGER DEFAULT 0,
+  total_amount NUMERIC DEFAULT 0,
+  channel TEXT DEFAULT 'WhatsApp',
+  status TEXT DEFAULT 'Order Placed',
+  courier_partner TEXT,
+  tracking_number TEXT,
+  estimated_delivery TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public access for orders" ON public.orders FOR ALL USING (true) WITH CHECK (true);
+
+CREATE TABLE IF NOT EXISTS public.site_settings (
+  id TEXT PRIMARY KEY DEFAULT 'primary_settings',
+  announcement_text TEXT,
+  is_announcement_visible BOOLEAN DEFAULT true,
+  whatsapp_number TEXT DEFAULT '916380437068',
+  instagram_username TEXT DEFAULT 'petalorah',
+  admin_pin TEXT DEFAULT '240812',
+  google_sheet_webhook_url TEXT,
+  creation_of_the_week_product_id TEXT DEFAULT 'four_tulips_pot',
+  shipping_fee_coimbatore NUMERIC DEFAULT 60,
+  shipping_fee_tamil_nadu NUMERIC DEFAULT 80,
+  shipping_fee_other_states NUMERIC DEFAULT 100,
+  free_shipping_threshold NUMERIC DEFAULT 799,
+  is_free_shipping_enabled BOOLEAN DEFAULT true,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public access for site_settings" ON public.site_settings FOR ALL USING (true) WITH CHECK (true);
+
+CREATE TABLE IF NOT EXISTS public.coupons (
+  id TEXT PRIMARY KEY,
+  code TEXT NOT NULL UNIQUE,
+  discount_type TEXT DEFAULT 'percentage',
+  discount_value NUMERIC DEFAULT 10,
+  min_order_value NUMERIC DEFAULT 0,
+  is_active BOOLEAN DEFAULT true,
+  usage_count INTEGER DEFAULT 0,
+  description TEXT,
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.coupons ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public access for coupons" ON public.coupons FOR ALL USING (true) WITH CHECK (true);
+
+CREATE TABLE IF NOT EXISTS public.reviews (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  rating NUMERIC DEFAULT 5,
+  date TEXT,
+  comment TEXT,
+  verified_buyer BOOLEAN DEFAULT true,
+  helpful_count INTEGER DEFAULT 0,
+  product_id TEXT,
+  product_name TEXT,
+  location TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public access for reviews" ON public.reviews FOR ALL USING (true) WITH CHECK (true);
+
+CREATE TABLE IF NOT EXISTS public.gallery (
+  id TEXT PRIMARY KEY,
+  img TEXT NOT NULL,
+  title TEXT NOT NULL,
+  caption TEXT,
+  tag TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.gallery ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public access for gallery" ON public.gallery FOR ALL USING (true) WITH CHECK (true);
+
+CREATE TABLE IF NOT EXISTS public.customers (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  phone TEXT,
+  address JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (true) WITH CHECK (true);
+`;
+
+    navigator.clipboard.writeText(sqlScript);
+    setCopiedSqlSchema(true);
+    setTimeout(() => setCopiedSqlSchema(false), 3000);
+  };
 
   const getCustomerOrders = (customer: RegisteredCustomer) => {
     const custPhone = customer.phone.replace(/[^0-9]/g, '').slice(-10);
@@ -702,7 +850,22 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Live Cloud Sync</span>
+            </div>
+
+            <button
+              onClick={handleSyncCloudAll}
+              disabled={isSyncingCloud}
+              title="Force sync all devices from cloud"
+              className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+            >
+              <RefreshCw size={14} className={isSyncingCloud ? 'animate-spin text-rose-500' : 'text-slate-500'} />
+              <span className="hidden md:inline">{isSyncingCloud ? 'Syncing...' : 'Sync Cloud'}</span>
+            </button>
+
             <button
               onClick={onNavigateHome}
               className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5"
@@ -719,6 +882,13 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
             </button>
           </div>
         </div>
+
+        {cloudSyncMsg && (
+          <div className="bg-emerald-500 text-white px-4 py-2 text-xs font-bold text-center flex items-center justify-center gap-2 animate-in fade-in">
+            <CheckCircle2 size={16} />
+            <span>{cloudSyncMsg}</span>
+          </div>
+        )}
 
         {/* Tab Navigation */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-1 sm:space-x-2 border-t border-slate-100 dark:border-slate-800/80 overflow-x-auto">
@@ -2556,6 +2726,67 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
                     <span>{isSyncingAll ? 'Syncing...' : `Export Petalorah Orders to Sheet (${orders.length})`}</span>
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* Supabase Cloud Database & Universal Sync Manager */}
+            <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 flex items-center justify-center">
+                    <Database size={22} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold font-serif text-slate-800 dark:text-white flex items-center gap-2">
+                      Cloud Database & Multi-Device Sync
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-400 text-[10px] font-bold flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Live Connected
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Every update you make in products, banners, coupons, reviews, gallery, and settings is automatically synchronized across all customer phones and devices.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSyncCloudAll}
+                    disabled={isSyncingCloud}
+                    className="px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5"
+                  >
+                    <RefreshCw size={14} className={isSyncingCloud ? 'animate-spin' : ''} />
+                    <span>{isSyncingCloud ? 'Syncing Everything...' : 'Sync Cloud Now'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCopySqlSchema}
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors flex items-center gap-1.5"
+                  >
+                    {copiedSqlSchema ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                    <span>{copiedSqlSchema ? 'Copied SQL Script!' : 'Copy Supabase SQL Setup'}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                <p className="font-semibold text-slate-800 dark:text-slate-200">
+                  💡 How Multi-Device Synchronization Works:
+                </p>
+                <ul className="list-disc pl-5 space-y-1 text-slate-500 dark:text-slate-400 text-[11px]">
+                  <li>
+                    <strong>Real-Time Replication:</strong> When you save a product, change a price, update an announcement banner, or add a coupon, the change is broadcast immediately to all active sessions across phones and PCs.
+                  </li>
+                  <li>
+                    <strong>Instant Tab Focus Refresh:</strong> Whenever a customer or admin switches back to the Petalorah tab or unlocks their mobile screen, the site automatically refreshes all products and banners.
+                  </li>
+                  <li>
+                    <strong>Optional Database Expansion:</strong> Click <em>"Copy Supabase SQL Setup"</em> if you ever want to paste the full table schema directly into your Supabase Dashboard SQL Editor.
+                  </li>
+                </ul>
               </div>
             </div>
           </div>

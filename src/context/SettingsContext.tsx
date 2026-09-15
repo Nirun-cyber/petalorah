@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { getCloudItem, saveCloudItem, onCloudChange, CLOUD_KEYS } from '../lib/cloudStore';
 
 export interface SiteSettings {
   announcementText: string;
@@ -20,6 +21,7 @@ interface SettingsContextType {
   updateSettings: (newSettings: Partial<SiteSettings>) => void;
   verifyPin: (pin: string) => boolean;
   changePin: (oldPin: string, newPin: string) => boolean;
+  refreshSettingsFromCloud: () => Promise<void>;
 }
 
 const SETTINGS_STORAGE_KEY = 'petalorah_site_settings';
@@ -47,11 +49,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Force update legacy PINs to 240812
         if (parsed.adminPin === '1234' || parsed.adminPin === '240312') {
           parsed.adminPin = '240812';
         }
-        // Force update legacy WhatsApp number to new contact number
         if (parsed.whatsappNumber === '916382735751' || parsed.whatsappNumber === '6382735751') {
           parsed.whatsappNumber = '916380437068';
         }
@@ -63,6 +63,45 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return DEFAULT_SETTINGS;
   });
 
+  const refreshSettingsFromCloud = useCallback(async () => {
+    try {
+      const cloudSettings = await getCloudItem<SiteSettings>(CLOUD_KEYS.SETTINGS, DEFAULT_SETTINGS);
+      if (cloudSettings) {
+        setSettings((prev) => ({ ...prev, ...cloudSettings }));
+      }
+    } catch (err) {
+      console.warn('Failed to refresh settings from cloud:', err);
+    }
+  }, []);
+
+  // Initial cloud fetch and realtime subscription
+  useEffect(() => {
+    refreshSettingsFromCloud();
+
+    const unsubscribe = onCloudChange<SiteSettings>(CLOUD_KEYS.SETTINGS, (latestSettings) => {
+      setSettings((prev) => ({ ...prev, ...latestSettings }));
+    });
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshSettingsFromCloud();
+      }
+    };
+    const onFocus = () => {
+      refreshSettingsFromCloud();
+    };
+
+    window.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [refreshSettingsFromCloud]);
+
+  // Local storage caching
   useEffect(() => {
     try {
       localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
@@ -72,7 +111,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [settings]);
 
   const updateSettings = (newSettings: Partial<SiteSettings>) => {
-    setSettings((prev) => ({ ...prev, ...newSettings }));
+    const updated = { ...settings, ...newSettings };
+    setSettings(updated);
+    // Push to cloud store for multi-device sync
+    saveCloudItem(CLOUD_KEYS.SETTINGS, updated);
   };
 
   const verifyPin = (pin: string): boolean => {
@@ -95,6 +137,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         updateSettings,
         verifyPin,
         changePin,
+        refreshSettingsFromCloud,
       }}
     >
       {children}

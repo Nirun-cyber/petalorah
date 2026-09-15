@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { getCloudItem, saveCloudItem, onCloudChange, CLOUD_KEYS } from '../lib/cloudStore';
 
 export interface CreationItem {
   id: string;
@@ -61,6 +62,7 @@ interface GalleryContextType {
   updateGalleryItem: (id: string, updated: Partial<CreationItem>) => void;
   deleteGalleryItem: (id: string) => void;
   resetGalleryToDefault: () => void;
+  refreshGalleryFromCloud: () => Promise<void>;
 }
 
 const GalleryContext = createContext<GalleryContextType | undefined>(undefined);
@@ -81,6 +83,46 @@ export const GalleryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return INITIAL_CREATIONS;
   });
 
+  const refreshGalleryFromCloud = useCallback(async () => {
+    try {
+      const cloudGallery = await getCloudItem<CreationItem[]>(CLOUD_KEYS.GALLERY, INITIAL_CREATIONS);
+      if (cloudGallery && Array.isArray(cloudGallery) && cloudGallery.length > 0) {
+        setGalleryItems(cloudGallery);
+      }
+    } catch (e) {
+      console.warn('Failed to refresh gallery from cloud:', e);
+    }
+  }, []);
+
+  // Initial cloud fetch and realtime sync
+  useEffect(() => {
+    refreshGalleryFromCloud();
+
+    const unsubscribe = onCloudChange<CreationItem[]>(CLOUD_KEYS.GALLERY, (latest) => {
+      if (Array.isArray(latest)) {
+        setGalleryItems(latest);
+      }
+    });
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshGalleryFromCloud();
+      }
+    };
+    const onFocus = () => {
+      refreshGalleryFromCloud();
+    };
+
+    window.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [refreshGalleryFromCloud]);
+
   useEffect(() => {
     try {
       localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(galleryItems));
@@ -94,21 +136,26 @@ export const GalleryProvider: React.FC<{ children: React.ReactNode }> = ({ child
       ...item,
       id: `c-${Date.now()}`,
     };
-    setGalleryItems((prev) => [newItem, ...prev]);
+    const updated = [newItem, ...galleryItems];
+    setGalleryItems(updated);
+    saveCloudItem(CLOUD_KEYS.GALLERY, updated);
   };
 
-  const updateGalleryItem = (id: string, updated: Partial<CreationItem>) => {
-    setGalleryItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, ...updated } : item))
-    );
+  const updateGalleryItem = (id: string, updatedFields: Partial<CreationItem>) => {
+    const updated = galleryItems.map((item) => (item.id === id ? { ...item, ...updatedFields } : item));
+    setGalleryItems(updated);
+    saveCloudItem(CLOUD_KEYS.GALLERY, updated);
   };
 
   const deleteGalleryItem = (id: string) => {
-    setGalleryItems((prev) => prev.filter((item) => item.id !== id));
+    const updated = galleryItems.filter((item) => item.id !== id);
+    setGalleryItems(updated);
+    saveCloudItem(CLOUD_KEYS.GALLERY, updated);
   };
 
   const resetGalleryToDefault = () => {
     setGalleryItems(INITIAL_CREATIONS);
+    saveCloudItem(CLOUD_KEYS.GALLERY, INITIAL_CREATIONS);
     try {
       localStorage.removeItem(GALLERY_STORAGE_KEY);
     } catch (e) {
@@ -124,6 +171,7 @@ export const GalleryProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updateGalleryItem,
         deleteGalleryItem,
         resetGalleryToDefault,
+        refreshGalleryFromCloud,
       }}
     >
       {children}

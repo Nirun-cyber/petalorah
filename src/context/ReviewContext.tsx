@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { INITIAL_REVIEWS, type Review } from '../data/reviews';
+import { getCloudItem, saveCloudItem, onCloudChange, CLOUD_KEYS } from '../lib/cloudStore';
 
 interface ReviewContextType {
   reviews: Review[];
@@ -11,6 +12,7 @@ interface ReviewContextType {
   averageRating: number;
   totalReviews: number;
   getProductReviews: (productId: string) => Review[];
+  refreshReviewsFromCloud: () => Promise<void>;
 }
 
 const REVIEWS_STORAGE_KEY = 'petalorah_customer_reviews';
@@ -23,7 +25,6 @@ export const ReviewProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const saved = localStorage.getItem(REVIEWS_STORAGE_KEY);
       if (saved) {
         const parsed: Review[] = JSON.parse(saved);
-        // If user already saved modifications, use them
         if (parsed && Array.isArray(parsed) && parsed.length > 0) {
           return parsed;
         }
@@ -33,6 +34,46 @@ export const ReviewProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
     return INITIAL_REVIEWS;
   });
+
+  const refreshReviewsFromCloud = useCallback(async () => {
+    try {
+      const cloudReviews = await getCloudItem<Review[]>(CLOUD_KEYS.REVIEWS, INITIAL_REVIEWS);
+      if (cloudReviews && Array.isArray(cloudReviews) && cloudReviews.length > 0) {
+        setReviews(cloudReviews);
+      }
+    } catch (e) {
+      console.warn('Failed to refresh reviews from cloud:', e);
+    }
+  }, []);
+
+  // Initial cloud fetch and realtime sync
+  useEffect(() => {
+    refreshReviewsFromCloud();
+
+    const unsubscribe = onCloudChange<Review[]>(CLOUD_KEYS.REVIEWS, (latestReviews) => {
+      if (Array.isArray(latestReviews)) {
+        setReviews(latestReviews);
+      }
+    });
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshReviewsFromCloud();
+      }
+    };
+    const onFocus = () => {
+      refreshReviewsFromCloud();
+    };
+
+    window.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [refreshReviewsFromCloud]);
 
   useEffect(() => {
     try {
@@ -50,21 +91,26 @@ export const ReviewProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       verifiedBuyer: true,
       helpfulCount: 1,
     };
-    setReviews((prev) => [newEntry, ...prev]);
+    const updated = [newEntry, ...reviews];
+    setReviews(updated);
+    saveCloudItem(CLOUD_KEYS.REVIEWS, updated);
   };
 
   const updateReview = (reviewId: string, updatedFields: Partial<Review>) => {
-    setReviews((prev) =>
-      prev.map((r) => (r.id === reviewId ? { ...r, ...updatedFields } : r))
-    );
+    const updated = reviews.map((r) => (r.id === reviewId ? { ...r, ...updatedFields } : r));
+    setReviews(updated);
+    saveCloudItem(CLOUD_KEYS.REVIEWS, updated);
   };
 
   const deleteReview = (reviewId: string) => {
-    setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+    const updated = reviews.filter((r) => r.id !== reviewId);
+    setReviews(updated);
+    saveCloudItem(CLOUD_KEYS.REVIEWS, updated);
   };
 
   const resetReviewsToDefault = () => {
     setReviews(INITIAL_REVIEWS);
+    saveCloudItem(CLOUD_KEYS.REVIEWS, INITIAL_REVIEWS);
     try {
       localStorage.removeItem(REVIEWS_STORAGE_KEY);
     } catch (e) {
@@ -73,9 +119,9 @@ export const ReviewProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const markHelpful = (reviewId: string) => {
-    setReviews((prev) =>
-      prev.map((r) => (r.id === reviewId ? { ...r, helpfulCount: r.helpfulCount + 1 } : r))
-    );
+    const updated = reviews.map((r) => (r.id === reviewId ? { ...r, helpfulCount: r.helpfulCount + 1 } : r));
+    setReviews(updated);
+    saveCloudItem(CLOUD_KEYS.REVIEWS, updated);
   };
 
   const averageRating = reviews.length > 0
@@ -100,6 +146,7 @@ export const ReviewProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         averageRating,
         totalReviews,
         getProductReviews,
+        refreshReviewsFromCloud,
       }}
     >
       {children}

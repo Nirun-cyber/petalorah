@@ -20,6 +20,7 @@ import { MobileStickyCart } from './components/MobileStickyCart';
 import { CartToast } from './components/CartToast';
 import { ClipboardFallbackModal } from './components/ClipboardFallbackModal';
 import { OrderTrackingModal } from './components/OrderTrackingModal';
+import { initCloudRealtimeSync } from './lib/cloudStore';
 import Lenis from 'lenis';
 
 const getTabFromPath = (): 'home' | 'about' | 'shop' | 'portfolio' | 'keychains' | 'tabletops' | 'bouquets' | 'admin' | 'login' => {
@@ -64,6 +65,9 @@ export const App: React.FC = () => {
     document.documentElement.classList.remove('dark');
     document.body.classList.remove('dark');
     localStorage.setItem('petalorah-theme', 'light');
+    initCloudRealtimeSync(() => {
+      // Triggered on remote database changes
+    });
   }, []);
 
   // Initialize Smooth Scrolling (Lenis)
