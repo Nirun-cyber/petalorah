@@ -4,6 +4,7 @@ import type { Product } from '../data/products';
 import { useProducts } from '../context/ProductContext';
 import { ProductModal } from '../components/ProductModal';
 import { ProductQuantityControl } from '../components/ProductQuantityControl';
+import { OptimizedImage } from '../components/OptimizedImage';
 
 interface PortfolioProps {
   onNavigateHome: () => void;
@@ -133,7 +134,7 @@ export const Portfolio: React.FC<PortfolioProps> = ({
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-6">
-          {filteredProducts.map((product) => (
+          {filteredProducts.map((product, index) => (
             <div
               key={product.id}
               onClick={() => setSelectedProduct(product)}
@@ -141,13 +142,14 @@ export const Portfolio: React.FC<PortfolioProps> = ({
             >
               <div className="min-w-0">
                 <div className="relative aspect-square rounded-lg sm:rounded-2xl overflow-hidden bg-gray-50 dark:bg-navy mb-1.5 sm:mb-4">
-                  <img
+                  <OptimizedImage
                     src={product.img}
                     alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    priority={index < 4}
+                    className="group-hover:scale-105 transition-transform duration-300"
                   />
                   {product.badge && (
-                    <span className="absolute top-1 left-1 sm:top-3 sm:left-3 bg-primary text-white dark:bg-secondary dark:text-navy text-[8px] sm:text-[11px] font-bold px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-xs">
+                    <span className="absolute top-1 left-1 sm:top-3 sm:left-3 bg-primary text-white dark:bg-secondary dark:text-navy text-[8px] sm:text-[11px] font-bold px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-xs z-10">
                       {product.badge}
                     </span>
                   )}

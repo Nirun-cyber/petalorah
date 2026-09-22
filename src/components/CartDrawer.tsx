@@ -31,6 +31,7 @@ import { useCart, calculateShippingFee, type CustomerCheckoutInfo } from '../con
 import { useAuth } from '../context/AuthContext';
 import { useCoupon } from '../context/CouponContext';
 import { useSettings } from '../context/SettingsContext';
+import { OptimizedImage } from './OptimizedImage';
 
 interface CartDrawerProps {
   onNavigateToLogin?: () => void;
@@ -583,10 +584,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigateToLogin }) => 
                     >
                       {/* Product Thumbnail */}
                       <div className="w-16 h-16 rounded-xl overflow-hidden bg-white dark:bg-navy-light shrink-0 border border-primary/10 dark:border-white/10">
-                        <img
+                        <OptimizedImage
                           src={item.product.img}
                           alt={item.product.name}
-                          className="w-full h-full object-cover"
+                          priority={true}
                         />
                       </div>
 

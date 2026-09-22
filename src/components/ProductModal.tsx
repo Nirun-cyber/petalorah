@@ -6,6 +6,7 @@ import type { Product } from '../data/products';
 import { ProductQuantityControl } from './ProductQuantityControl';
 import { useReviews } from '../context/ReviewContext';
 import { useSettings } from '../context/SettingsContext';
+import { OptimizedImage } from './OptimizedImage';
 
 interface ProductModalProps {
   product: Product | null;
@@ -60,15 +61,14 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, onClose }) 
         {/* Left Column: Product Image (aspect-[4/3] max-h-52 on mobile, aspect-square on desktop) */}
         <div className="w-full md:w-1/2 flex-shrink-0">
           <div className="relative aspect-[4/3] sm:aspect-square max-h-52 sm:max-h-none w-full rounded-xl sm:rounded-2xl overflow-hidden border border-primary/10 dark:border-white/10 shadow-xs sm:shadow-md bg-gray-50 dark:bg-navy">
-            <img
+            <OptimizedImage
               src={product.img}
               alt={product.name}
-              loading="lazy"
-              className="w-full h-full object-cover"
-              onError={(e) => (e.currentTarget.src = '/assets/products/rose.jpg')}
+              priority={true}
+              fallbackSrc="/assets/products/rose.webp"
             />
             {product.badge && (
-              <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-primary text-white dark:bg-secondary dark:text-navy text-[10px] sm:text-xs font-semibold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-xs">
+              <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-primary text-white dark:bg-secondary dark:text-navy text-[10px] sm:text-xs font-semibold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-xs z-10">
                 {product.badge}
               </span>
             )}

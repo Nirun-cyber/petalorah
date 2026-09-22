@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowRight, CheckCircle } from 'lucide-react';
 import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import type { Product } from '../data/products';
@@ -6,6 +6,8 @@ import { useProducts } from '../context/ProductContext';
 import { useSettings } from '../context/SettingsContext';
 import { CustomerReviews } from '../components/CustomerReviews';
 import { RealCreationsGallery } from '../components/RealCreationsGallery';
+import { OptimizedImage } from '../components/OptimizedImage';
+import { preloadKeyImages } from '../utils/imagePreloader';
 
 import { ProductModal } from '../components/ProductModal';
 import { ProductQuantityControl } from '../components/ProductQuantityControl';
@@ -39,6 +41,13 @@ export const Home: React.FC<HomeProps> = ({
   const creationOfTheWeek =
     products.find((p) => p.id === (settings.creationOfTheWeekProductId || 'four_tulips_pot')) ||
     products[0];
+
+  // Preload remaining product images in the background during idle time
+  useEffect(() => {
+    if (products.length > 0) {
+      preloadKeyImages(products.map((p) => p.img));
+    }
+  }, [products]);
 
   return (
     <div className="w-full flex flex-col min-h-screen">
@@ -102,12 +111,13 @@ export const Home: React.FC<HomeProps> = ({
               className="relative w-full max-w-xs sm:max-w-sm rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 bg-white dark:bg-navy-light border border-primary/10 dark:border-white/10 shadow-xl cursor-pointer group hover:scale-[1.02] transition-all duration-300"
             >
               <div className="relative aspect-[4/3] sm:aspect-[4/5] rounded-xl sm:rounded-2xl overflow-hidden bg-gray-100 dark:bg-navy mb-2 sm:mb-4">
-                <img
+                <OptimizedImage
                   src={creationOfTheWeek.img}
                   alt={creationOfTheWeek.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  priority={true}
+                  className="group-hover:scale-105 transition-transform duration-500"
                 />
-                <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-rose-500 text-white text-[10px] sm:text-xs font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-md">
+                <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-rose-500 text-white text-[10px] sm:text-xs font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-md z-10">
                   ✨ Creation of Week
                 </span>
               </div>
@@ -161,13 +171,13 @@ export const Home: React.FC<HomeProps> = ({
             >
               <div className="min-w-0">
                 <div className="relative aspect-square rounded-lg sm:rounded-xl overflow-hidden bg-gray-50 dark:bg-navy mb-1.5 sm:mb-3">
-                  <img
+                  <OptimizedImage
                     src={prod.img}
                     alt={prod.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="group-hover:scale-105 transition-transform duration-300"
                   />
                   {prod.badge && (
-                    <span className="absolute top-1 left-1 sm:top-2 sm:left-2 bg-primary/90 text-white text-[8px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full">
+                    <span className="absolute top-1 left-1 sm:top-2 sm:left-2 bg-primary/90 text-white text-[8px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full z-10">
                       {prod.badge}
                     </span>
                   )}

@@ -43,7 +43,20 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="flex items-center gap-1.5 sm:gap-3 cursor-pointer group select-none flex-shrink-0"
         >
           <div className="w-7 h-7 sm:w-11 sm:h-11 rounded-full border-2 border-primary/20 dark:border-secondary/30 overflow-hidden shadow-sm group-hover:scale-105 transition-transform duration-300">
-            <img src="/assets/logo.jpg" alt="Petalorah Logo" className="w-full h-full object-cover" />
+            <picture>
+              <source srcSet="/assets/logo.webp" type="image/webp" />
+              <img
+                src="/assets/logo.jpg"
+                alt="Petalorah Logo"
+                width="44"
+                height="44"
+                loading="eager"
+                // @ts-expect-error fetchpriority
+                fetchpriority="high"
+                decoding="sync"
+                className="w-full h-full object-cover"
+              />
+            </picture>
           </div>
           <div className="flex flex-col">
             <span className="font-serif text-sm xs:text-base sm:text-2xl font-bold tracking-wider text-primary dark:text-secondary-light">

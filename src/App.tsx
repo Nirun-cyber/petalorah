@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Home } from './pages/Home';
 import { About } from './pages/About';
 import { Portfolio } from './pages/Portfolio';
-import { Admin } from './pages/Admin';
-import { LoginPage } from './pages/LoginPage';
+
+const Admin = lazy(() => import('./pages/Admin').then((m) => ({ default: m.Admin })));
+const LoginPage = lazy(() => import('./pages/LoginPage').then((m) => ({ default: m.LoginPage })));
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { AnnouncementBar } from './components/AnnouncementBar';
@@ -177,14 +178,32 @@ export const App: React.FC = () => {
                       />
                     )}
                     {currentTab === 'admin' && (
-                      <Admin onNavigateHome={() => handleNavigate('home')} />
+                      <Suspense
+                        fallback={
+                          <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
+                            <div className="w-8 h-8 rounded-full border-2 border-rose-200 border-t-rose-500 animate-spin" />
+                            <span className="text-xs font-medium text-primary/60">Loading studio dashboard...</span>
+                          </div>
+                        }
+                      >
+                        <Admin onNavigateHome={() => handleNavigate('home')} />
+                      </Suspense>
                     )}
                     {currentTab === 'login' && (
-                      <LoginPage
-                        onNavigateHome={() => handleNavigate('home')}
-                        onNavigateToAdmin={() => handleNavigate('admin')}
-                        onNavigateToCollection={() => handleNavigate('shop')}
-                      />
+                      <Suspense
+                        fallback={
+                          <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
+                            <div className="w-8 h-8 rounded-full border-2 border-rose-200 border-t-rose-500 animate-spin" />
+                            <span className="text-xs font-medium text-primary/60">Loading account...</span>
+                          </div>
+                        }
+                      >
+                        <LoginPage
+                          onNavigateHome={() => handleNavigate('home')}
+                          onNavigateToAdmin={() => handleNavigate('admin')}
+                          onNavigateToCollection={() => handleNavigate('shop')}
+                        />
+                      </Suspense>
                     )}
                   </main>
 

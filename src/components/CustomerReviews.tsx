@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useReviews } from '../context/ReviewContext';
 import { WriteReviewModal } from './WriteReviewModal';
+import { OptimizedImage } from './OptimizedImage';
 
 export const CustomerReviews: React.FC = () => {
   const { reviews, averageRating, totalReviews } = useReviews();
@@ -90,11 +91,9 @@ export const CustomerReviews: React.FC = () => {
                 {/* Optional Craft Photo */}
                 {rev.photo && (
                   <div className="mb-2 sm:mb-3 w-12 h-12 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl overflow-hidden border border-primary/10 dark:border-white/10 bg-gray-50 dark:bg-navy flex-shrink-0">
-                    <img
+                    <OptimizedImage
                       src={rev.photo}
                       alt={rev.productName || 'Handmade creation'}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
                     />
                   </div>
                 )}

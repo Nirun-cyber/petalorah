@@ -4,6 +4,7 @@ import type { Product } from '../data/products';
 import { useProducts } from '../context/ProductContext';
 import { ProductModal } from '../components/ProductModal';
 import { ProductQuantityControl } from '../components/ProductQuantityControl';
+import { OptimizedImage } from '../components/OptimizedImage';
 
 interface TableTopsProps {
   onNavigateHome: () => void;
@@ -34,7 +35,7 @@ export const TableTops: React.FC<TableTopsProps> = () => {
 
       {/* Table Top Grid - 2-col on mobile, 3-col on md+ */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-8 max-w-5xl mx-auto w-full">
-        {tabletops.map((product) => (
+        {tabletops.map((product, index) => (
           <div
             key={product.id}
             onClick={() => setSelectedProduct(product)}
@@ -42,13 +43,14 @@ export const TableTops: React.FC<TableTopsProps> = () => {
           >
             <div className="min-w-0">
               <div className="relative aspect-square rounded-lg sm:rounded-2xl overflow-hidden bg-gray-50 dark:bg-navy mb-2 sm:mb-5">
-                <img
+                <OptimizedImage
                   src={product.img}
                   alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  priority={index < 3}
+                  className="group-hover:scale-105 transition-transform duration-300"
                 />
                 {product.badge && (
-                  <span className="absolute top-1.5 left-1.5 sm:top-3 sm:left-3 bg-indigo-600 text-white text-[8px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-xs">
+                  <span className="absolute top-1.5 left-1.5 sm:top-3 sm:left-3 bg-indigo-600 text-white text-[8px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-xs z-10">
                     {product.badge}
                   </span>
                 )}

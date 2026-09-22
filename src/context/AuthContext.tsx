@@ -22,10 +22,6 @@ export interface CustomerUser {
 interface AuthContextType {
   user: CustomerUser | null;
   isAdmin: boolean;
-  isAuthModalOpen: boolean;
-  initialTab: 'customer' | 'admin';
-  openAuthModal: (tab?: 'customer' | 'admin') => void;
-  closeAuthModal: () => void;
   loginCustomer: (data: { name: string; email: string; phone: string; address?: DeliveryAddress; avatar?: string }) => void;
   loginCustomerWithGoogle: () => void;
   logoutCustomer: () => void;
@@ -59,9 +55,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true';
   });
 
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [initialTab, setInitialTab] = useState<'customer' | 'admin'>('customer');
-
   useEffect(() => {
     if (user) {
       try {
@@ -73,15 +66,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem(CUSTOMER_STORAGE_KEY);
     }
   }, [user]);
-
-  const openAuthModal = (tab: 'customer' | 'admin' = 'customer') => {
-    setInitialTab(tab);
-    setIsAuthModalOpen(true);
-  };
-
-  const closeAuthModal = () => {
-    setIsAuthModalOpen(false);
-  };
 
   const loginCustomer = (data: {
     name: string;
@@ -150,10 +134,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         isAdmin,
-        isAuthModalOpen,
-        initialTab,
-        openAuthModal,
-        closeAuthModal,
         loginCustomer,
         loginCustomerWithGoogle,
         logoutCustomer,

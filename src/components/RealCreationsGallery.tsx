@@ -3,6 +3,7 @@ import { Heart } from 'lucide-react';
 import { InstagramIcon } from './InstagramIcon';
 import { INSTAGRAM_USERNAME } from '../context/CartContext';
 import { useGallery } from '../context/GalleryContext';
+import { OptimizedImage } from './OptimizedImage';
 
 export const RealCreationsGallery: React.FC = () => {
   const { galleryItems } = useGallery();
@@ -27,13 +28,12 @@ export const RealCreationsGallery: React.FC = () => {
           >
             {/* Image Aspect Box */}
             <div className="relative aspect-square w-full overflow-hidden bg-gray-50 dark:bg-navy">
-              <img
+              <OptimizedImage
                 src={item.img}
                 alt={item.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                loading="lazy"
+                className="group-hover:scale-105 transition-transform duration-500"
               />
-              <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[9px] sm:text-[10px] font-medium text-white">
+              <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[9px] sm:text-[10px] font-medium text-white z-10">
                 {item.tag}
               </span>
             </div>
