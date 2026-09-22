@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ArrowRight, CheckCircle } from 'lucide-react';
 import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import type { Product } from '../data/products';
@@ -7,8 +7,6 @@ import { useSettings } from '../context/SettingsContext';
 import { CustomerReviews } from '../components/CustomerReviews';
 import { RealCreationsGallery } from '../components/RealCreationsGallery';
 import { OptimizedImage } from '../components/OptimizedImage';
-import { preloadKeyImages } from '../utils/imagePreloader';
-
 import { ProductModal } from '../components/ProductModal';
 import { ProductQuantityControl } from '../components/ProductQuantityControl';
 
@@ -41,13 +39,6 @@ export const Home: React.FC<HomeProps> = ({
   const creationOfTheWeek =
     products.find((p) => p.id === (settings.creationOfTheWeekProductId || 'four_tulips_pot')) ||
     products[0];
-
-  // Preload remaining product images in the background during idle time
-  useEffect(() => {
-    if (products.length > 0) {
-      preloadKeyImages(products.map((p) => p.img));
-    }
-  }, [products]);
 
   return (
     <div className="w-full flex flex-col min-h-screen">
