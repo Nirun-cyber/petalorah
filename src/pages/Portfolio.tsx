@@ -8,18 +8,18 @@ import { OptimizedImage } from '../components/OptimizedImage';
 
 interface PortfolioProps {
   onNavigateHome: () => void;
-  initialCategory?: 'keychain' | 'tabletop' | 'bouquet' | 'custom';
+  initialCategory?: 'all' | 'keychain' | 'tabletop' | 'bouquet' | 'custom';
   isDarkMode?: boolean;
   toggleDarkMode?: () => void;
 }
 
 export const Portfolio: React.FC<PortfolioProps> = ({
-  initialCategory = 'keychain',
+  initialCategory = 'all',
 }) => {
   const { products } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<'keychain' | 'tabletop' | 'bouquet' | 'custom'>(initialCategory);
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'keychain' | 'tabletop' | 'bouquet' | 'custom'>(initialCategory);
   const [sortBy, setSortBy] = useState<'default' | 'low-high' | 'high-low' | 'bestsellers'>('default');
 
   useEffect(() => {
@@ -29,6 +29,7 @@ export const Portfolio: React.FC<PortfolioProps> = ({
   }, [initialCategory]);
 
   const categories = [
+    { id: 'all', label: 'All Crafts' },
     { id: 'keychain', label: 'Keychains' },
     { id: 'tabletop', label: 'Table Tops' },
     { id: 'bouquet', label: 'Bouquets' },
@@ -37,7 +38,7 @@ export const Portfolio: React.FC<PortfolioProps> = ({
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
-      const matchesCategory = product.category === selectedCategory;
+      const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
       const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
         !q ||
