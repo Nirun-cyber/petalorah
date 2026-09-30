@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowRight, CheckCircle } from 'lucide-react';
 import { WhatsAppIcon } from '../components/WhatsAppIcon';
-import type { Product } from '../data/products';
+import { type Product, ALL_PRODUCTS } from '../data/products';
 import { useProducts } from '../context/ProductContext';
 import { useSettings } from '../context/SettingsContext';
 import { CustomerReviews } from '../components/CustomerReviews';
@@ -31,14 +31,17 @@ export const Home: React.FC<HomeProps> = ({
   const cleanPhone = (settings.whatsappNumber || '916380437068').replace(/[^0-9]/g, '');
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent("Hi Petalorah! I would like to place an order.")}`;
 
+  const safeList: Product[] = products && products.length > 0 ? products : ALL_PRODUCTS;
+
   // Featured 6 highlight products
-  const featuredProducts = products.filter(
-    (p) => p.isBestSeller || ['duck', 'single_tulip_pot', 'luffy', 'custom_jersey'].includes(p.id)
+  const featuredProducts: Product[] = (
+    safeList.filter((p: Product) => p.isBestSeller || ['duck', 'single_tulip_pot', 'luffy', 'custom_jersey'].includes(p.id))
   ).slice(0, 6);
 
-  const creationOfTheWeek =
-    products.find((p) => p.id === (settings.creationOfTheWeekProductId || 'four_tulips_pot')) ||
-    products[0];
+  const creationOfTheWeek: Product =
+    safeList.find((p: Product) => p.id === (settings.creationOfTheWeekProductId || 'four_tulips_pot')) ||
+    safeList[0] ||
+    ALL_PRODUCTS[0];
 
   return (
     <div className="w-full flex flex-col min-h-screen">

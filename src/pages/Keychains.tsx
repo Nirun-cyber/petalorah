@@ -21,10 +21,10 @@ export const Keychains: React.FC<KeychainsProps> = () => {
   const keychains = useMemo(() => {
     return products.filter(
       (p) => p.category === 'keychain' || p.category === 'custom'
-    ).filter((p) =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.description.toLowerCase().includes(searchQuery.toLowerCase())
-    ).sort((a, b) => {
+    ).filter((p) => {
+      const q = searchQuery.toLowerCase().trim();
+      return !q || (p.name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q);
+    }).sort((a, b) => {
       if (sortBy === 'low-high') return a.numericPrice - b.numericPrice;
       if (sortBy === 'high-low') return b.numericPrice - a.numericPrice;
       if (sortBy === 'bestsellers') return (b.isBestSeller ? 1 : 0) - (a.isBestSeller ? 1 : 0);

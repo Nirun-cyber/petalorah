@@ -38,10 +38,12 @@ export const Portfolio: React.FC<PortfolioProps> = ({
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       const matchesCategory = product.category === selectedCategory;
+      const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.badge.toLowerCase().includes(searchQuery.toLowerCase());
+        !q ||
+        (product.name || '').toLowerCase().includes(q) ||
+        (product.description || '').toLowerCase().includes(q) ||
+        (product.badge || '').toLowerCase().includes(q);
       return matchesCategory && matchesSearch;
     }).sort((a, b) => {
       if (sortBy === 'low-high') return a.numericPrice - b.numericPrice;

@@ -54,18 +54,28 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
           const ALLOWED_BADGES = ['New', 'Best Seller', 'Limited'];
-          return parsed
-            .filter((p: Product) => !isSystemConfigRecord(p.id, p.category))
+          const valid = parsed
+            .filter((p: Product) => p && p.id && !isSystemConfigRecord(p.id, p.category))
             .map((p: Product) => {
-              let updated = p;
-              if (p.description && !p.description.includes('Size:') && !p.description.includes('Material:')) {
-                updated = { ...updated, description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE };
+              let updated = { ...p };
+              if (!updated.badge) updated.badge = '';
+              if (!updated.name) updated.name = 'Handcrafted Item';
+              if (!updated.category) updated.category = 'keychain';
+              if (
+                updated.description &&
+                !updated.description.includes('Size:') &&
+                !updated.description.includes('Material:')
+              ) {
+                updated.description = DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE;
               }
-              if (p.badge && !ALLOWED_BADGES.includes(p.badge)) {
-                updated = { ...updated, badge: '' };
+              if (updated.badge && !ALLOWED_BADGES.includes(updated.badge)) {
+                updated.badge = '';
               }
               return updated;
             });
+          if (valid.length > 0) {
+            return valid;
+          }
         }
       }
     } catch (e) {
@@ -186,6 +196,11 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
           if (res.products && res.products.length > 0) {
             setProducts(res.products);
             setIsCloudSynced(true);
+          } else if (res.products && res.products.length === 0) {
+            // Google Sheet is empty! Automatically seed it with ALL_PRODUCTS
+            syncProductsToGoogleSheet(ALL_PRODUCTS, sheetUrl).catch((err) =>
+              console.warn('Auto-seed to Google Sheets failed:', err)
+            );
           }
         })
         .catch((e) => {
@@ -194,21 +209,25 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, []);
 
-  // Save to localStorage as local offline fallback
+  // Save to localStorage as local offline fallback (never save empty array)
   useEffect(() => {
+    if (!products || products.length === 0) return;
     try {
-      const cleanProducts = products.filter((p) => !isSystemConfigRecord(p.id, p.category));
+      const cleanProducts = products.filter((p) => p && p.id && !isSystemConfigRecord(p.id, p.category));
+      if (cleanProducts.length === 0) return;
       localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(cleanProducts));
     } catch (e) {
       console.warn('Failed to save products to localStorage, attempting compact save:', e);
       try {
         const compact = products
-          .filter((p) => !isSystemConfigRecord(p.id, p.category))
+          .filter((p) => p && p.id && !isSystemConfigRecord(p.id, p.category))
           .map((p) => ({
             ...p,
             img: p.img?.startsWith('data:') && p.img.length > 5000 ? '/assets/products/rose.jpg' : p.img,
           }));
-        localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(compact));
+        if (compact.length > 0) {
+          localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(compact));
+        }
       } catch (innerErr) {
         console.warn('LocalStorage quota limit reached, products preserved in memory:', innerErr);
       }
@@ -434,8 +453,10 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     await fetchProductsFromCloud();
   };
 
-  const getProductById = (id: string) => {
-    return products.find((p) => p.id === id);
+  const safeProducts = products && products.length > 0 ? products : ALL_PRODUCTS;
+
+  const getProductById = (id: string): Product | undefined => {
+    return safeProducts.find((p) => p.id === id) || ALL_PRODUCTS.find((p) => p.id === id);
   };
 
   const importProducts = (newProducts: Product[]): boolean => {
@@ -454,7 +475,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
   return (
     <ProductContext.Provider
       value={{
-        products,
+        products: safeProducts,
         isCloudSynced,
         addProduct,
         updateProduct,

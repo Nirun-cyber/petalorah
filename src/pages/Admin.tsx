@@ -852,7 +852,8 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
   const totalRevenue = orders.reduce((sum, ord) => sum + ord.totalAmount, 0);
 
   const filteredProducts = products.filter((prod) => {
-    const matchesSearch = prod.name.toLowerCase().includes(productSearch.toLowerCase()) || prod.description.toLowerCase().includes(productSearch.toLowerCase());
+    const s = productSearch.toLowerCase().trim();
+    const matchesSearch = !s || (prod.name || '').toLowerCase().includes(s) || (prod.description || '').toLowerCase().includes(s);
     const matchesCat = selectedCategory === 'all' || prod.category === selectedCategory;
     return matchesSearch && matchesCat;
   });
