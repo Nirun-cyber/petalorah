@@ -3,8 +3,10 @@ import { X, Star, Upload, Sparkles, CheckCircle2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useReviews } from '../context/ReviewContext';
 import { useProducts } from '../context/ProductContext';
+import { useSettings } from '../context/SettingsContext';
 import type { Review } from '../data/reviews';
 import { compressImageFile } from '../lib/imageCompressor';
+import { uploadImageToGoogleDrive } from '../lib/googleDriveStorage';
 
 interface WriteReviewModalProps {
   isOpen: boolean;
@@ -19,6 +21,8 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
 }) => {
   const { addReview } = useReviews();
   const { products } = useProducts();
+  const { settings } = useSettings();
+  const webhookUrl = settings.googleSheetWebhookUrl || (import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL as string) || '';
 
   const [rating, setRating] = useState<number>(5);
   const [hoverRating, setHoverRating] = useState<number>(0);
@@ -27,6 +31,7 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
   const [productId, setProductId] = useState(preselectedProductId || products[0]?.id || 'rose');
   const [comment, setComment] = useState('');
   const [photo, setPhoto] = useState<string>('');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   if (!isOpen) return null;
@@ -34,15 +39,27 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        alert('Please choose an image under 10MB.');
+      if (file.size > 15 * 1024 * 1024) {
+        alert('Please choose an image under 15MB.');
         return;
       }
+      setIsUploadingPhoto(true);
       try {
-        const compressed = await compressImageFile(file, 600, 0.7);
-        setPhoto(compressed);
+        const compressed = await compressImageFile(file, 800, 0.75);
+        if (webhookUrl && webhookUrl.includes('script.google.com')) {
+          const res = await uploadImageToGoogleDrive(compressed, file.name, webhookUrl);
+          if (res.success && res.url) {
+            setPhoto(res.url);
+          } else {
+            setPhoto(compressed);
+          }
+        } else {
+          setPhoto(compressed);
+        }
       } catch (err) {
         console.error('Failed to compress review photo:', err);
+      } finally {
+        setIsUploadingPhoto(false);
       }
     }
   };
@@ -229,10 +246,11 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
               </label>
               <div className="flex items-center gap-3">
                 <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-primary/5 dark:bg-white/5 border border-primary/15 dark:border-white/15 text-xs font-semibold text-primary dark:text-gray-200 hover:bg-primary/10 transition-colors">
-                  <Upload size={14} /> Choose Image
+                  <Upload size={14} /> {isUploadingPhoto ? 'Uploading...' : 'Choose Image'}
                   <input
                     type="file"
                     accept="image/*"
+                    disabled={isUploadingPhoto}
                     onChange={handlePhotoUpload}
                     className="hidden"
                   />

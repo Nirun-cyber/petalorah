@@ -244,6 +244,21 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [orders]);
 
+  const getGoogleSheetUrl = (): string => {
+    try {
+      const saved = localStorage.getItem('petalorah_site_settings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed?.googleSheetWebhookUrl) {
+          return parsed.googleSheetWebhookUrl.trim();
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+    return (import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL as string) || '';
+  };
+
   const logOrder = (
     cartItems: CartItem[],
     channel: 'WhatsApp' | 'Instagram',
@@ -263,7 +278,7 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const newOrder: LoggedOrder = {
       id: customerDetails?.orderId || `ORD-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`,
       createdAt: new Date().toISOString(),
-      customerName: customerDetails?.name || 'Guest Customer',
+      customerName: customerDetails?.name || 'Customer',
       customerPhone: customerDetails?.phone || '',
       deliveryAddress: customerDetails?.deliveryAddress,
       pincode: customerDetails?.pincode,
@@ -338,16 +353,9 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         });
     }
 
-    // Automatically sync to Google Sheets for Accounting app
+    // Automatically sync to Google Sheets (Free Cloud Database)
     try {
-      let sheetUrl = (import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL as string) || '';
-      const savedSettings = localStorage.getItem('petalorah_site_settings');
-      if (savedSettings) {
-        const parsed = JSON.parse(savedSettings);
-        if (parsed?.googleSheetWebhookUrl) {
-          sheetUrl = parsed.googleSheetWebhookUrl;
-        }
-      }
+      const sheetUrl = getGoogleSheetUrl();
       if (sheetUrl) {
         syncOrderToGoogleSheets(newOrder, sheetUrl);
       }
@@ -359,9 +367,23 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updateOrderStatus = (orderId: string, status: LoggedOrder['status']) => {
+    let updatedTarget: LoggedOrder | undefined;
+
     setOrders((prev) =>
-      prev.map((ord) => (ord.id === orderId ? { ...ord, status } : ord))
+      prev.map((ord) => {
+        if (ord.id === orderId) {
+          updatedTarget = { ...ord, status };
+          return updatedTarget;
+        }
+        return ord;
+      })
     );
+
+    // Sync status change to Google Sheets
+    const sheetUrl = getGoogleSheetUrl();
+    if (sheetUrl && updatedTarget) {
+      syncOrderToGoogleSheets(updatedTarget, sheetUrl);
+    }
 
     if (isSupabaseConfigured && supabase) {
       const targetOrder = orders.find((o) => o.id === orderId);
@@ -416,6 +438,12 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return ord;
       })
     );
+
+    // Sync updated tracking details to Google Sheets
+    const sheetUrl = getGoogleSheetUrl();
+    if (sheetUrl && updatedOrder) {
+      syncOrderToGoogleSheets(updatedOrder, sheetUrl);
+    }
 
     if (isSupabaseConfigured && supabase && updatedOrder) {
       const client = supabase;
@@ -497,21 +525,6 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     return undefined;
-  };
-
-  const getGoogleSheetUrl = (): string => {
-    try {
-      const saved = localStorage.getItem('petalorah_site_settings');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed?.googleSheetWebhookUrl) {
-          return parsed.googleSheetWebhookUrl.trim();
-        }
-      }
-    } catch (e) {
-      // ignore
-    }
-    return (import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL as string) || '';
   };
 
   const lookupOrder = async (query: string): Promise<LoggedOrder | undefined> => {

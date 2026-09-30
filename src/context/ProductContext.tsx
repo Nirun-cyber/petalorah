@@ -2,6 +2,22 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { ALL_PRODUCTS, type Product, DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE } from '../data/products';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { SYSTEM_CONFIG_CATEGORY, CLOUD_KEYS } from '../lib/cloudStore';
+import { syncProductsToGoogleSheet, fetchProductsFromGoogleSheet } from '../lib/googleDriveStorage';
+
+const getGoogleSheetUrl = (): string => {
+  try {
+    const saved = localStorage.getItem('petalorah_site_settings');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed?.googleSheetWebhookUrl) {
+        return parsed.googleSheetWebhookUrl.trim();
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+  return (import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL as string) || '';
+};
 
 interface ProductContextType {
   products: Product[];
@@ -14,6 +30,7 @@ interface ProductContextType {
   resetToDefaultProducts: () => Promise<void>;
   getProductById: (id: string) => Product | undefined;
   forceRefreshProducts: () => Promise<void>;
+  importProducts: (newProducts: Product[]) => boolean;
 }
 
 const PRODUCTS_STORAGE_KEY = 'petalorah_dynamic_products';
@@ -160,6 +177,23 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
   }, [fetchProductsFromCloud]);
 
+  // Auto-fetch products from Google Sheets (Free Cloud Database)
+  useEffect(() => {
+    const sheetUrl = getGoogleSheetUrl();
+    if (sheetUrl && sheetUrl.includes('script.google.com')) {
+      fetchProductsFromGoogleSheet(sheetUrl)
+        .then((res) => {
+          if (res.products && res.products.length > 0) {
+            setProducts(res.products);
+            setIsCloudSynced(true);
+          }
+        })
+        .catch((e) => {
+          console.warn('Google Sheets products fetch warning:', e);
+        });
+    }
+  }, []);
+
   // Save to localStorage as local offline fallback
   useEffect(() => {
     try {
@@ -188,7 +222,16 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
       id,
     };
 
-    setProducts((prev) => [newProduct, ...prev]);
+    const updated = [newProduct, ...products];
+    setProducts(updated);
+
+    // Auto-sync to Google Sheets (Free Cloud Database)
+    const sheetUrl = getGoogleSheetUrl();
+    if (sheetUrl && sheetUrl.includes('script.google.com')) {
+      syncProductsToGoogleSheet(updated, sheetUrl).catch((err) =>
+        console.warn('Auto-sync product to Google Sheets failed:', err)
+      );
+    }
 
     // Push to Supabase if available
     if (isSupabaseConfigured && supabase) {
@@ -217,9 +260,16 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const updateProduct = (id: string, productData: Partial<Product>) => {
-    setProducts((prev) =>
-      prev.map((prod) => (prod.id === id ? { ...prod, ...productData } : prod))
-    );
+    const updated = products.map((prod) => (prod.id === id ? { ...prod, ...productData } : prod));
+    setProducts(updated);
+
+    // Auto-sync to Google Sheets (Free Cloud Database)
+    const sheetUrl = getGoogleSheetUrl();
+    if (sheetUrl && sheetUrl.includes('script.google.com')) {
+      syncProductsToGoogleSheet(updated, sheetUrl).catch((err) =>
+        console.warn('Auto-sync product to Google Sheets failed:', err)
+      );
+    }
 
     if (isSupabaseConfigured && supabase) {
       const updatePayload: Record<string, any> = {};
@@ -246,7 +296,16 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const deleteProduct = (id: string) => {
-    setProducts((prev) => prev.filter((prod) => prod.id !== id));
+    const updated = products.filter((prod) => prod.id !== id);
+    setProducts(updated);
+
+    // Auto-sync to Google Sheets (Free Cloud Database)
+    const sheetUrl = getGoogleSheetUrl();
+    if (sheetUrl && sheetUrl.includes('script.google.com')) {
+      syncProductsToGoogleSheet(updated, sheetUrl).catch((err) =>
+        console.warn('Auto-sync product to Google Sheets failed:', err)
+      );
+    }
 
     if (isSupabaseConfigured && supabase) {
       supabase
@@ -261,47 +320,72 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const toggleBestSeller = (id: string) => {
-    setProducts((prev) =>
-      prev.map((prod) => {
-        if (prod.id === id) {
-          const updated = {
-            ...prod,
-            isBestSeller: !prod.isBestSeller,
-            badge: !prod.isBestSeller ? 'Best Seller' : prod.badge,
-          };
-          if (isSupabaseConfigured && supabase) {
-            supabase
-              .from('products')
-              .update({ is_best_seller: updated.isBestSeller, badge: updated.badge })
-              .eq('id', id);
-          }
-          return updated;
-        }
-        return prod;
-      })
-    );
+    const updated = products.map((prod) => {
+      if (prod.id === id) {
+        return {
+          ...prod,
+          isBestSeller: !prod.isBestSeller,
+          badge: !prod.isBestSeller ? 'Best Seller' : prod.badge,
+        };
+      }
+      return prod;
+    });
+    setProducts(updated);
+
+    const sheetUrl = getGoogleSheetUrl();
+    if (sheetUrl && sheetUrl.includes('script.google.com')) {
+      syncProductsToGoogleSheet(updated, sheetUrl).catch((err) =>
+        console.warn('Auto-sync product to Google Sheets failed:', err)
+      );
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      const target = updated.find((p) => p.id === id);
+      if (target) {
+        supabase
+          .from('products')
+          .update({ is_best_seller: target.isBestSeller, badge: target.badge })
+          .eq('id', id);
+      }
+    }
   };
 
   const toggleComingSoon = (id: string) => {
-    setProducts((prev) =>
-      prev.map((prod) => {
-        if (prod.id === id) {
-          const updated = { ...prod, isComingSoon: !prod.isComingSoon };
-          if (isSupabaseConfigured && supabase) {
-            supabase
-              .from('products')
-              .update({ is_coming_soon: updated.isComingSoon })
-              .eq('id', id);
-          }
-          return updated;
-        }
-        return prod;
-      })
-    );
+    const updated = products.map((prod) => {
+      if (prod.id === id) {
+        return { ...prod, isComingSoon: !prod.isComingSoon };
+      }
+      return prod;
+    });
+    setProducts(updated);
+
+    const sheetUrl = getGoogleSheetUrl();
+    if (sheetUrl && sheetUrl.includes('script.google.com')) {
+      syncProductsToGoogleSheet(updated, sheetUrl).catch((err) =>
+        console.warn('Auto-sync product to Google Sheets failed:', err)
+      );
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      const target = updated.find((p) => p.id === id);
+      if (target) {
+        supabase
+          .from('products')
+          .update({ is_coming_soon: target.isComingSoon })
+          .eq('id', id);
+      }
+    }
   };
 
   const resetToDefaultProducts = async () => {
     setProducts(ALL_PRODUCTS);
+
+    const sheetUrl = getGoogleSheetUrl();
+    if (sheetUrl && sheetUrl.includes('script.google.com')) {
+      syncProductsToGoogleSheet(ALL_PRODUCTS, sheetUrl).catch((err) =>
+        console.warn('Auto-sync product to Google Sheets failed:', err)
+      );
+    }
 
     if (isSupabaseConfigured && supabase) {
       try {
@@ -334,11 +418,37 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const forceRefreshProducts = async () => {
+    const sheetUrl = getGoogleSheetUrl();
+    if (sheetUrl && sheetUrl.includes('script.google.com')) {
+      try {
+        const res = await fetchProductsFromGoogleSheet(sheetUrl);
+        if (res.products && res.products.length > 0) {
+          setProducts(res.products);
+          setIsCloudSynced(true);
+          return;
+        }
+      } catch (e) {
+        console.warn('Failed to force refresh from Google Sheets:', e);
+      }
+    }
     await fetchProductsFromCloud();
   };
 
   const getProductById = (id: string) => {
     return products.find((p) => p.id === id);
+  };
+
+  const importProducts = (newProducts: Product[]): boolean => {
+    if (!Array.isArray(newProducts) || newProducts.length === 0) return false;
+    const clean = newProducts.filter((p) => p && p.id && p.name);
+    if (clean.length === 0) return false;
+    setProducts(clean);
+    try {
+      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(clean));
+    } catch (e) {
+      console.warn('LocalStorage save after import warning:', e);
+    }
+    return true;
   };
 
   return (
@@ -354,6 +464,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
         resetToDefaultProducts,
         getProductById,
         forceRefreshProducts,
+        importProducts,
       }}
     >
       {children}

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Upload, Sparkles, CheckCircle, Trash2, Wand2, FileText } from 'lucide-react';
 import { type Product, DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE } from '../../data/products';
 import { compressImageFile } from '../../lib/imageCompressor';
+import { useSettings } from '../../context/SettingsContext';
+import { uploadImageToGoogleDrive } from '../../lib/googleDriveStorage';
 
 interface ProductFormModalProps {
   product?: Product | null;
@@ -16,6 +18,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   onClose,
   onSave,
 }) => {
+  const { settings } = useSettings();
+  const webhookUrl = settings.googleSheetWebhookUrl || (import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL as string) || '';
+
   const [name, setName] = useState(product?.name || '');
   const [numericPrice, setNumericPrice] = useState<number>(product?.numericPrice || 50);
   const [originalPrice, setOriginalPrice] = useState(product?.originalPrice || '');
@@ -26,6 +31,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const [isBestSeller, setIsBestSeller] = useState(product?.isBestSeller || false);
   const [isComingSoon, setIsComingSoon] = useState(product?.isComingSoon || false);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatusMsg, setUploadStatusMsg] = useState<string | null>(null);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
 
   // Sync state whenever modal opens or active product changes
@@ -57,23 +63,36 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Handle local image file upload -> compress to web-optimized JPEG data URL
+  // Handle local image file upload -> upload to Google Drive or fallback to compressed JPEG
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        alert('File size is too large. Please select an image under 10MB.');
+      if (file.size > 15 * 1024 * 1024) {
+        alert('File size is too large. Please select an image under 15MB.');
         return;
       }
       setIsUploading(true);
+      setUploadStatusMsg('Optimizing image...');
       try {
-        const compressed = await compressImageFile(file, 800, 0.75);
-        setImg(compressed);
+        const compressed = await compressImageFile(file, 1000, 0.85);
+        if (webhookUrl && webhookUrl.includes('script.google.com')) {
+          setUploadStatusMsg('Uploading to Google Drive (15 GB Storage)...');
+          const uploadRes = await uploadImageToGoogleDrive(compressed, file.name, webhookUrl);
+          if (uploadRes.success && uploadRes.url) {
+            setImg(uploadRes.url);
+          } else {
+            console.warn('Google Drive upload notice:', uploadRes.error);
+            setImg(compressed);
+          }
+        } else {
+          setImg(compressed);
+        }
       } catch (err) {
-        console.error('Failed to compress image:', err);
+        console.error('Failed to compress/upload image:', err);
         alert('Failed to read and process image file.');
       } finally {
         setIsUploading(false);
+        setUploadStatusMsg(null);
       }
     }
   };
@@ -237,10 +256,13 @@ Approximate preparation time: ${prepTime}`;
 
                 <div className="flex-grow min-w-0">
                   <div className="flex items-center gap-1 text-emerald-600 font-bold text-xs mb-1">
-                    <CheckCircle size={14} /> Image Selected
+                    <CheckCircle size={14} />
+                    {img.includes('googleusercontent.com')
+                      ? 'Saved in Google Drive (15 GB Free Cloud)'
+                      : 'Image Ready'}
                   </div>
-                  <p className="text-xs text-slate-400 truncate max-w-xs">
-                    {img.startsWith('data:') ? 'Uploaded image file (Base64)' : img}
+                  <p className="text-xs text-slate-400 truncate max-w-xs font-mono">
+                    {img.startsWith('data:') ? 'Optimized image' : img}
                   </p>
                 </div>
 
@@ -258,6 +280,7 @@ Approximate preparation time: ${prepTime}`;
                 <input
                   type="file"
                   accept="image/*"
+                  disabled={isUploading}
                   onChange={handleFileUpload}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
@@ -271,9 +294,15 @@ Approximate preparation time: ${prepTime}`;
                   </div>
                   <div>
                     <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                      Click or drag image file here to upload
+                      {isUploading
+                        ? (uploadStatusMsg || 'Uploading to Google Drive...')
+                        : 'Click or drag image file here to upload'}
                     </p>
-                    <p className="text-xs text-slate-400 mt-0.5">Supports PNG, JPG, WEBP (Max 5MB)</p>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {webhookUrl
+                        ? '☁️ Auto-uploads to your Google Drive (15 GB Free Storage)'
+                        : 'Supports PNG, JPG, WEBP • Connect Google Sheet in Settings for Free 15GB Drive Storage'}
+                    </p>
                   </div>
                 </div>
               </div>

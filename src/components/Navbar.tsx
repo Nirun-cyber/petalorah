@@ -51,8 +51,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 width="44"
                 height="44"
                 loading="eager"
-                // @ts-expect-error fetchpriority
-                fetchpriority="high"
+                fetchPriority="high"
                 decoding="sync"
                 className="w-full h-full object-cover"
               />

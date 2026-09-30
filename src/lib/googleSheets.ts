@@ -419,17 +419,67 @@ export const testGoogleSheetsConnection = async (
 };
 
 /**
- * Modern Google Apps Script code with both doGet (read/search orders) and doPost (save orders).
+ * Universal Google Apps Script code with:
+ * 1. Orders database & live customer order tracking
+ * 2. Google Drive 15 GB free image hosting ('Petalorah Store Images' folder)
+ * 3. Product catalog multi-sheet synchronization
  */
 export const GOOGLE_APPS_SCRIPT_CODE = `/**
- * Petalorah & Accounts App Google Sheets Bridge
- * Supports both writing new orders (doPost) and live order tracking queries (doGet).
+ * Petalorah Complete E-Commerce Database & Google Drive Storage Bridge
+ * 100% Free Forever (Powered by your Google Account)
  */
+
+function getOrCreateSheet(ss, sheetName, headers) {
+  var sheet = ss.getSheetByName(sheetName);
+  if (!sheet) {
+    sheet = ss.insertSheet(sheetName);
+  }
+  if (sheet.getLastRow() === 0 && headers && headers.length > 0) {
+    sheet.appendRow(headers);
+    sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#FCE7F3');
+  }
+  return sheet;
+}
 
 function doGet(e) {
   try {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    var data = sheet.getDataRange().getValues();
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var action = (e && e.parameter && e.parameter.action) ? String(e.parameter.action) : '';
+    
+    // ACTION: Return Products catalog
+    if (action === 'getProducts') {
+      var prodSheet = ss.getSheetByName('Products');
+      if (!prodSheet || prodSheet.getLastRow() <= 1) {
+        return ContentService.createTextOutput(JSON.stringify({ status: 'success', products: [] }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+      var pData = prodSheet.getDataRange().getValues();
+      var pRows = pData.slice(1);
+      var products = [];
+      for (var p = 0; p < pRows.length; p++) {
+        var row = pRows[p];
+        if (!row[0]) continue;
+        products.push({
+          id: String(row[0]),
+          name: String(row[1] || ''),
+          category: String(row[2] || 'keychain'),
+          price: String(row[3] || '₹50'),
+          numericPrice: parseFloat(row[4]) || 50,
+          originalPrice: row[5] ? String(row[5]) : undefined,
+          description: String(row[6] || ''),
+          img: String(row[7] || ''),
+          badge: row[8] ? String(row[8]) : undefined,
+          isBestSeller: row[9] === true || String(row[9]).toLowerCase() === 'true',
+          isComingSoon: row[10] === true || String(row[10]).toLowerCase() === 'true'
+        });
+      }
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', products: products }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // ACTION: Return Orders or Order Tracking query
+    var orderSheet = ss.getSheetByName('Orders') || ss.getActiveSheet();
+    var data = orderSheet.getDataRange().getValues();
     
     if (data.length <= 1) {
       return ContentService.createTextOutput(JSON.stringify({ status: 'success', orders: [] }))
@@ -461,15 +511,12 @@ function doGet(e) {
     var query = (e && e.parameter && (e.parameter.orderId || e.parameter.q || '')) ? String(e.parameter.orderId || e.parameter.q).toLowerCase().trim() : '';
     
     var orders = [];
-    
     for (var r = 0; r < rows.length; r++) {
       var row = rows[r];
       var orderId = idCol !== -1 ? String(row[idCol] || '').trim() : String(row[0] || '').trim();
       if (!orderId || orderId.toLowerCase() === 'order id') continue;
       
       var phone = phoneCol !== -1 ? String(row[phoneCol] || '').trim() : '';
-      
-      // Filter if query is provided
       if (query) {
         var idMatches = orderId.toLowerCase().indexOf(query) !== -1;
         var phoneMatches = phone && phone.replace(/\\D/g, '').indexOf(query.replace(/\\D/g, '')) !== -1;
@@ -502,7 +549,6 @@ function doGet(e) {
     
     return ContentService.createTextOutput(JSON.stringify({ status: 'success', orders: orders }))
       .setMimeType(ContentService.MimeType.JSON);
-      
   } catch (error) {
     return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -511,33 +557,115 @@ function doGet(e) {
 
 function doPost(e) {
   try {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow([
-        'Order ID',
-        'Date & Time',
-        'Customer Name',
-        'Customer Phone',
-        'Items Summary',
-        'Total Items',
-        'Total Amount (₹)',
-        'Order Channel',
-        'Status',
-        'Courier Partner',
-        'Tracking AWB'
-      ]);
-      sheet.getRange('A1:K1').setFontWeight('bold').setBackground('#FCE7F3');
-    }
-    
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
     var data = JSON.parse(e.postData.contents);
     
+    // PING ACTION
     if (data.action === 'ping') {
-      return ContentService.createTextOutput(JSON.stringify({ status: 'ok', message: 'Connected successfully!' }))
+      return ContentService.createTextOutput(JSON.stringify({ status: 'ok', message: 'Connected to Petalorah Database & Drive successfully!' }))
         .setMimeType(ContentService.MimeType.JSON);
     }
     
-    sheet.appendRow([
+    // ACTION: Upload Image directly to Google Drive (15 GB Free Storage)
+    if (data.action === 'uploadImage') {
+      var rawBase64 = String(data.base64 || '');
+      var base64Clean = rawBase64.replace(/^data:image\\/\\w+;base64,/, '');
+      var fileName = data.fileName || ('petalorah_' + Date.now() + '.jpg');
+      var folderName = data.folderName || 'Petalorah Store Images';
+      
+      var folders = DriveApp.getFoldersByName(folderName);
+      var folder;
+      if (folders.hasNext()) {
+        folder = folders.next();
+      } else {
+        folder = DriveApp.createFolder(folderName);
+        folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      }
+      
+      var decoded = Utilities.base64Decode(base64Clean);
+      var blob = Utilities.newBlob(decoded, 'image/jpeg', fileName);
+      var file = folder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      
+      var fileId = file.getId();
+      var directUrl = 'https://lh3.googleusercontent.com/d/' + fileId;
+      
+      return ContentService.createTextOutput(JSON.stringify({
+        status: 'success',
+        url: directUrl,
+        fileId: fileId
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // ACTION: Sync / Save Product Catalog
+    if (data.action === 'saveProducts' && Array.isArray(data.products)) {
+      var prodHeaders = ['ID', 'Name', 'Category', 'Price', 'Numeric Price', 'Original Price', 'Description', 'Image URL', 'Badge', 'Best Seller', 'Coming Soon'];
+      var prodSheet = getOrCreateSheet(ss, 'Products', prodHeaders);
+      
+      if (prodSheet.getLastRow() > 1) {
+        prodSheet.deleteRows(2, prodSheet.getLastRow() - 1);
+      }
+      
+      var rowsToAppend = data.products.map(function(p) {
+        return [
+          p.id,
+          p.name,
+          p.category,
+          p.price,
+          p.numericPrice,
+          p.originalPrice || '',
+          p.description || '',
+          p.img || '',
+          p.badge || '',
+          p.isBestSeller ? 'TRUE' : 'FALSE',
+          p.isComingSoon ? 'TRUE' : 'FALSE'
+        ];
+      });
+      
+      if (rowsToAppend.length > 0) {
+        prodSheet.getRange(2, 1, rowsToAppend.length, prodHeaders.length).setValues(rowsToAppend);
+      }
+      
+      return ContentService.createTextOutput(JSON.stringify({
+        status: 'success',
+        count: rowsToAppend.length
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // DEFAULT ACTION: Orders insert or update
+    var orderHeaders = [
+      'Order ID',
+      'Date & Time',
+      'Customer Name',
+      'Customer Phone',
+      'Items Summary',
+      'Total Items',
+      'Total Amount (₹)',
+      'Order Channel',
+      'Status',
+      'Courier Partner',
+      'Tracking AWB'
+    ];
+    var orderSheet = getOrCreateSheet(ss, 'Orders', orderHeaders);
+    
+    var values = orderSheet.getDataRange().getValues();
+    var existingRow = -1;
+    for (var i = 1; i < values.length; i++) {
+      if (String(values[i][0]).trim().toLowerCase() === String(data.orderId || '').trim().toLowerCase()) {
+        existingRow = i + 1;
+        break;
+      }
+    }
+    
+    if (existingRow > 1) {
+      if (data.status) orderSheet.getRange(existingRow, 9).setValue(data.status);
+      if (data.courierPartner) orderSheet.getRange(existingRow, 10).setValue(data.courierPartner);
+      if (data.trackingNumber) orderSheet.getRange(existingRow, 11).setValue(data.trackingNumber);
+      return ContentService.createTextOutput(JSON.stringify({ status: 'updated', orderId: data.orderId }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    orderSheet.appendRow([
       data.orderId,
       data.createdAt,
       data.customerName || 'Customer',

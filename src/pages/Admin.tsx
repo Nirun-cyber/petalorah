@@ -36,6 +36,8 @@ import {
   MapPin,
   Calendar,
   Database,
+  Download,
+  Upload,
 } from 'lucide-react';
 import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import { InstagramIcon } from '../components/InstagramIcon';
@@ -48,6 +50,7 @@ import { useCoupon, type Coupon } from '../context/CouponContext';
 import { getStoredCustomers, syncCustomersFromCloud, type RegisteredCustomer } from '../lib/customerAuth';
 import { compressImageFile } from '../lib/imageCompressor';
 import { ProductFormModal } from '../components/admin/ProductFormModal';
+import { isSupabaseConfigured } from '../lib/supabase';
 import type { Product } from '../data/products';
 import type { Review } from '../data/reviews';
 import {
@@ -56,13 +59,28 @@ import {
   testGoogleSheetsConnection,
   GOOGLE_APPS_SCRIPT_CODE,
 } from '../lib/googleSheets';
+import {
+  uploadImageToGoogleDrive,
+  syncProductsToGoogleSheet,
+  fetchProductsFromGoogleSheet,
+} from '../lib/googleDriveStorage';
 
 interface AdminProps {
   onNavigateHome: () => void;
 }
 
 export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
-  const { products, addProduct, updateProduct, deleteProduct, toggleBestSeller, toggleComingSoon, resetToDefaultProducts, forceRefreshProducts } = useProducts();
+  const {
+    products,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    toggleBestSeller,
+    toggleComingSoon,
+    resetToDefaultProducts,
+    forceRefreshProducts,
+    importProducts,
+  } = useProducts();
   const { orders, updateOrderStatus, updateOrderTracking, deleteOrder, clearAllOrders, pullOrdersFromGoogleSheet, refreshOrdersFromCloud } = useOrders();
   const { settings, updateSettings, verifyPin, changePin, refreshSettingsFromCloud } = useSettings();
 
@@ -711,9 +729,12 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
   const handleSaveProduct = (productData: Omit<Product, 'id'>) => {
     if (editingProduct) {
       updateProduct(editingProduct.id, productData);
+      setProductSyncSheetMsg(`✅ Updated "${productData.name}"! Synced to your store & Google Sheets.`);
     } else {
       addProduct(productData);
+      setProductSyncSheetMsg(`✨ Added "${productData.name}"! Synced to your store & Google Sheets.`);
     }
+    setTimeout(() => setProductSyncSheetMsg(null), 4500);
   };
 
   const handleDeleteProduct = (id: string, name: string) => {
@@ -726,6 +747,81 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
     if (window.confirm('Reset all products to initial default Petalorah list? Any custom products added will be removed.')) {
       resetToDefaultProducts();
     }
+  };
+
+  const handleExportCatalog = () => {
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(products, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', `petalorah-products-${new Date().toISOString().slice(0, 10)}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
+  const handleImportCatalog = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const success = importProducts(parsed);
+          if (success) {
+            alert(`✅ Successfully imported and restored ${parsed.length} products!`);
+          } else {
+            alert('Invalid product format in file.');
+          }
+        } else {
+          alert('JSON file does not contain a valid list of products.');
+        }
+      } catch (err) {
+        alert('Failed to parse JSON backup file.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const [isSyncingProductsSheet, setIsSyncingProductsSheet] = useState(false);
+  const [productSyncSheetMsg, setProductSyncSheetMsg] = useState<string | null>(null);
+
+  const handleExportProductsToSheet = async () => {
+    const url = googleSheetInput.trim() || settings.googleSheetWebhookUrl;
+    if (!url || !url.includes('script.google.com')) {
+      alert('Please save your Google Apps Script Web App URL in Store Settings first.');
+      return;
+    }
+    setIsSyncingProductsSheet(true);
+    setProductSyncSheetMsg(null);
+    const res = await syncProductsToGoogleSheet(products, url);
+    setIsSyncingProductsSheet(false);
+    if (res.success) {
+      setProductSyncSheetMsg(`✅ Synced ${res.count} products to your Google Sheet 'Products' tab!`);
+    } else {
+      setProductSyncSheetMsg(`❌ ${res.error || 'Failed to sync products'}`);
+    }
+    setTimeout(() => setProductSyncSheetMsg(null), 5000);
+  };
+
+  const handleImportProductsFromSheet = async () => {
+    const url = googleSheetInput.trim() || settings.googleSheetWebhookUrl;
+    if (!url || !url.includes('script.google.com')) {
+      alert('Please save your Google Apps Script Web App URL in Store Settings first.');
+      return;
+    }
+    setIsSyncingProductsSheet(true);
+    setProductSyncSheetMsg(null);
+    const res = await fetchProductsFromGoogleSheet(url);
+    setIsSyncingProductsSheet(false);
+    if (res.products && res.products.length > 0) {
+      importProducts(res.products);
+      setProductSyncSheetMsg(`✅ Loaded ${res.products.length} products from your Google Sheet!`);
+    } else {
+      setProductSyncSheetMsg(`❌ ${res.error || 'No products found in Google Sheet'}`);
+    }
+    setTimeout(() => setProductSyncSheetMsg(null), 5000);
   };
 
   const handleChangePinSubmit = (e: React.FormEvent) => {
@@ -1113,7 +1209,53 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
                 </select>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <button
+                  type="button"
+                  onClick={handleExportProductsToSheet}
+                  disabled={isSyncingProductsSheet}
+                  className="px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  title="Save/sync full catalog to Google Sheet 'Products' tab"
+                >
+                  <FileSpreadsheet size={14} className="text-emerald-600" />
+                  <span className="hidden sm:inline">{isSyncingProductsSheet ? 'Syncing...' : 'Push to Sheet'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleImportProductsFromSheet}
+                  disabled={isSyncingProductsSheet}
+                  className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  title="Import products from Google Sheet"
+                >
+                  <FileSpreadsheet size={14} className="text-slate-500" />
+                  <span className="hidden sm:inline">Pull Sheet</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleExportCatalog}
+                  className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  title="Export products as JSON backup"
+                >
+                  <Download size={14} className="text-rose-500" />
+                  <span className="hidden sm:inline">Backup</span>
+                </button>
+
+                <label
+                  className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Import products from JSON backup"
+                >
+                  <Upload size={14} className="text-emerald-500" />
+                  <span className="hidden sm:inline">Restore</span>
+                  <input
+                    type="file"
+                    accept=".json"
+                    className="hidden"
+                    onChange={handleImportCatalog}
+                  />
+                </label>
+
                 <button
                   onClick={handleResetProducts}
                   className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800 text-xs font-bold flex items-center gap-1.5 hover:bg-slate-100 transition-colors"
@@ -1132,6 +1274,18 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
                 </button>
               </div>
             </div>
+
+            {productSyncSheetMsg && (
+              <div
+                className={`p-3 rounded-2xl text-xs font-bold flex items-center gap-2 ${
+                  productSyncSheetMsg.startsWith('✅')
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800'
+                    : 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800'
+                }`}
+              >
+                {productSyncSheetMsg}
+              </div>
+            )}
 
             {/* Product Grid Table */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
@@ -2614,7 +2768,7 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
               </form>
             </div>
 
-            {/* Google Sheets & AI Studio Accounting Sync */}
+            {/* Google Sheets Free Cloud Database */}
             <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -2623,13 +2777,24 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
                   </div>
                   <div>
                     <h3 className="text-lg font-bold font-serif text-slate-800 dark:text-white flex items-center gap-2">
-                      Google Sheets & Accounting Sync
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-                        Google AI Studio Ready
+                      Google Sheets Free Cloud Database
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${
+                        (googleSheetInput.trim() || settings.googleSheetWebhookUrl)
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                          : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                      }`}>
+                        {(googleSheetInput.trim() || settings.googleSheetWebhookUrl) ? (
+                          <>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Active Free Database
+                          </>
+                        ) : (
+                          'Ready to Connect (100% Free)'
+                        )}
                       </span>
                     </h3>
                     <p className="text-xs text-slate-400">
-                      Sync every order ID, items breakdown, and revenue in real-time to your Google Spreadsheet.
+                      Sync every order ID, customer details, and live order tracking queries directly with your free Google Sheet — 100% free forever, no limits, no credit card.
                     </p>
                   </div>
                 </div>
@@ -2729,7 +2894,7 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
               </div>
             </div>
 
-            {/* Supabase Cloud Database & Universal Sync Manager */}
+            {/* Supabase Cloud Database (Optional Secondary Sync) */}
             <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -2738,14 +2903,26 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
                   </div>
                   <div>
                     <h3 className="text-lg font-bold font-serif text-slate-800 dark:text-white flex items-center gap-2">
-                      Cloud Database & Multi-Device Sync
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-400 text-[10px] font-bold flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        Live Connected
+                      Supabase Cloud Database (Optional)
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${
+                        isSupabaseConfigured
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-400'
+                          : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                      }`}>
+                        {isSupabaseConfigured ? (
+                          <>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Connected
+                          </>
+                        ) : (
+                          'Inactive / Safe Mode (Zero Paid Limits)'
+                        )}
                       </span>
                     </h3>
                     <p className="text-xs text-slate-400">
-                      Every update you make in products, banners, coupons, reviews, gallery, and settings is automatically synchronized across all customer phones and devices.
+                      {isSupabaseConfigured
+                        ? 'Secondary PostgreSQL cloud database connected.'
+                        : 'Disabled to avoid quota limits & paid fees. Your store runs 100% free with Google Sheets and browser storage.'}
                     </p>
                   </div>
                 </div>
@@ -3071,8 +3248,18 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
                         const file = e.target.files?.[0];
                         if (file) {
                           try {
-                            const compressed = await compressImageFile(file, 800, 0.75);
-                            setGalleryFormImg(compressed);
+                            const compressed = await compressImageFile(file, 1000, 0.85);
+                            const url = googleSheetInput.trim() || settings.googleSheetWebhookUrl;
+                            if (url && url.includes('script.google.com')) {
+                              const uploadRes = await uploadImageToGoogleDrive(compressed, file.name, url);
+                              if (uploadRes.success && uploadRes.url) {
+                                setGalleryFormImg(uploadRes.url);
+                              } else {
+                                setGalleryFormImg(compressed);
+                              }
+                            } else {
+                              setGalleryFormImg(compressed);
+                            }
                           } catch (err) {
                             console.error('Failed to compress gallery image:', err);
                           }
