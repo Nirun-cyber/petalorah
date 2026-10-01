@@ -7,6 +7,7 @@
  */
 
 import type { Product } from '../data/products';
+import type { Review } from '../data/reviews';
 
 export interface UploadImageResult {
   success: boolean;
@@ -154,5 +155,145 @@ export async function fetchProductsFromGoogleSheet(
     return { products: [], error: data.message || 'No products found in sheet.' };
   } catch (err: any) {
     return { products: [], error: err.message || 'Network error fetching products from sheet.' };
+  }
+}
+
+/**
+ * Syncs the complete customer reviews list to the 'Reviews' tab in Google Sheets.
+ */
+export async function syncAllReviewsToGoogleSheet(
+  reviews: Review[],
+  webhookUrl: string
+): Promise<{ success: boolean; count: number; error?: string }> {
+  if (!webhookUrl || !webhookUrl.includes('script.google.com')) {
+    return { success: false, count: 0, error: 'Apps Script URL not configured.' };
+  }
+
+  try {
+    const payload = {
+      action: 'saveReviews',
+      reviews: reviews.map((r) => ({
+        id: r.id,
+        date: r.date || '',
+        customerName: r.customerName || 'Customer',
+        city: r.city || '',
+        rating: r.rating || 5,
+        productName: r.productName || '',
+        productId: r.productId || '',
+        category: r.category || 'keychain',
+        comment: r.comment || '',
+        photo: r.photo || '',
+        verifiedBuyer: Boolean(r.verifiedBuyer),
+        helpfulCount: r.helpfulCount || 0,
+      })),
+    };
+
+    const response = await fetch(webhookUrl.trim(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.status === 'success') {
+      return { success: true, count: reviews.length };
+    }
+    return { success: false, count: 0, error: data.message || 'Failed to save reviews to sheet.' };
+  } catch (err: any) {
+    return { success: false, count: 0, error: err.message || 'Network error syncing reviews.' };
+  }
+}
+
+/**
+ * Appends or updates a single review in the 'Reviews' tab of Google Sheets.
+ */
+export async function syncSingleReviewToGoogleSheet(
+  review: Review,
+  webhookUrl: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!webhookUrl || !webhookUrl.includes('script.google.com')) {
+    return { success: false, error: 'Apps Script URL not configured.' };
+  }
+
+  try {
+    const payload = {
+      action: 'addReview',
+      review: {
+        id: review.id,
+        date: review.date || 'Just now',
+        customerName: review.customerName || 'Customer',
+        city: review.city || '',
+        rating: review.rating || 5,
+        productName: review.productName || '',
+        productId: review.productId || '',
+        category: review.category || 'keychain',
+        comment: review.comment || '',
+        photo: review.photo || '',
+        verifiedBuyer: Boolean(review.verifiedBuyer),
+        helpfulCount: review.helpfulCount || 0,
+      },
+    };
+
+    const response = await fetch(webhookUrl.trim(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.status === 'success') {
+      return { success: true };
+    }
+    return { success: false, error: data.message || 'Failed to sync review.' };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Network error syncing single review.' };
+  }
+}
+
+/**
+ * Fetches all reviews from the 'Reviews' tab in Google Sheets.
+ */
+export async function fetchReviewsFromGoogleSheet(
+  webhookUrl: string
+): Promise<{ reviews: Review[]; error?: string }> {
+  if (!webhookUrl || !webhookUrl.includes('script.google.com')) {
+    return { reviews: [], error: 'Apps Script URL not configured.' };
+  }
+
+  try {
+    const url = `${webhookUrl.trim()}${webhookUrl.includes('?') ? '&' : '?'}action=getReviews&t=${Date.now()}`;
+    const response = await fetch(url, { method: 'GET' });
+    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+    const data = await response.json();
+
+    if (data.status === 'success' && Array.isArray(data.reviews)) {
+      const mapped: Review[] = data.reviews.map((r: any) => ({
+        id: String(r.id || `rev-${Date.now()}`),
+        customerName: String(r.customerName || 'Customer'),
+        city: String(r.city || ''),
+        rating: Number(r.rating || 5),
+        date: String(r.date || 'Recently'),
+        productName: String(r.productName || 'Handcrafted Item'),
+        productId: r.productId ? String(r.productId) : undefined,
+        category: (r.category || 'keychain') as Review['category'],
+        comment: String(r.comment || ''),
+        photo: r.photo ? String(r.photo) : undefined,
+        verifiedBuyer: Boolean(r.verifiedBuyer),
+        helpfulCount: Number(r.helpfulCount || 0),
+      }));
+      return { reviews: mapped };
+    }
+
+    return { reviews: [], error: data.message || 'No reviews found in sheet.' };
+  } catch (err: any) {
+    return { reviews: [], error: err.message || 'Network error fetching reviews from sheet.' };
   }
 }

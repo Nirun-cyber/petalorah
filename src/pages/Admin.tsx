@@ -119,6 +119,9 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
     resetReviewsToDefault,
     averageRating,
     refreshReviewsFromCloud,
+    syncReviewsToSheet,
+    pullReviewsFromSheet,
+    isCloudSynced: isReviewsCloudSynced,
   } = useReviews();
 
   const [reviewSearch, setReviewSearch] = useState('');
@@ -133,6 +136,8 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
   const [reviewFormPhoto, setReviewFormPhoto] = useState('');
   const [reviewFormVerified, setReviewFormVerified] = useState(true);
   const [reviewStatusMsg, setReviewStatusMsg] = useState<string | null>(null);
+  const [isSyncingReviews, setIsSyncingReviews] = useState(false);
+  const [isPullingReviews, setIsPullingReviews] = useState(false);
 
   // Gallery Context & State
   const {
@@ -498,6 +503,32 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
 
     setIsReviewModalOpen(false);
     setTimeout(() => setReviewStatusMsg(null), 3500);
+  };
+
+  const handleSyncReviewsToSheet = async () => {
+    setIsSyncingReviews(true);
+    setReviewStatusMsg(null);
+    const res = await syncReviewsToSheet();
+    setIsSyncingReviews(false);
+    if (res.success) {
+      setReviewStatusMsg(`✅ Dispatched ${res.count || reviews.length} customer reviews to Google Sheets!`);
+    } else {
+      setReviewStatusMsg(`❌ ${res.error || 'Failed to sync reviews to Google Sheets.'}`);
+    }
+    setTimeout(() => setReviewStatusMsg(null), 5000);
+  };
+
+  const handlePullReviewsFromSheet = async () => {
+    setIsPullingReviews(true);
+    setReviewStatusMsg(null);
+    const res = await pullReviewsFromSheet();
+    setIsPullingReviews(false);
+    if (res.success) {
+      setReviewStatusMsg(`✅ Refreshed ${res.count || 0} customer reviews from Google Sheets!`);
+    } else {
+      setReviewStatusMsg(`❌ ${res.error || 'Failed to pull reviews from Google Sheets.'}`);
+    }
+    setTimeout(() => setReviewStatusMsg(null), 5000);
   };
 
   const handleDeleteReview = (id: string, name: string) => {
@@ -2084,7 +2115,29 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
                 </select>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handlePullReviewsFromSheet}
+                  disabled={isPullingReviews}
+                  className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                  title="Fetch latest reviews from Google Sheets"
+                >
+                  <RefreshCw size={13} className={isPullingReviews ? 'animate-spin' : ''} />
+                  <span>{isPullingReviews ? 'Pulling...' : 'Pull Sheets'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSyncReviewsToSheet}
+                  disabled={isSyncingReviews}
+                  className="px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                  title="Sync all reviews to Google Sheets"
+                >
+                  <FileSpreadsheet size={13} />
+                  <span>{isSyncingReviews ? 'Syncing...' : 'Sync to Sheets'}</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={handleOpenAddReview}
@@ -2109,6 +2162,25 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
                   Reset Defaults
                 </button>
               </div>
+            </div>
+
+            {/* Live Cloud Status Banner */}
+            <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 text-xs">
+              <div className="flex items-center gap-2">
+                <span className={`inline-block w-2.5 h-2.5 rounded-full ${isReviewsCloudSynced ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'bg-amber-400'}`} />
+                <span className="font-semibold text-slate-700 dark:text-slate-200">
+                  {isReviewsCloudSynced ? 'Google Sheets Cloud Sync Active' : 'Offline / Local Storage'}
+                </span>
+                <span className="text-slate-400 hidden sm:inline">•</span>
+                <span className="text-slate-500 hidden sm:inline">All reviews auto-sync to 'Reviews' tab in Google Sheets</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleSyncReviewsToSheet}
+                className="text-rose-500 hover:text-rose-600 font-semibold text-[11px] underline underline-offset-2"
+              >
+                Force Sync Now
+              </button>
             </div>
 
             {/* Metrics Bar */}

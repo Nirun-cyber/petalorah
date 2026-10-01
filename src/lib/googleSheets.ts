@@ -1,4 +1,9 @@
 import type { LoggedOrder } from '../context/OrderContext';
+export {
+  syncAllReviewsToGoogleSheet,
+  syncSingleReviewToGoogleSheet,
+  fetchReviewsFromGoogleSheet,
+} from './googleDriveStorage';
 
 export interface GoogleSheetOrderPayload {
   orderId: string;
@@ -423,6 +428,7 @@ export const testGoogleSheetsConnection = async (
  * 1. Orders database & live customer order tracking
  * 2. Google Drive 15 GB free image hosting ('Petalorah Store Images' folder)
  * 3. Product catalog multi-sheet synchronization
+ * 4. Customer Reviews multi-sheet synchronization & live store integration
  */
 export const GOOGLE_APPS_SCRIPT_CODE = `/**
  * Petalorah Complete E-Commerce Database & Google Drive Storage Bridge
@@ -474,6 +480,38 @@ function doGet(e) {
         });
       }
       return ContentService.createTextOutput(JSON.stringify({ status: 'success', products: products }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // ACTION: Return Customer Reviews
+    if (action === 'getReviews') {
+      var revSheet = ss.getSheetByName('Reviews');
+      if (!revSheet || revSheet.getLastRow() <= 1) {
+        return ContentService.createTextOutput(JSON.stringify({ status: 'success', reviews: [] }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+      var rData = revSheet.getDataRange().getValues();
+      var rRows = rData.slice(1);
+      var reviews = [];
+      for (var r = 0; r < rRows.length; r++) {
+        var rRow = rRows[r];
+        if (!rRow[0]) continue;
+        reviews.push({
+          id: String(rRow[0]),
+          date: String(rRow[1] || 'Recently'),
+          customerName: String(rRow[2] || 'Customer'),
+          city: String(rRow[3] || ''),
+          rating: parseInt(rRow[4], 10) || 5,
+          productName: String(rRow[5] || ''),
+          productId: rRow[6] ? String(rRow[6]) : undefined,
+          category: String(rRow[7] || 'keychain'),
+          comment: String(rRow[8] || ''),
+          photo: rRow[9] ? String(rRow[9]) : undefined,
+          verifiedBuyer: rRow[10] === true || String(rRow[10]).toLowerCase() === 'true',
+          helpfulCount: parseInt(rRow[11], 10) || 0
+        });
+      }
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', reviews: reviews }))
         .setMimeType(ContentService.MimeType.JSON);
     }
     
@@ -630,6 +668,65 @@ function doPost(e) {
         status: 'success',
         count: rowsToAppend.length
       })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // ACTION: Sync / Save All Reviews
+    if (data.action === 'saveReviews' && Array.isArray(data.reviews)) {
+      var revHeaders = ['ID', 'Date', 'Customer Name', 'City', 'Rating', 'Product Name', 'Product ID', 'Category', 'Comment', 'Photo URL', 'Verified Buyer', 'Helpful Count'];
+      var revSheet = getOrCreateSheet(ss, 'Reviews', revHeaders);
+      
+      if (revSheet.getLastRow() > 1) {
+        revSheet.deleteRows(2, revSheet.getLastRow() - 1);
+      }
+      
+      var revRowsToAppend = data.reviews.map(function(r) {
+        return [
+          r.id,
+          r.date || '',
+          r.customerName || 'Customer',
+          r.city || '',
+          r.rating || 5,
+          r.productName || '',
+          r.productId || '',
+          r.category || 'keychain',
+          r.comment || '',
+          r.photo || '',
+          r.verifiedBuyer ? 'TRUE' : 'FALSE',
+          r.helpfulCount || 0
+        ];
+      });
+      
+      if (revRowsToAppend.length > 0) {
+        revSheet.getRange(2, 1, revRowsToAppend.length, revHeaders.length).setValues(revRowsToAppend);
+      }
+      
+      return ContentService.createTextOutput(JSON.stringify({
+        status: 'success',
+        count: revRowsToAppend.length
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // ACTION: Add Single Customer Review
+    if (data.action === 'addReview' && data.review) {
+      var revSingleHeaders = ['ID', 'Date', 'Customer Name', 'City', 'Rating', 'Product Name', 'Product ID', 'Category', 'Comment', 'Photo URL', 'Verified Buyer', 'Helpful Count'];
+      var revSingleSheet = getOrCreateSheet(ss, 'Reviews', revSingleHeaders);
+      var r = data.review;
+      revSingleSheet.appendRow([
+        r.id,
+        r.date || 'Just now',
+        r.customerName || 'Customer',
+        r.city || '',
+        r.rating || 5,
+        r.productName || '',
+        r.productId || '',
+        r.category || 'keychain',
+        r.comment || '',
+        r.photo || '',
+        r.verifiedBuyer ? 'TRUE' : 'FALSE',
+        r.helpfulCount || 0
+      ]);
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', reviewId: r.id }))
+        .setMimeType(ContentService.MimeType.JSON);
     }
     
     // DEFAULT ACTION: Orders insert or update
