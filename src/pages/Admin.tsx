@@ -620,12 +620,19 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
     settings.creationOfTheWeekProductId || 'four_tulips_pot'
   );
   const [settingsSuccessMsg, setSettingsSuccessMsg] = useState<string | null>(null);
+  const [sheetSaveSuccessMsg, setSheetSaveSuccessMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (settings.creationOfTheWeekProductId) {
       setCreationOfTheWeekInput(settings.creationOfTheWeekProductId);
     }
   }, [settings.creationOfTheWeekProductId]);
+
+  useEffect(() => {
+    if (settings.googleSheetWebhookUrl) {
+      setGoogleSheetInput(settings.googleSheetWebhookUrl);
+    }
+  }, [settings.googleSheetWebhookUrl]);
 
   const handleSetCreationOfTheWeek = (productId: string) => {
     updateSettings({ creationOfTheWeekProductId: productId });
@@ -677,7 +684,22 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
       creationOfTheWeekProductId: creationOfTheWeekInput,
     });
     setSettingsSuccessMsg('Store & Showcase settings saved successfully!');
-    setTimeout(() => setSettingsSuccessMsg(null), 3000);
+    setSheetSaveSuccessMsg('✅ Google Sheets Webhook URL saved successfully!');
+    setTimeout(() => {
+      setSettingsSuccessMsg(null);
+      setSheetSaveSuccessMsg(null);
+    }, 4000);
+  };
+
+  const handleSaveGoogleSheetUrl = () => {
+    const cleanUrl = googleSheetInput.trim();
+    if (!cleanUrl) {
+      alert('Please enter a Google Sheet URL or Apps Script URL.');
+      return;
+    }
+    updateSettings({ googleSheetWebhookUrl: cleanUrl });
+    setSheetSaveSuccessMsg('✅ Google Sheets Webhook URL saved successfully!');
+    setTimeout(() => setSheetSaveSuccessMsg(null), 4000);
   };
 
   const handleTestGoogleSheet = async () => {
@@ -2897,10 +2919,11 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
                     />
                     <button
                       type="button"
-                      onClick={handleSaveSettings}
-                      className="px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow transition-all flex-shrink-0"
+                      onClick={handleSaveGoogleSheetUrl}
+                      className="px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow transition-all flex-shrink-0 flex items-center gap-1.5"
                     >
-                      Save URL
+                      <Check size={14} />
+                      <span>Save URL</span>
                     </button>
                   </div>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 leading-normal">
@@ -2908,6 +2931,12 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
                     ⚡ <strong>Option 2 (Bidirectional):</strong> Paste your Google Apps Script Web App URL to both live query and sync orders back and forth.
                   </p>
                 </div>
+
+                {sheetSaveSuccessMsg && (
+                  <div className="p-3 rounded-xl text-xs font-bold flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 animate-in fade-in">
+                    <CheckCircle size={16} /> {sheetSaveSuccessMsg}
+                  </div>
+                )}
 
                 {sheetTestStatus && (
                   <div

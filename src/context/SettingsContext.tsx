@@ -65,8 +65,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const refreshSettingsFromCloud = useCallback(async () => {
     try {
-      const cloudSettings = await getCloudItem<SiteSettings>(CLOUD_KEYS.SETTINGS, DEFAULT_SETTINGS);
-      if (cloudSettings) {
+      const cloudSettings = await getCloudItem<SiteSettings | null>(CLOUD_KEYS.SETTINGS, null);
+      if (cloudSettings && typeof cloudSettings === 'object' && Object.keys(cloudSettings).length > 0) {
         setSettings((prev) => ({ ...prev, ...cloudSettings }));
       }
     } catch (err) {
@@ -79,7 +79,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     refreshSettingsFromCloud();
 
     const unsubscribe = onCloudChange<SiteSettings>(CLOUD_KEYS.SETTINGS, (latestSettings) => {
-      setSettings((prev) => ({ ...prev, ...latestSettings }));
+      if (latestSettings && typeof latestSettings === 'object') {
+        setSettings((prev) => ({ ...prev, ...latestSettings }));
+      }
     });
 
     const onVisibilityChange = () => {
@@ -111,10 +113,17 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [settings]);
 
   const updateSettings = (newSettings: Partial<SiteSettings>) => {
-    const updated = { ...settings, ...newSettings };
-    setSettings(updated);
-    // Push to cloud store for multi-device sync
-    saveCloudItem(CLOUD_KEYS.SETTINGS, updated);
+    setSettings((prev) => {
+      const updated = { ...prev, ...newSettings };
+      try {
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to save site settings:', e);
+      }
+      // Push to cloud store for multi-device sync if configured
+      saveCloudItem(CLOUD_KEYS.SETTINGS, updated);
+      return updated;
+    });
   };
 
   const verifyPin = (pin: string): boolean => {
