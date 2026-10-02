@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { X, Upload, Sparkles, CheckCircle, Trash2, Wand2, FileText } from 'lucide-react';
 import { type Product, DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE } from '../../data/products';
 import { compressImageFile } from '../../lib/imageCompressor';
-import { useSettings } from '../../context/SettingsContext';
-import { uploadImageToGoogleDrive } from '../../lib/googleDriveStorage';
 
 interface ProductFormModalProps {
   product?: Product | null;
@@ -18,8 +16,6 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   onClose,
   onSave,
 }) => {
-  const { settings } = useSettings();
-  const webhookUrl = settings.googleSheetWebhookUrl || (import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL as string) || '';
 
   const [name, setName] = useState(product?.name || '');
   const [numericPrice, setNumericPrice] = useState<number>(product?.numericPrice || 50);
@@ -63,7 +59,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Handle local image file upload -> upload to Google Drive or fallback to compressed JPEG
+  // Handle local image file upload with compression
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -75,20 +71,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
       setUploadStatusMsg('Optimizing image...');
       try {
         const compressed = await compressImageFile(file, 1000, 0.85);
-        if (webhookUrl && webhookUrl.includes('script.google.com')) {
-          setUploadStatusMsg('Uploading to Google Drive (15 GB Storage)...');
-          const uploadRes = await uploadImageToGoogleDrive(compressed, file.name, webhookUrl);
-          if (uploadRes.success && uploadRes.url) {
-            setImg(uploadRes.url);
-          } else {
-            console.warn('Google Drive upload notice:', uploadRes.error);
-            setImg(compressed);
-          }
-        } else {
-          setImg(compressed);
-        }
+        setImg(compressed);
       } catch (err) {
-        console.error('Failed to compress/upload image:', err);
+        console.error('Failed to compress image:', err);
         alert('Failed to read and process image file.');
       } finally {
         setIsUploading(false);
@@ -295,13 +280,11 @@ Approximate preparation time: ${prepTime}`;
                   <div>
                     <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
                       {isUploading
-                        ? (uploadStatusMsg || 'Uploading to Google Drive...')
+                        ? (uploadStatusMsg || 'Optimizing image...')
                         : 'Click or drag image file here to upload'}
                     </p>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      {webhookUrl
-                        ? '☁️ Auto-uploads to your Google Drive (15 GB Free Storage)'
-                        : 'Supports PNG, JPG, WEBP • Connect Google Sheet in Settings for Free 15GB Drive Storage'}
+                      Supports PNG, JPG, WEBP • Automatically compressed for fast loading
                     </p>
                   </div>
                 </div>

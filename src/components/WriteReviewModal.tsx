@@ -3,10 +3,8 @@ import { X, Star, Upload, Sparkles, CheckCircle2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useReviews } from '../context/ReviewContext';
 import { useProducts } from '../context/ProductContext';
-import { useSettings } from '../context/SettingsContext';
 import type { Review } from '../data/reviews';
 import { compressImageFile } from '../lib/imageCompressor';
-import { uploadImageToGoogleDrive } from '../lib/googleDriveStorage';
 
 interface WriteReviewModalProps {
   isOpen: boolean;
@@ -21,8 +19,6 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
 }) => {
   const { addReview } = useReviews();
   const { products } = useProducts();
-  const { settings } = useSettings();
-  const webhookUrl = settings.googleSheetWebhookUrl || (import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL as string) || '';
 
   const [rating, setRating] = useState<number>(5);
   const [hoverRating, setHoverRating] = useState<number>(0);
@@ -46,16 +42,7 @@ export const WriteReviewModal: React.FC<WriteReviewModalProps> = ({
       setIsUploadingPhoto(true);
       try {
         const compressed = await compressImageFile(file, 800, 0.75);
-        if (webhookUrl && webhookUrl.includes('script.google.com')) {
-          const res = await uploadImageToGoogleDrive(compressed, file.name, webhookUrl);
-          if (res.success && res.url) {
-            setPhoto(res.url);
-          } else {
-            setPhoto(compressed);
-          }
-        } else {
-          setPhoto(compressed);
-        }
+        setPhoto(compressed);
       } catch (err) {
         console.error('Failed to compress review photo:', err);
       } finally {
