@@ -2,21 +2,22 @@ import { createClient } from '@supabase/supabase-js';
 
 // Retrieve credentials strictly from environment variables without expired fallbacks
 const rawUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+const cleanUrl = rawUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
 const rawKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 
 // Avoid using expired/quota-exceeded demo project
 const EXPIRED_PROJECT_ID = 'vlbpolgzrnebajfmlisx';
 
 export const isSupabaseConfigured = Boolean(
-  rawUrl &&
+  cleanUrl &&
   rawKey &&
-  !rawUrl.includes('YOUR_') &&
+  !cleanUrl.includes('YOUR_') &&
   !rawKey.includes('YOUR_') &&
-  !rawUrl.includes(EXPIRED_PROJECT_ID) &&
-  rawUrl.startsWith('http')
+  !cleanUrl.includes(EXPIRED_PROJECT_ID) &&
+  cleanUrl.startsWith('http')
 );
 
 export const supabase = isSupabaseConfigured
-  ? createClient(rawUrl, rawKey)
+  ? createClient(cleanUrl, rawKey)
   : null;
 

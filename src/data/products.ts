@@ -27,7 +27,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 50,
     category: 'keychain',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/rose.jpg',
+    img: '/assets/products/rose.webp',
     badge: 'Best Seller',
     isBestSeller: true
   },
@@ -38,7 +38,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 50,
     category: 'keychain',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/tulip.png',
+    img: '/assets/products/tulip.webp',
     badge: ''
   },
   {
@@ -48,7 +48,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 60,
     category: 'keychain',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/evil_eye.jpg',
+    img: '/assets/products/evil_eye.webp',
     badge: ''
   },
   {
@@ -58,7 +58,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 80,
     category: 'keychain',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/duck.png',
+    img: '/assets/products/duck.webp',
     badge: ''
   },
   {
@@ -68,7 +68,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 80,
     category: 'keychain',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/moon_cloud.jpg',
+    img: '/assets/products/moon_cloud.webp',
     badge: ''
   },
   {
@@ -78,7 +78,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 60,
     category: 'keychain',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/cloud.jpg',
+    img: '/assets/products/cloud.webp',
     badge: ''
   },
   {
@@ -88,7 +88,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 80,
     category: 'keychain',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/paw_print.jpg',
+    img: '/assets/products/paw_print.webp',
     badge: ''
   },
   {
@@ -98,7 +98,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 60,
     category: 'keychain',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/lily.jpg',
+    img: '/assets/products/lily.webp',
     badge: 'New'
   },
   {
@@ -108,7 +108,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 50,
     category: 'keychain',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/cherry.jpg',
+    img: '/assets/products/cherry.webp',
     badge: ''
   },
   {
@@ -118,7 +118,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 60,
     category: 'keychain',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/rainbow.jpg',
+    img: '/assets/products/rainbow.webp',
     badge: ''
   },
   {
@@ -128,7 +128,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 60,
     category: 'keychain',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/daisy_pot.png',
+    img: '/assets/products/daisy_pot.webp',
     badge: ''
   },
   {
@@ -138,7 +138,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 45,
     category: 'keychain',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/bow.png',
+    img: '/assets/products/bow.webp',
     badge: ''
   },
   {
@@ -148,7 +148,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 80,
     category: 'custom',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/custom_jersey.jpg',
+    img: '/assets/products/custom_jersey.webp',
     badge: 'Limited'
   },
   {
@@ -158,7 +158,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 60,
     category: 'custom',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/custom_letter.jpg',
+    img: '/assets/products/custom_letter.webp',
     badge: ''
   },
   {
@@ -168,7 +168,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 80,
     category: 'keychain',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/sunflower.jpg',
+    img: '/assets/products/sunflower.webp',
     badge: ''
   },
   {
@@ -178,7 +178,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 90,
     category: 'keychain',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/luffy.jpg',
+    img: '/assets/products/luffy.webp',
     badge: 'Limited'
   },
   {
@@ -188,7 +188,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 90,
     category: 'keychain',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/batman.jpg',
+    img: '/assets/products/batman.webp',
     badge: ''
   },
 
@@ -201,7 +201,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 169,
     category: 'tabletop',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/single_tulip_pot.jpg',
+    img: '/assets/products/single_tulip_pot.webp',
     badge: 'New'
   },
   {
@@ -212,7 +212,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 199,
     category: 'tabletop',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/four_tulips_pot.jpg',
+    img: '/assets/products/four_tulips_pot.webp',
     badge: 'Best Seller',
     isBestSeller: true
   },
@@ -224,7 +224,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 199,
     category: 'tabletop',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/sunflower_pot.jpg',
+    img: '/assets/products/sunflower_pot.webp',
     badge: ''
   },
 
@@ -236,7 +236,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 249,
     category: 'bouquet',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/flower_bouquets.png',
+    img: '/assets/products/flower_bouquets.webp',
     badge: 'Best Seller',
     isBestSeller: true,
     isComingSoon: false
@@ -248,7 +248,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 299,
     category: 'bouquet',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/customised_birthday.png',
+    img: '/assets/products/customised_birthday.webp',
     badge: 'New',
     isComingSoon: false
   },
@@ -259,7 +259,7 @@ export const ALL_PRODUCTS: Product[] = [
     numericPrice: 279,
     category: 'bouquet',
     description: DEFAULT_PRODUCT_DESCRIPTION_TEMPLATE,
-    img: '/assets/products/blue_rose.jpg',
+    img: '/assets/products/blue_rose.webp',
     badge: 'Limited',
     isComingSoon: false
   }

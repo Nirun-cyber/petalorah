@@ -20,7 +20,6 @@ import { CartDrawer } from './components/CartDrawer';
 import { MobileStickyCart } from './components/MobileStickyCart';
 import { CartToast } from './components/CartToast';
 import { ClipboardFallbackModal } from './components/ClipboardFallbackModal';
-import { OrderTrackingModal } from './components/OrderTrackingModal';
 import { initCloudRealtimeSync } from './lib/cloudStore';
 import Lenis from 'lenis';
 
@@ -46,7 +45,6 @@ const getCategoryFromPath = (): 'keychain' | 'tabletop' | 'bouquet' | 'custom' =
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<'home' | 'about' | 'shop' | 'portfolio' | 'keychains' | 'tabletops' | 'bouquets' | 'admin' | 'login'>(getTabFromPath);
   const [shopCategory, setShopCategory] = useState<'keychain' | 'tabletop' | 'bouquet' | 'custom'>(getCategoryFromPath);
-  const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
 
   // Sync tab with browser URL history
   useEffect(() => {
@@ -141,7 +139,6 @@ export const App: React.FC = () => {
                   <Navbar
                     currentTab={currentTab}
                     onNavigate={handleNavigate}
-                    onOpenTracking={() => setIsTrackingModalOpen(true)}
                     isDarkMode={isDarkMode}
                     toggleDarkMode={() => {}}
                   />
@@ -154,7 +151,6 @@ export const App: React.FC = () => {
                         onNavigateToKeychains={() => handleNavigate('keychains')}
                         onNavigateToTableTops={() => handleNavigate('tabletops')}
                         onNavigateToAbout={() => handleNavigate('about')}
-                        onOpenTracking={() => setIsTrackingModalOpen(true)}
                         isDarkMode={isDarkMode}
                         toggleDarkMode={() => {}}
                       />
@@ -210,7 +206,6 @@ export const App: React.FC = () => {
                   {/* Footer */}
                   <Footer
                     onNavigate={handleNavigate}
-                    onOpenTracking={() => setIsTrackingModalOpen(true)}
                   />
 
                   {/* Cart Drawer & Modals */}
@@ -218,10 +213,6 @@ export const App: React.FC = () => {
                   <MobileStickyCart />
                   <CartToast />
                   <ClipboardFallbackModal />
-                  <OrderTrackingModal
-                    isOpen={isTrackingModalOpen}
-                    onClose={() => setIsTrackingModalOpen(false)}
-                  />
                 </div>
                   </GalleryProvider>
                 </ReviewProvider>

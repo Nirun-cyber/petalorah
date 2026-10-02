@@ -15,7 +15,6 @@ interface HomeProps {
   onNavigateToKeychains: () => void;
   onNavigateToTableTops: () => void;
   onNavigateToAbout?: () => void;
-  onOpenTracking?: () => void;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
 }

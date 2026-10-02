@@ -32,7 +32,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   whatsappNumber: '916380437068',
   instagramUsername: 'petalorah',
   adminPin: '240812',
-  googleSheetWebhookUrl: (import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL as string) || '',
+  googleSheetWebhookUrl: '',
   creationOfTheWeekProductId: 'four_tulips_pot',
   shippingFeeCoimbatore: 60,
   shippingFeeTamilNadu: 80,

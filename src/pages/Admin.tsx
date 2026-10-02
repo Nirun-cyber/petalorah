@@ -21,7 +21,6 @@ import {
   AlertCircle,
   Clock,
   Truck,
-  FileSpreadsheet,
   Copy,
   Check,
   X,
@@ -53,17 +52,6 @@ import { ProductFormModal } from '../components/admin/ProductFormModal';
 import { isSupabaseConfigured } from '../lib/supabase';
 import type { Product } from '../data/products';
 import type { Review } from '../data/reviews';
-import {
-  syncOrderToGoogleSheets,
-  syncBatchOrdersToGoogleSheets,
-  testGoogleSheetsConnection,
-  GOOGLE_APPS_SCRIPT_CODE,
-} from '../lib/googleSheets';
-import {
-  uploadImageToGoogleDrive,
-  syncProductsToGoogleSheet,
-  fetchProductsFromGoogleSheet,
-} from '../lib/googleDriveStorage';
 
 interface AdminProps {
   onNavigateHome: () => void;
@@ -78,10 +66,11 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
     toggleBestSeller,
     toggleComingSoon,
     resetToDefaultProducts,
+    clearAllProducts,
     forceRefreshProducts,
     importProducts,
   } = useProducts();
-  const { orders, updateOrderStatus, updateOrderTracking, deleteOrder, clearAllOrders, pullOrdersFromGoogleSheet, refreshOrdersFromCloud } = useOrders();
+  const { orders, updateOrderStatus, updateOrderTracking, deleteOrder, clearAllOrders, refreshOrdersFromCloud } = useOrders();
   const { settings, updateSettings, verifyPin, changePin, refreshSettingsFromCloud } = useSettings();
 
   // Cloud Sync State
@@ -119,8 +108,6 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
     resetReviewsToDefault,
     averageRating,
     refreshReviewsFromCloud,
-    syncReviewsToSheet,
-    pullReviewsFromSheet,
     isCloudSynced: isReviewsCloudSynced,
   } = useReviews();
 
@@ -136,8 +123,6 @@ export const Admin: React.FC<AdminProps> = ({ onNavigateHome }) => {
   const [reviewFormPhoto, setReviewFormPhoto] = useState('');
   const [reviewFormVerified, setReviewFormVerified] = useState(true);
   const [reviewStatusMsg, setReviewStatusMsg] = useState<string | null>(null);
-  const [isSyncingReviews, setIsSyncingReviews] = useState(false);
-  const [isPullingReviews, setIsPullingReviews] = useState(false);
 
   // Gallery Context & State
   const {
@@ -505,32 +490,6 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
     setTimeout(() => setReviewStatusMsg(null), 3500);
   };
 
-  const handleSyncReviewsToSheet = async () => {
-    setIsSyncingReviews(true);
-    setReviewStatusMsg(null);
-    const res = await syncReviewsToSheet();
-    setIsSyncingReviews(false);
-    if (res.success) {
-      setReviewStatusMsg(`✅ Dispatched ${res.count || reviews.length} customer reviews to Google Sheets!`);
-    } else {
-      setReviewStatusMsg(`❌ ${res.error || 'Failed to sync reviews to Google Sheets.'}`);
-    }
-    setTimeout(() => setReviewStatusMsg(null), 5000);
-  };
-
-  const handlePullReviewsFromSheet = async () => {
-    setIsPullingReviews(true);
-    setReviewStatusMsg(null);
-    const res = await pullReviewsFromSheet();
-    setIsPullingReviews(false);
-    if (res.success) {
-      setReviewStatusMsg(`✅ Refreshed ${res.count || 0} customer reviews from Google Sheets!`);
-    } else {
-      setReviewStatusMsg(`❌ ${res.error || 'Failed to pull reviews from Google Sheets.'}`);
-    }
-    setTimeout(() => setReviewStatusMsg(null), 5000);
-  };
-
   const handleDeleteReview = (id: string, name: string) => {
     if (window.confirm(`Are you sure you want to delete the review by "${name}"?`)) {
       deleteReview(id);
@@ -615,24 +574,18 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
   const [announcementInput, setAnnouncementInput] = useState(settings.announcementText);
   const [whatsappInput, setWhatsappInput] = useState(settings.whatsappNumber);
   const [instagramInput, setInstagramInput] = useState(settings.instagramUsername);
-  const [googleSheetInput, setGoogleSheetInput] = useState(settings.googleSheetWebhookUrl || '');
   const [creationOfTheWeekInput, setCreationOfTheWeekInput] = useState(
     settings.creationOfTheWeekProductId || 'four_tulips_pot'
   );
   const [settingsSuccessMsg, setSettingsSuccessMsg] = useState<string | null>(null);
-  const [sheetSaveSuccessMsg, setSheetSaveSuccessMsg] = useState<string | null>(null);
+  const [freshStartStatus, setFreshStartStatus] = useState<string | null>(null);
+  const [productStatusMsg, setProductStatusMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (settings.creationOfTheWeekProductId) {
       setCreationOfTheWeekInput(settings.creationOfTheWeekProductId);
     }
   }, [settings.creationOfTheWeekProductId]);
-
-  useEffect(() => {
-    if (settings.googleSheetWebhookUrl) {
-      setGoogleSheetInput(settings.googleSheetWebhookUrl);
-    }
-  }, [settings.googleSheetWebhookUrl]);
 
   const handleSetCreationOfTheWeek = (productId: string) => {
     updateSettings({ creationOfTheWeekProductId: productId });
@@ -641,15 +594,6 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
     setSettingsSuccessMsg(`✨ "${prod?.name || 'Craft'}" is now featured as Creation of the Week on the homepage!`);
     setTimeout(() => setSettingsSuccessMsg(null), 3500);
   };
-
-  // Google Sheets Integration State
-  const [isTestingSheet, setIsTestingSheet] = useState(false);
-  const [sheetTestStatus, setSheetTestStatus] = useState<string | null>(null);
-  const [isSyncingAll, setIsSyncingAll] = useState(false);
-  const [syncStatusMsg, setSyncStatusMsg] = useState<string | null>(null);
-  const [isScriptModalOpen, setIsScriptModalOpen] = useState(false);
-  const [copiedScript, setCopiedScript] = useState(false);
-  const [syncedOrderIds, setSyncedOrderIds] = useState<Record<string, boolean>>({});
 
   // Auth Submit
   const handleLogin = (e: React.FormEvent) => {
@@ -680,98 +624,30 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
       announcementText: announcementInput,
       whatsappNumber: whatsappInput,
       instagramUsername: instagramInput,
-      googleSheetWebhookUrl: googleSheetInput.trim(),
       creationOfTheWeekProductId: creationOfTheWeekInput,
     });
     setSettingsSuccessMsg('Store & Showcase settings saved successfully!');
-    setSheetSaveSuccessMsg('✅ Google Sheets Webhook URL saved successfully!');
     setTimeout(() => {
       setSettingsSuccessMsg(null);
-      setSheetSaveSuccessMsg(null);
     }, 4000);
   };
 
-  const handleSaveGoogleSheetUrl = () => {
-    const cleanUrl = googleSheetInput.trim();
-    if (!cleanUrl) {
-      alert('Please enter a Google Sheet URL or Apps Script URL.');
-      return;
+  const handleFreshStartDatabase = async () => {
+    if (
+      window.confirm(
+        '⚠️ FRESH START DATABASE CONFIRMATION\n\nThis will clear all products, order history, and local database cache from the website so you can start with a fresh Supabase database.\n\nAre you sure you want to proceed?'
+      )
+    ) {
+      await clearAllOrders();
+      await clearAllProducts();
+      localStorage.removeItem('petalorah_dynamic_products');
+      localStorage.removeItem('petalorah_logged_orders');
+      localStorage.removeItem('petalorah_customer_reviews');
+      localStorage.removeItem('petalorah_coupons');
+      localStorage.removeItem('petalorah_gallery_items');
+      setFreshStartStatus('✅ Database and cache cleared! Ready for your fresh Supabase connection.');
+      setTimeout(() => setFreshStartStatus(null), 5000);
     }
-    updateSettings({ googleSheetWebhookUrl: cleanUrl });
-    setSheetSaveSuccessMsg('✅ Google Sheets Webhook URL saved successfully!');
-    setTimeout(() => setSheetSaveSuccessMsg(null), 4000);
-  };
-
-  const handleTestGoogleSheet = async () => {
-    const url = googleSheetInput.trim() || settings.googleSheetWebhookUrl;
-    if (!url) {
-      alert('Please enter your Google Sheet link or Apps Script Webhook URL first.');
-      return;
-    }
-    setIsTestingSheet(true);
-    setSheetTestStatus(null);
-    const res = await testGoogleSheetsConnection(url);
-    setIsTestingSheet(false);
-    if (res.success) {
-      setSheetTestStatus(`✅ ${res.message}`);
-    } else {
-      setSheetTestStatus(`❌ ${res.message}`);
-    }
-    setTimeout(() => setSheetTestStatus(null), 6000);
-  };
-
-  const handlePullOrdersFromSheet = async () => {
-    const url = googleSheetInput.trim() || settings.googleSheetWebhookUrl;
-    if (!url) {
-      alert('Please enter and save your Google Sheet link or Apps Script URL first.');
-      return;
-    }
-    setIsSyncingAll(true);
-    setSyncStatusMsg(null);
-    const res = await pullOrdersFromGoogleSheet();
-    setIsSyncingAll(false);
-    if (res.error) {
-      setSyncStatusMsg(`❌ ${res.error}`);
-    } else {
-      setSyncStatusMsg(`✅ Imported ${res.count} new orders from Google Sheet! Total store orders: ${orders.length + res.count}`);
-    }
-    setTimeout(() => setSyncStatusMsg(null), 5000);
-  };
-
-  const handleSyncAllOrders = async () => {
-    const url = googleSheetInput.trim() || settings.googleSheetWebhookUrl;
-    if (!url) {
-      alert('Please enter and save your Google Sheet Webhook URL first.');
-      return;
-    }
-    if (orders.length === 0) {
-      alert('No orders to sync yet.');
-      return;
-    }
-    setIsSyncingAll(true);
-    setSyncStatusMsg(null);
-    const res = await syncBatchOrdersToGoogleSheets(orders, url);
-    setIsSyncingAll(false);
-    setSyncStatusMsg(`✅ Dispatched ${res.success} of ${res.total} orders to Google Sheets!`);
-    setTimeout(() => setSyncStatusMsg(null), 4500);
-  };
-
-  const handleSyncSingleOrder = async (order: LoggedOrder) => {
-    const url = googleSheetInput.trim() || settings.googleSheetWebhookUrl;
-    if (!url) {
-      alert('Please configure your Google Sheet Webhook URL in Settings first.');
-      return;
-    }
-    const ok = await syncOrderToGoogleSheets(order, url);
-    if (ok) {
-      setSyncedOrderIds((prev) => ({ ...prev, [order.id]: true }));
-    }
-  };
-
-  const handleCopyScript = () => {
-    navigator.clipboard.writeText(GOOGLE_APPS_SCRIPT_CODE);
-    setCopiedScript(true);
-    setTimeout(() => setCopiedScript(false), 3000);
   };
 
   const handleOpenEditModal = (prod: Product) => {
@@ -782,12 +658,12 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
   const handleSaveProduct = (productData: Omit<Product, 'id'>) => {
     if (editingProduct) {
       updateProduct(editingProduct.id, productData);
-      setProductSyncSheetMsg(`✅ Updated "${productData.name}"! Synced to your store & Google Sheets.`);
+      setProductStatusMsg(`✅ Updated "${productData.name}"!`);
     } else {
       addProduct(productData);
-      setProductSyncSheetMsg(`✨ Added "${productData.name}"! Synced to your store & Google Sheets.`);
+      setProductStatusMsg(`✨ Added "${productData.name}"!`);
     }
-    setTimeout(() => setProductSyncSheetMsg(null), 4500);
+    setTimeout(() => setProductStatusMsg(null), 4500);
   };
 
   const handleDeleteProduct = (id: string, name: string) => {
@@ -835,46 +711,6 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
     };
     reader.readAsText(file);
     e.target.value = '';
-  };
-
-  const [isSyncingProductsSheet, setIsSyncingProductsSheet] = useState(false);
-  const [productSyncSheetMsg, setProductSyncSheetMsg] = useState<string | null>(null);
-
-  const handleExportProductsToSheet = async () => {
-    const url = googleSheetInput.trim() || settings.googleSheetWebhookUrl;
-    if (!url || !url.includes('script.google.com')) {
-      alert('Please save your Google Apps Script Web App URL in Store Settings first.');
-      return;
-    }
-    setIsSyncingProductsSheet(true);
-    setProductSyncSheetMsg(null);
-    const res = await syncProductsToGoogleSheet(products, url);
-    setIsSyncingProductsSheet(false);
-    if (res.success) {
-      setProductSyncSheetMsg(`✅ Synced ${res.count} products to your Google Sheet 'Products' tab!`);
-    } else {
-      setProductSyncSheetMsg(`❌ ${res.error || 'Failed to sync products'}`);
-    }
-    setTimeout(() => setProductSyncSheetMsg(null), 5000);
-  };
-
-  const handleImportProductsFromSheet = async () => {
-    const url = googleSheetInput.trim() || settings.googleSheetWebhookUrl;
-    if (!url || !url.includes('script.google.com')) {
-      alert('Please save your Google Apps Script Web App URL in Store Settings first.');
-      return;
-    }
-    setIsSyncingProductsSheet(true);
-    setProductSyncSheetMsg(null);
-    const res = await fetchProductsFromGoogleSheet(url);
-    setIsSyncingProductsSheet(false);
-    if (res.products && res.products.length > 0) {
-      importProducts(res.products);
-      setProductSyncSheetMsg(`✅ Loaded ${res.products.length} products from your Google Sheet!`);
-    } else {
-      setProductSyncSheetMsg(`❌ ${res.error || 'No products found in Google Sheet'}`);
-    }
-    setTimeout(() => setProductSyncSheetMsg(null), 5000);
   };
 
   const handleChangePinSubmit = (e: React.FormEvent) => {
@@ -1266,28 +1102,6 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <button
                   type="button"
-                  onClick={handleExportProductsToSheet}
-                  disabled={isSyncingProductsSheet}
-                  className="px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 text-xs font-bold flex items-center gap-1.5 transition-colors"
-                  title="Save/sync full catalog to Google Sheet 'Products' tab"
-                >
-                  <FileSpreadsheet size={14} className="text-emerald-600" />
-                  <span className="hidden sm:inline">{isSyncingProductsSheet ? 'Syncing...' : 'Push to Sheet'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleImportProductsFromSheet}
-                  disabled={isSyncingProductsSheet}
-                  className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors"
-                  title="Import products from Google Sheet"
-                >
-                  <FileSpreadsheet size={14} className="text-slate-500" />
-                  <span className="hidden sm:inline">Pull Sheet</span>
-                </button>
-
-                <button
-                  type="button"
                   onClick={handleExportCatalog}
                   className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors"
                   title="Export products as JSON backup"
@@ -1311,6 +1125,20 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
                 </label>
 
                 <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm('Clear all products from the catalog? This will allow you to freshly seed or import your products.')) {
+                      clearAllProducts();
+                    }
+                  }}
+                  className="px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-900/40 text-rose-500 hover:bg-rose-50 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  title="Clear all products"
+                >
+                  <Trash2 size={14} />
+                  <span className="hidden md:inline">Clear All</span>
+                </button>
+
+                <button
                   onClick={handleResetProducts}
                   className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800 text-xs font-bold flex items-center gap-1.5 hover:bg-slate-100 transition-colors"
                   title="Reset to default products"
@@ -1329,15 +1157,15 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
               </div>
             </div>
 
-            {productSyncSheetMsg && (
+            {productStatusMsg && (
               <div
                 className={`p-3 rounded-2xl text-xs font-bold flex items-center gap-2 ${
-                  productSyncSheetMsg.startsWith('✅')
+                  productStatusMsg.startsWith('✅') || productStatusMsg.startsWith('✨')
                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800'
                     : 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800'
                 }`}
               >
-                {productSyncSheetMsg}
+                {productStatusMsg}
               </div>
             )}
 
@@ -1508,18 +1336,6 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
 
                 {orders.length > 0 && (
                   <button
-                    onClick={handleSyncAllOrders}
-                    disabled={isSyncingAll}
-                    className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-all"
-                    title="Sync all orders to Google Sheets for your accounting app"
-                  >
-                    <FileSpreadsheet size={15} />
-                    <span>{isSyncingAll ? 'Syncing...' : 'Sync to Sheets'}</span>
-                  </button>
-                )}
-
-                {orders.length > 0 && (
-                  <button
                     onClick={() => {
                       if (window.confirm('Clear all order history logs?')) clearAllOrders();
                     }}
@@ -1530,12 +1346,6 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
                 )}
               </div>
             </div>
-
-            {syncStatusMsg && (
-              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-2xl flex items-center gap-2">
-                <Check size={16} /> {syncStatusMsg}
-              </div>
-            )}
 
             {filteredOrders.length === 0 ? (
               <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center border border-slate-100 dark:border-slate-800">
@@ -1597,22 +1407,6 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
                           <option value="Delivered">Status: Delivered</option>
                           <option value="Cancelled">Status: Cancelled</option>
                         </select>
-
-                        {/* Sync Single Order to Sheet */}
-                        <button
-                          onClick={() => handleSyncSingleOrder(ord)}
-                          className={`px-2 py-1 rounded-lg border text-xs font-bold flex items-center gap-1 transition-colors ${
-                            syncedOrderIds[ord.id]
-                              ? 'bg-emerald-50 text-emerald-600 border-emerald-300'
-                              : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-emerald-600 hover:bg-emerald-50'
-                          }`}
-                          title="Sync this order row to Google Sheets"
-                        >
-                          <FileSpreadsheet size={14} className="text-emerald-600" />
-                          <span className="hidden sm:inline">
-                            {syncedOrderIds[ord.id] ? 'Synced' : 'Sheet'}
-                          </span>
-                        </button>
 
                         <button
                           onClick={() => deleteOrder(ord.id)}
@@ -2140,28 +1934,6 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  onClick={handlePullReviewsFromSheet}
-                  disabled={isPullingReviews}
-                  className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50"
-                  title="Fetch latest reviews from Google Sheets"
-                >
-                  <RefreshCw size={13} className={isPullingReviews ? 'animate-spin' : ''} />
-                  <span>{isPullingReviews ? 'Pulling...' : 'Pull Sheets'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleSyncReviewsToSheet}
-                  disabled={isSyncingReviews}
-                  className="px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50"
-                  title="Sync all reviews to Google Sheets"
-                >
-                  <FileSpreadsheet size={13} />
-                  <span>{isSyncingReviews ? 'Syncing...' : 'Sync to Sheets'}</span>
-                </button>
-
-                <button
-                  type="button"
                   onClick={handleOpenAddReview}
                   className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-1.5"
                 >
@@ -2191,18 +1963,11 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
               <div className="flex items-center gap-2">
                 <span className={`inline-block w-2.5 h-2.5 rounded-full ${isReviewsCloudSynced ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'bg-amber-400'}`} />
                 <span className="font-semibold text-slate-700 dark:text-slate-200">
-                  {isReviewsCloudSynced ? 'Google Sheets Cloud Sync Active' : 'Offline / Local Storage'}
+                  {isReviewsCloudSynced ? 'Supabase Cloud Sync Active' : 'Offline / Local Storage'}
                 </span>
                 <span className="text-slate-400 hidden sm:inline">•</span>
-                <span className="text-slate-500 hidden sm:inline">All reviews auto-sync to 'Reviews' tab in Google Sheets</span>
+                <span className="text-slate-500 hidden sm:inline">Reviews synchronize across devices via Supabase cloud</span>
               </div>
-              <button
-                type="button"
-                onClick={handleSyncReviewsToSheet}
-                className="text-rose-500 hover:text-rose-600 font-semibold text-[11px] underline underline-offset-2"
-              >
-                Force Sync Now
-              </button>
             </div>
 
             {/* Metrics Bar */}
@@ -2863,168 +2628,35 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
               </form>
             </div>
 
-            {/* Google Sheets Free Cloud Database */}
+            {/* Supabase Cloud Database (Primary Engine) */}
             <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                    <FileSpreadsheet size={22} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold font-serif text-slate-800 dark:text-white flex items-center gap-2">
-                      Google Sheets Free Cloud Database
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${
-                        (googleSheetInput.trim() || settings.googleSheetWebhookUrl)
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                          : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                      }`}>
-                        {(googleSheetInput.trim() || settings.googleSheetWebhookUrl) ? (
-                          <>
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            Active Free Database
-                          </>
-                        ) : (
-                          'Ready to Connect (100% Free)'
-                        )}
-                      </span>
-                    </h3>
-                    <p className="text-xs text-slate-400">
-                      Sync every order ID, customer details, and live order tracking queries directly with your free Google Sheet — 100% free forever, no limits, no credit card.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setIsScriptModalOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors flex items-center gap-1.5 self-start sm:self-auto"
-                >
-                  <FileSpreadsheet size={14} className="text-emerald-600" />
-                  View Setup Guide & Script
-                </button>
-              </div>
-
-              <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
-                    Google Sheet Link or Apps Script Webhook URL
-                  </label>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <input
-                      type="url"
-                      placeholder="Paste Google Sheet URL (docs.google.com/spreadsheets/d/...) or Apps Script URL"
-                      value={googleSheetInput}
-                      onChange={(e) => setGoogleSheetInput(e.target.value)}
-                      className="flex-grow px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono text-xs text-slate-800 dark:text-white"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleSaveGoogleSheetUrl}
-                      className="px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow transition-all flex-shrink-0 flex items-center gap-1.5"
-                    >
-                      <Check size={14} />
-                      <span>Save URL</span>
-                    </button>
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 leading-normal">
-                    ✨ <strong>Option 1 (Easiest):</strong> Paste your Google Sheet URL directly (make sure Google Drive sharing is set to <em>&quot;Anyone with the link can view&quot;</em>). Orders created in your accounts app can be tracked immediately!<br />
-                    ⚡ <strong>Option 2 (Bidirectional):</strong> Paste your Google Apps Script Web App URL to both live query and sync orders back and forth.
-                  </p>
-                </div>
-
-                {sheetSaveSuccessMsg && (
-                  <div className="p-3 rounded-xl text-xs font-bold flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 animate-in fade-in">
-                    <CheckCircle size={16} /> {sheetSaveSuccessMsg}
-                  </div>
-                )}
-
-                {sheetTestStatus && (
-                  <div
-                    className={`p-3 rounded-xl text-xs font-bold flex items-center gap-2 ${
-                      sheetTestStatus.startsWith('✅')
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-rose-50 text-rose-700 border border-rose-200'
-                    }`}
-                  >
-                    {sheetTestStatus}
-                  </div>
-                )}
-
-                {syncStatusMsg && (
-                  <div
-                    className={`p-3 rounded-xl text-xs font-bold flex items-center gap-2 ${
-                      syncStatusMsg.startsWith('✅')
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-rose-50 text-rose-700 border border-rose-200'
-                    }`}
-                  >
-                    {syncStatusMsg}
-                  </div>
-                )}
-
-                <div className="flex flex-wrap items-center gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={handleTestGoogleSheet}
-                    disabled={isTestingSheet}
-                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs transition-colors flex items-center gap-1.5"
-                  >
-                    <Check size={14} className="text-emerald-500" />
-                    <span>{isTestingSheet ? 'Testing Connection...' : 'Test Connection & Orders'}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handlePullOrdersFromSheet}
-                    disabled={isSyncingAll}
-                    className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow transition-colors flex items-center gap-1.5"
-                  >
-                    <FileSpreadsheet size={14} className="text-white" />
-                    <span>{isSyncingAll ? 'Importing...' : 'Import Orders from Google Sheet'}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleSyncAllOrders}
-                    disabled={isSyncingAll}
-                    className="px-4 py-2.5 rounded-xl bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 text-white font-bold text-xs shadow transition-colors flex items-center gap-1.5"
-                  >
-                    <FileSpreadsheet size={14} className="text-emerald-400" />
-                    <span>{isSyncingAll ? 'Syncing...' : `Export Petalorah Orders to Sheet (${orders.length})`}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Supabase Cloud Database (Optional Secondary Sync) */}
-            <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 flex items-center justify-center">
                     <Database size={22} />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold font-serif text-slate-800 dark:text-white flex items-center gap-2">
-                      Supabase Cloud Database (Optional)
+                      Supabase Cloud Database (Primary Engine)
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${
                         isSupabaseConfigured
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-400'
-                          : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                          : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
                       }`}>
                         {isSupabaseConfigured ? (
                           <>
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            Connected
+                            Connected & Active
                           </>
                         ) : (
-                          'Inactive / Safe Mode (Zero Paid Limits)'
+                          'Awaiting Credentials in .env'
                         )}
                       </span>
                     </h3>
                     <p className="text-xs text-slate-400">
                       {isSupabaseConfigured
-                        ? 'Secondary PostgreSQL cloud database connected.'
-                        : 'Disabled to avoid quota limits & paid fees. Your store runs 100% free with Google Sheets and browser storage.'}
+                        ? 'Connected directly to your Supabase PostgreSQL cloud database.'
+                        : 'Connect your Supabase project by adding VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file.'}
                     </p>
                   </div>
                 </div>
@@ -3034,10 +2666,10 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
                     type="button"
                     onClick={handleSyncCloudAll}
                     disabled={isSyncingCloud}
-                    className="px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5"
+                    className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5"
                   >
                     <RefreshCw size={14} className={isSyncingCloud ? 'animate-spin' : ''} />
-                    <span>{isSyncingCloud ? 'Syncing Everything...' : 'Sync Cloud Now'}</span>
+                    <span>{isSyncingCloud ? 'Syncing...' : 'Sync Cloud Now'}</span>
                   </button>
 
                   <button
@@ -3053,20 +2685,56 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
 
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-2">
                 <p className="font-semibold text-slate-800 dark:text-slate-200">
-                  💡 How Multi-Device Synchronization Works:
+                  ⚡ Setup Your Fresh Supabase Database:
                 </p>
-                <ul className="list-disc pl-5 space-y-1 text-slate-500 dark:text-slate-400 text-[11px]">
+                <ol className="list-decimal pl-5 space-y-1 text-slate-500 dark:text-slate-400 text-[11px]">
                   <li>
-                    <strong>Real-Time Replication:</strong> When you save a product, change a price, update an announcement banner, or add a coupon, the change is broadcast immediately to all active sessions across phones and PCs.
+                    Create a new project at <a href="https://supabase.com" target="_blank" rel="noreferrer" className="text-emerald-600 underline">supabase.com</a>.
                   </li>
                   <li>
-                    <strong>Instant Tab Focus Refresh:</strong> Whenever a customer or admin switches back to the Petalorah tab or unlocks their mobile screen, the site automatically refreshes all products and banners.
+                    Click <strong>&quot;Copy Supabase SQL Setup&quot;</strong> above, open the <strong>SQL Editor</strong> tab in your Supabase dashboard, and click <strong>Run</strong>.
                   </li>
                   <li>
-                    <strong>Optional Database Expansion:</strong> Click <em>"Copy Supabase SQL Setup"</em> if you ever want to paste the full table schema directly into your Supabase Dashboard SQL Editor.
+                    Add your project URL and Anon Public Key to <code className="px-1 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-slate-800 dark:text-slate-200 font-mono">.env</code> as <code className="px-1 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-slate-800 dark:text-slate-200 font-mono">VITE_SUPABASE_URL</code> and <code className="px-1 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-slate-800 dark:text-slate-200 font-mono">VITE_SUPABASE_ANON_KEY</code>.
                   </li>
-                </ul>
+                  <li>
+                    All products, customer orders, reviews, coupons, and site settings will now sync directly to your Supabase cloud database!
+                  </li>
+                </ol>
               </div>
+            </div>
+
+            {/* Fresh Start Database & Local Cache Reset */}
+            <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl p-8 border border-rose-100 dark:border-rose-950/60 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-bold font-serif text-slate-800 dark:text-white flex items-center gap-2">
+                    <span>Database Fresh Start &amp; Local Wipe</span>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">
+                      Maintenance
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 max-w-xl">
+                    Clear local browser product caches, legacy order logs, reviews, and test items so you can connect cleanly to your fresh Supabase project without old leftover records.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleFreshStartDatabase}
+                  className="px-5 py-3 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 flex-shrink-0"
+                >
+                  <Trash2 size={15} />
+                  <span>Fresh Start: Clear All Local Demo &amp; Stored Data</span>
+                </button>
+              </div>
+
+              {freshStartStatus && (
+                <div className="p-3 rounded-xl text-xs font-bold flex items-center gap-2 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
+                  <CheckCircle size={16} />
+                  <span>{freshStartStatus}</span>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -3351,17 +3019,7 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
                         if (file) {
                           try {
                             const compressed = await compressImageFile(file, 1000, 0.85);
-                            const url = googleSheetInput.trim() || settings.googleSheetWebhookUrl;
-                            if (url && url.includes('script.google.com')) {
-                              const uploadRes = await uploadImageToGoogleDrive(compressed, file.name, url);
-                              if (uploadRes.success && uploadRes.url) {
-                                setGalleryFormImg(uploadRes.url);
-                              } else {
-                                setGalleryFormImg(compressed);
-                              }
-                            } else {
-                              setGalleryFormImg(compressed);
-                            }
+                            setGalleryFormImg(compressed);
                           } catch (err) {
                             console.error('Failed to compress gallery image:', err);
                           }
@@ -3395,77 +3053,6 @@ CREATE POLICY "Public access for customers" ON public.customers FOR ALL USING (t
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-
-
-      {/* GOOGLE APPS SCRIPT SETUP MODAL */}
-      {isScriptModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="fixed inset-0" onClick={() => setIsScriptModalOpen(false)} />
-          <div
-            data-lenis-prevent
-            className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 z-10 max-h-[90vh] overflow-y-auto overscroll-contain space-y-5"
-          >
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div className="flex items-center gap-2.5">
-                <FileSpreadsheet className="text-emerald-600" size={22} />
-                <h3 className="text-lg font-bold font-serif text-slate-800 dark:text-white">
-                  Google Sheets & Accounting Setup
-                </h3>
-              </div>
-              <button
-                onClick={() => setIsScriptModalOpen(false)}
-                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="text-xs text-slate-600 dark:text-slate-300 space-y-2 leading-relaxed">
-              <p className="font-semibold text-slate-800 dark:text-white">
-                Follow these 4 simple steps to connect Petalorah to your Google Sheet:
-              </p>
-              <ol className="list-decimal list-inside space-y-1.5 pl-1">
-                <li>Open your Google Sheet (used by your Google AI Studio accounting app).</li>
-                <li>Click <strong>Extensions</strong> → <strong>Apps Script</strong>.</li>
-                <li>Delete any default code, paste the script below, and click <strong>Save</strong> (💾).</li>
-                <li>Click <strong>Deploy</strong> → <strong>New deployment</strong> → Select type: <strong>Web app</strong>:
-                  <ul className="list-disc list-inside pl-4 mt-1 space-y-0.5 text-slate-500">
-                    <li>Execute as: <strong>Me</strong></li>
-                    <li>Who has access: <strong>Anyone</strong></li>
-                  </ul>
-                </li>
-                <li>Copy the generated <strong>Web App URL</strong> and paste it into the setting input above!</li>
-              </ol>
-            </div>
-
-            <div className="relative">
-              <div className="flex items-center justify-between bg-slate-800 text-slate-200 px-4 py-2 rounded-t-2xl text-[11px] font-mono">
-                <span>Code.gs (Google Apps Script)</span>
-                <button
-                  onClick={handleCopyScript}
-                  className="flex items-center gap-1 font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
-                >
-                  {copiedScript ? <Check size={14} /> : <Copy size={14} />}
-                  <span>{copiedScript ? 'Copied!' : 'Copy Script'}</span>
-                </button>
-              </div>
-              <pre className="p-4 bg-slate-950 text-slate-200 text-xs font-mono rounded-b-2xl overflow-x-auto max-h-56 leading-relaxed border border-slate-800">
-                {GOOGLE_APPS_SCRIPT_CODE}
-              </pre>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={() => setIsScriptModalOpen(false)}
-                className="px-5 py-2.5 rounded-xl bg-slate-800 text-white hover:bg-slate-900 font-bold text-xs"
-              >
-                Close
-              </button>
-            </div>
           </div>
         </div>
       )}

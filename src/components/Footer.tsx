@@ -6,10 +6,9 @@ import { useSettings } from '../context/SettingsContext';
 
 interface FooterProps {
   onNavigate: (tab: 'home' | 'about' | 'shop' | 'portfolio' | 'keychains' | 'tabletops' | 'bouquets' | 'admin' | 'login') => void;
-  onOpenTracking?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenTracking }) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   const { settings } = useSettings();
   const phone = (settings.whatsappNumber || '916380437068').replace(/[^0-9]/g, '');
   const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent("Hi Petalorah! I would like to place an order.")}`;
@@ -57,16 +56,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenTracking }) =>
                   Delivery &amp; Shipping
                 </button>
               </li>
-              {onOpenTracking && (
-                <li>
-                  <button
-                    onClick={onOpenTracking}
-                    className="hover:underline text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1.5"
-                  >
-                    Track Your Order 🚚
-                  </button>
-                </li>
-              )}
               <li>
                 <button onClick={() => onNavigate('login')} className="hover:underline text-rose-500 font-semibold">Account / Login</button>
               </li>
